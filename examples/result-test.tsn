@@ -1,0 +1,39 @@
+import { Result, ok, err, tryRun } from 'std:result';
+
+function divide(a: float, b: float): Result<float, str> {
+    if (b === 0.0) return err("division by zero");
+    return ok(a / b);
+}
+
+// Basic ok/err
+const r1 = divide(10.0, 2.0);
+print(r1.isOk());           // true
+print(r1.unwrap());         // 5
+
+const r2 = divide(10.0, 0.0);
+print(r2.isErr());          // true
+print(r2.err());            // division by zero
+print(r2.valueOr(-1.0));    // -1
+
+// map
+const r3 = divide(10.0, 2.0).map(x => x * 2.0);
+print(r3.unwrap());         // 10
+
+// andThen chaining
+const r4 = divide(10.0, 2.0).andThen(x => divide(x, 2.5));
+print(r4.unwrap());         // 2
+
+// toString
+print(ok(42).toString());   // Ok(42)
+print(err("oops").toString()); // Err(oops)
+
+// tryRun
+const r5 = tryRun(() => {
+    throw new Error("something failed");
+});
+print(r5.isErr());          // true
+const e5 = r5.err() as Error;
+print(e5.message);   // something failed
+
+const r6 = tryRun(() => 99);
+print(r6.unwrap());         // 99

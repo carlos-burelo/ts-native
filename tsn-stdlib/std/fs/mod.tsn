@@ -1,0 +1,135 @@
+// std:fs — filesystem module
+
+export namespace FileType {
+    export const Unknown = 0;
+    export const File    = 1;
+    export const Dir     = 2;
+    export const Symlink = 3;
+}
+
+export namespace OpenMode {
+    export const Read   = 1;
+    export const Write  = 2;
+    export const Append = 4;
+    export const Create = 8;
+    export const Trunc  = 16;
+}
+
+export class Stats {
+    size: int;
+    isDir: bool;
+    isFile: bool;
+    mtime: int;
+}
+
+/**
+ * Reads entire file as str.
+ */
+export async function readFile(path: str): str {
+    return __fs_read(path)
+}
+
+export async function readText(path: str): str {
+    return readFile(path)
+}
+
+/**
+ * Writes str to file.
+ */
+export async function writeFile(path: str, content: str): void {
+    __fs_write(path, content)
+}
+
+export function writeText(path: str, content: str): void {
+    writeFile(path, content)
+}
+
+/**
+ * Appends str to file.
+ */
+export function appendFile(path: str, content: str): void {
+    __fs_append_text(path, content)
+}
+
+/**
+ * Checks if path exists.
+ */
+export async function exists(path: str): bool {
+    return __fs_exists(path)
+}
+
+/**
+ * Returns kind of file (file, dir, etc).
+ */
+export function kind(path: str): str {
+    return __fs_kind(path)
+}
+
+/**
+ * Returns stats for a path.
+ */
+export function stat(path: str): Stats {
+    const raw = __fs_stat(path);
+    const s = new Stats();
+    s.size = raw.size;
+    s.isDir = raw.isDir;
+    s.isFile = raw.isFile;
+    s.mtime = raw.mtime === null ? 0 : raw.mtime;
+    return s;
+}
+
+/**
+ * Creates a directory.
+ */
+export async function mkdir(path: str): void {
+    __fs_mkdir(path)
+}
+
+/**
+ * Creates a directory and all parent components.
+ */
+export async function mkdirAll(path: str): void {
+    __fs_mkdir_all(path)
+}
+
+/**
+ * Reads directory entries.
+ */
+export async function readDir(path: str): str[] {
+    return __fs_read_dir(path)
+}
+
+/**
+ * Removes a file or empty directory.
+ */
+export async function remove(path: str): void {
+    __fs_remove(path)
+}
+
+/**
+ * Removes a directory and all its contents.
+ */
+export async function removeAll(path: str): void {
+    __fs_remove_all(path)
+}
+
+/**
+ * Renames or moves a file/directory.
+ */
+export async function rename(from: str, to: str): void {
+    __fs_rename(from, to)
+}
+
+/**
+ * Copies a file.
+ */
+export async function copy(from: str, to: str): void {
+    __fs_copy(from, to)
+}
+
+/**
+ * Returns path to temp directory.
+ */
+export function tempDir(): str {
+    return __fs_temp_dir()
+}

@@ -1,0 +1,19 @@
+pub mod array;
+pub mod async_;
+pub mod console;
+pub mod crypto;
+pub mod fs;
+pub mod io;
+pub mod json;
+pub mod map;
+pub mod math;
+pub mod net;
+pub mod path;
+pub mod primitives;
+pub mod reflect;
+pub mod set;
+pub mod sys;
+pub mod table;
+pub mod time;
+
+pub use table::dispatch_intrinsic;

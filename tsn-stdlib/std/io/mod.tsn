@@ -1,0 +1,42 @@
+// std:io — Input/Output streams
+
+/**
+ * Writes data to stdout.
+ */
+export function write(...args: dynamic[]): void {
+    for (let arg of args) {
+        __io_write(arg === null ? "null" : arg.toString())
+    }
+}
+
+/**
+ * Writes data to stdout followed by a newline.
+ */
+export function print(...args: dynamic[]): void {
+    let s = "";
+    for (let arg of args) {
+        s += (arg === null ? "null" : arg.toString()) + " ";
+    }
+    __io_writeln(s.trim())
+}
+
+/**
+ * Flushes stdout buffer.
+ */
+export function flush(): void {
+    __io_flush()
+}
+
+/**
+ * Reads a line from stdin.
+ */
+export function readLine(): str {
+    return __io_read_line()
+}
+
+/**
+ * Reads all data from stdin until EOF.
+ */
+export function readAll(): str {
+    return __io_read_all()
+}

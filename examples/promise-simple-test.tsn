@@ -1,0 +1,6 @@
+// Test simple synchronous code first
+function simpleTest(): void {
+    print("Simple test works!")
+}
+
+simpleTest()

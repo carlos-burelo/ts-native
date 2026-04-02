@@ -1,0 +1,22 @@
+/**
+ * Minimal Interface Implementation Test
+ */
+
+interface Named {
+    getName(): str
+}
+
+class User implements Named {
+    name: str
+
+    constructor(name: str) {
+        this.name = name
+    }
+
+    getName(): str {
+        return this.name
+    }
+}
+
+const user = new User("Alice")
+const result = user.getName()

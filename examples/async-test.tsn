@@ -1,0 +1,12 @@
+// Test async/await functionality
+
+async function getMessage(): str {
+    return "Hello from async!"
+}
+
+async function main(): void {
+    const msg = await getMessage()
+    print(msg)
+}
+
+main()

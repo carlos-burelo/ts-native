@@ -1,0 +1,139 @@
+// std:result — Result<T, E> type for explicit error handling
+
+/**
+ * Represents either a success value Ok(T) or a failure value Err(E).
+ *
+ * Usage:
+ *   import { Result, ok, err } from 'std:result';
+ *
+ *   function divide(a: float, b: float): Result<float, str> {
+ *       if (b === 0.0) return err("division by zero");
+ *       return ok(a / b);
+ *   }
+ *
+ *   const r = divide(10.0, 2.0);
+ *   if (r.isOk()) print(r.unwrap());
+ */
+export class Result<T, E> {
+    _ok: bool;
+    _value: dynamic;
+
+    constructor(ok: bool, value: dynamic) {
+        this._ok = ok;
+        this._value = value;
+    }
+
+    /** Returns true if this is an Ok result. */
+    isOk(): bool { return this._ok; }
+
+    /** Returns true if this is an Err result. */
+    isErr(): bool { return !this._ok; }
+
+    /** Returns the Ok value, or null if Err. */
+    ok(): T | null {
+        return this._ok ? this._value as T : null;
+    }
+
+    /** Returns the Err value, or null if Ok. */
+    err(): E | null {
+        return this._ok ? null : this._value as E;
+    }
+
+    /**
+     * Returns the Ok value.
+     * Throws an Error if this is Err.
+     */
+    unwrap(): T {
+        if (!this._ok) throw new Error("called unwrap() on Err: " + this._value);
+        return this._value as T;
+    }
+
+    /**
+     * Returns the Err value.
+     * Throws an Error if this is Ok.
+     */
+    unwrapErr(): E {
+        if (this._ok) throw new Error("called unwrapErr() on Ok: " + this._value);
+        return this._value as E;
+    }
+
+    /**
+     * Returns the Ok value, or throws with the given message if Err.
+     */
+    expect(msg: str): T {
+        if (!this._ok) throw new Error(msg + ": " + this._value);
+        return this._value as T;
+    }
+
+    /**
+     * Returns the Ok value, or `fallback` if Err.
+     */
+    valueOr(fallback: T): T {
+        return this._ok ? this._value as T : fallback;
+    }
+
+    /**
+     * Maps Ok(T) to Ok(U) by applying `fn`. Err passes through unchanged.
+     */
+    map<U>(fn: (value: T) => U): Result<U, E> {
+        if (this._ok) return ok<U, E>(fn(this._value as T));
+        return err<U, E>(this._value as E);
+    }
+
+    /**
+     * Maps Err(E) to Err(F) by applying `fn`. Ok passes through unchanged.
+     */
+    mapErr<F>(fn: (error: E) => F): Result<T, F> {
+        if (this._ok) return ok<T, F>(this._value as T);
+        return err<T, F>(fn(this._value as E));
+    }
+
+    /**
+     * Chains a fallible operation. If Ok, calls `fn(value)`.
+     * If `fn` returns Err, the chain short-circuits.
+     */
+    andThen<U>(fn: (value: T) => Result<U, E>): Result<U, E> {
+        if (this._ok) return fn(this._value as T);
+        return err<U, E>(this._value as E);
+    }
+
+    /**
+     * Recovers from an Err by calling `fn`. If Ok, passes through unchanged.
+     */
+    orElse<F>(fn: (error: E) => Result<T, F>): Result<T, F> {
+        if (!this._ok) return fn(this._value as E);
+        return ok<T, F>(this._value as T);
+    }
+
+    toString(): str {
+        if (this._ok) return "Ok(" + this._value + ")";
+        return "Err(" + this._value + ")";
+    }
+}
+
+/**
+ * Creates a successful Result containing `value`.
+ */
+export function ok<T, E>(value: T): Result<T, E> {
+    return new Result<T, E>(true, value);
+}
+
+/**
+ * Creates a failed Result containing `error`.
+ */
+export function err<T, E>(error: E): Result<T, E> {
+    return new Result<T, E>(false, error);
+}
+
+/**
+ * Runs `fn` and catches any thrown Error, returning Result<T, Error>.
+ * Returns Ok(value) on success, Err(error) on exception.
+ */
+export function tryRun<T>(fn: () => T): Result<T, Error> {
+    try {
+        return ok<T, Error>(fn());
+    } catch (e) {
+        if (e instanceof Error) return err<T, Error>(e);
+        return err<T, Error>(new Error("" + e));
+    }
+}

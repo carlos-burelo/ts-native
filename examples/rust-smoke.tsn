@@ -1,0 +1,14 @@
+// simple smoke test
+const x = 40 + 2
+print(x)
+
+const greeting = "Hello, TSN!"
+print(greeting)
+
+let arr = [1, 2, 3]
+print(arr)
+
+function add(a, b) {
+    return a + b
+}
+print(add(10, 32))

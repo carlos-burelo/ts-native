@@ -1,0 +1,43 @@
+// Simple field initializer example
+
+class Person {
+    name: str = "Anonymous"
+    age: int = 0
+    active: bool = true
+}
+
+class Counter {
+    value: int = 0
+    
+    increment() {
+        this.value = this.value + 1
+    }
+    
+    reset() {
+        this.value = 0
+    }
+}
+
+// Test Person
+print("=== Person Example ===")
+const person = new Person()
+print("Default person:", person.name, "age:", person.age, "active:", person.active)
+
+person.name = "Alice"
+person.age = 30
+print("Updated person:", person.name, "age:", person.age)
+
+// Test Counter
+print("\n=== Counter Example ===")
+const counter = new Counter()
+print("Initial value:", counter.value)
+
+counter.increment()
+print("After increment:", counter.value)
+
+counter.increment()
+counter.increment()
+print("After 2 more increments:", counter.value)
+
+counter.reset()
+print("After reset:", counter.value)

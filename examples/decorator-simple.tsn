@@ -1,0 +1,23 @@
+// Simple decorator test without complex types
+
+function log(value, context) {
+  print("Decorator called!")
+  print("Context kind: " + context.kind)
+  return value
+}
+
+@log
+class Simple {
+  constructor() {
+    print("Constructor called")
+  }
+  
+  greet(): void {
+    print("Hello!")
+  }
+}
+
+print("Creating instance...")
+let obj = new Simple()
+obj.greet()
+print("Done!")

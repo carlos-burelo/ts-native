@@ -1,0 +1,134 @@
+/**
+ * PRUEBA EXHAUSTIVA DE FUTURES/ASYNC
+ * Testing de la implementación real de async/await en la VM
+ */
+
+// TEST 1: Función async simple que retorna void
+async function simpleAsync(): void {
+    print("--- TEST 1: Async simple ---")
+    print("  Dentro de función async")
+}
+
+// TEST 2: Función async con await de otra async
+async function waitForAsync(): void {
+    print("\n--- TEST 2: Await de async ---")
+    print("  Antes de await")
+    await simpleAsync()
+    print("  Después de await")
+}
+
+// TEST 3: Múltiples awaits secuenciales
+async function multipleAwaits(): void {
+    print("\n--- TEST 3: Múltiples awaits ---")
+    print("  Await 1...")
+    await simpleAsync()
+    print("  Await 2...")
+    await waitForAsync()
+    print("  Await 3 completado")
+}
+
+// TEST 4: Async con retorno de valor
+async function withReturn(): int {
+    print("\n--- TEST 4: Async con retorno ---")
+    print("  Calculando...")
+    return 42
+}
+
+// TEST 5: Await de función con retorno
+async function awaitWithReturn(): void {
+    print("\n--- TEST 5: Await con retorno ---")
+    const value = await withReturn()
+    print("  Valor recibido: " + value.toString())
+}
+
+// TEST 6: Try/catch con async
+async function withTryCatch(): void {
+    print("\n--- TEST 6: Try/catch ---")
+    try {
+        print("  En try block")
+        await simpleAsync()
+        print("  Try exitoso")
+    } catch (e: dynamic) {
+        print("  En catch (no debería llegar)")
+    }
+}
+
+// TEST 7: Función async que lanza error
+async function throwingAsync(): void {
+    print("\n--- TEST 7: Async que lanza error ---")
+    print("  Antes de throw")
+    throw Error("Error intencional")
+    print("  Después de throw (NO debe aparecer)")
+}
+
+// TEST 8: Catch de error async
+async function catchAsyncError(): void {
+    print("\n--- TEST 8: Catch de error async ---")
+    try {
+        await throwingAsync()
+        print("  NO debe llegar aquí")
+    } catch (e: dynamic) {
+        print("  Error capturado correctamente")
+    }
+}
+
+// TEST 9: Async anidado
+async function innerAsync(): int {
+    print("  Inner async ejecutado")
+    return 100
+}
+
+async function outerAsync(): void {
+    print("\n--- TEST 9: Async anidado ---")
+    print("  Outer async iniciado")
+    const value = await innerAsync()
+    print("  Inner completó con: " + value.toString())
+    const doubled = value * 2
+    print("  Valor duplicado: " + doubled.toString())
+}
+
+// TEST 10: Múltiples niveles de await
+async function level1(): int {
+    print("  Level 1")
+    return 10
+}
+
+async function level2(): int {
+    print("  Level 2")
+    const val = await level1()
+    return val * 2
+}
+
+async function level3(): void {
+    print("\n--- TEST 10: Múltiples niveles ---")
+    print("  Level 3")
+    const result = await level2()
+    print("  Resultado final: " + result.toString())
+}
+
+// FUNCIÓN MAIN QUE EJECUTA TODOS LOS TESTS
+async function runAllTests(): void {
+    print("========================================")
+    print("  ASYNC/AWAIT COMPREHENSIVE TEST")
+    print("========================================")
+    
+    await simpleAsync()
+    await waitForAsync()
+    await multipleAwaits()
+    await withReturn()
+    await awaitWithReturn()
+    await withTryCatch()
+    await catchAsyncError()
+    await outerAsync()
+    await level3()
+    
+    print("\n========================================")
+    print("  TODOS LOS TESTS COMPLETADOS")
+    print("========================================")
+}
+
+function main(): void {
+    runAllTests()
+}
+
+main()

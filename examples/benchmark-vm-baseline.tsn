@@ -1,0 +1,174 @@
+/**
+ * VM Performance Benchmark - Baseline Test
+ * 
+ * This file tests various VM operations to establish a performance baseline:
+ * 1. Arithmetic operations (ADD, SUB, MUL, DIV)
+ * 2. Function calls (CALL, RETURN)
+ * 3. Object access (GET_PROPERTY, SET_PROPERTY)
+ * 4. Array operations (BUILD_ARRAY, GET_INDEX, SET_INDEX)
+ * 5. Control flow (JUMP, LOOP)
+ * 6. Variable access (GET_LOCAL, SET_LOCAL)
+ */
+
+// === 1. ARITHMETIC OPERATIONS ===
+function testArithmetic(iterations: int): int {
+    let result: int = 0
+    let i: int = 0
+    while (i < iterations) {
+        result = result + (i * 2) - 1
+        result = result / (i + 1)
+        result = result % 100
+        i = i + 1
+    }
+    return result
+}
+
+// === 2. FUNCTION CALLS ===
+function fibonacci(n: int): int {
+    if (n <= 1) {
+        return n
+    }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+function testFunctionCalls(): int {
+    let sum: int = 0
+    let i: int = 1
+    while (i <= 20) {
+        sum = sum + fibonacci(i)
+        i = i + 1
+    }
+    return sum
+}
+
+// === 3. OBJECT/CLASS OPERATIONS ===
+class Point {
+    x: int
+    y: int
+    
+    constructor(x: int, y: int) {
+        this.x = x
+        this.y = y
+    }
+    
+    distance(): int {
+        return this.x * this.x + this.y * this.y
+    }
+    
+    move(dx: int, dy: int): void {
+        this.x = this.x + dx
+        this.y = this.y + dy
+    }
+}
+
+function testObjectOps(iterations: int): int {
+    let p: Point = Point(10, 20)
+    let i: int = 0
+    let sum: int = 0
+    
+    while (i < iterations) {
+        p.move(1, -1)
+        sum = sum + p.distance()
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// === 4. ARRAY OPERATIONS ===
+function testArrayOps(size: int): int {
+    let arr: int[] = []
+    let i: int = 0
+    
+    // Fill array
+    while (i < size) {
+        arr = [...arr, i * 2]
+        i = i + 1
+    }
+    
+    // Sum array
+    let sum: int = 0
+    i = 0
+    while (i < size) {
+        sum = sum + arr[i]
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// === 5. NESTED LOOPS (CONTROL FLOW) ===
+function testNestedLoops(size: int): int {
+    let sum: int = 0
+    let i: int = 0
+    
+    while (i < size) {
+        let j: int = 0
+        while (j < size) {
+            sum = sum + (i * j)
+            j = j + 1
+        }
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// === 6. VARIABLE ACCESS PATTERNS ===
+function testLocalAccess(iterations: int): int {
+    let a: int = 1
+    let b: int = 2
+    let c: int = 3
+    let d: int = 4
+    let e: int = 5
+    let i: int = 0
+    
+    while (i < iterations) {
+        let temp: int = a
+        a = b
+        b = c
+        c = d
+        d = e
+        e = temp + 1
+        i = i + 1
+    }
+    
+    return a + b + c + d + e
+}
+
+// === MAIN BENCHMARK EXECUTION ===
+sys.print("=== VM Performance Baseline Benchmark ===")
+sys.print("")
+
+// Test 1: Arithmetic
+sys.print("Test 1 - Arithmetic (10000 iterations): ")
+const arithResult: int = testArithmetic(10000)
+sys.print(arithResult)
+
+// Test 2: Function Calls
+sys.print("Test 2 - Function Calls (Fibonacci 1-20): ")
+const fibResult: int = testFunctionCalls()
+sys.print(fibResult)
+
+// Test 3: Object Operations
+sys.print("Test 3 - Object Operations (5000 iterations): ")
+const objResult: int = testObjectOps(5000)
+sys.print(objResult)
+
+// Test 4: Array Operations
+sys.print("Test 4 - Array Operations (1000 elements): ")
+const arrResult: int = testArrayOps(1000)
+sys.print(arrResult)
+
+// Test 5: Nested Loops
+sys.print("Test 5 - Nested Loops (100x100): ")
+const loopResult: int = testNestedLoops(100)
+sys.print(loopResult)
+
+// Test 6: Local Variable Access
+sys.print("Test 6 - Local Access (10000 iterations): ")
+const localResult: int = testLocalAccess(10000)
+sys.print(localResult)
+
+sys.print("")
+sys.print("=== Benchmark Complete ===")

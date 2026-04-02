@@ -1,0 +1,32 @@
+// Comprehensive struct test - testing all features
+
+struct Point2D {
+    x: int;
+    y: int;
+}
+
+struct Vector3 {
+    x: float;
+    y: float;
+    z: float;
+}
+
+// Test 1: Basic struct declaration (already works)
+print("Test 1: Struct declarations parsed successfully")
+
+// Test 2: Struct instantiation (needs compiler support)
+// let p = Point2D { x: 10, y: 20 }
+// print("Point2D created: ", p)
+
+// Test 3: Field access (needs compiler support)
+// print("p.x = ", p.x)
+// print("p.y = ", p.y)
+
+// Test 4: Value semantics / copying (needs compiler support)
+// let p2 = p
+// p2.x = 100
+// print("After modifying p2.x to 100:")
+// print("p.x = ", p.x)   // Should still be 10
+// print("p2.x = ", p2.x) // Should be 100
+
+print("Struct declaration test complete!")

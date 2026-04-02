@@ -1,0 +1,24 @@
+// examples/member-chain-test.tsn
+
+const a = {
+    b: {
+        c: {
+            d: 123
+        }
+    }
+}
+
+// hover on b, c, d should be accurate and typed
+print(a.b.c.d);
+
+class MyClass {
+    static x: int = 1;
+
+    methodExample(): void {
+        print("methodExample");
+    }
+}
+
+// hover on c here should NOT point to MyClass!
+const obj = { c: 456 };
+print(obj.c);

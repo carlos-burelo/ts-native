@@ -1,0 +1,395 @@
+// fs-test.tsn — Comprehensive test for std:fs
+//
+// Run with: cargo run --bin tsn -- examples/fs-test.tsn
+
+import {
+    FileType, OpenMode, SeekOrigin,
+    FsError, Stats, DirEntry, File, Dir, WatchEvent, Watcher,
+    open, create,
+    readFile, readText, writeFile, writeText, appendFile,
+    exists, stat,
+    mkdir, mkdirAll, readDir,
+    remove, removeAll, rename, copy,
+    watch,
+    cwd, tempDir,
+    join, base, ext, dir,
+} from 'std:fs'
+
+// ─── test harness ──────────────────────────────────────────────────────────
+let passed = 0
+let failed = 0
+
+function ok(desc: str, value: bool): void {
+    if (value) {
+        passed++
+        print("  ✓ " + desc)
+    } else {
+        failed++
+        print("  ✗ " + desc)
+    }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 1. Enums
+// ═══════════════════════════════════════════════════════════════════
+print("█ FileType / OpenMode / SeekOrigin enums")
+
+ok("FileType.FILE === 0",       FileType.FILE === 0)
+ok("FileType.DIRECTORY === 1",  FileType.DIRECTORY === 1)
+ok("FileType.SYMLINK === 2",    FileType.SYMLINK === 2)
+ok("FileType.UNKNOWN === 3",    FileType.UNKNOWN === 3)
+
+ok("OpenMode.READ === 0",       OpenMode.READ === 0)
+ok("OpenMode.WRITE === 1",      OpenMode.WRITE === 1)
+ok("OpenMode.APPEND === 2",     OpenMode.APPEND === 2)
+ok("OpenMode.READ_WRITE === 3", OpenMode.READ_WRITE === 3)
+
+ok("SeekOrigin.START === 0",    SeekOrigin.START === 0)
+ok("SeekOrigin.CURRENT === 1",  SeekOrigin.CURRENT === 1)
+ok("SeekOrigin.END === 2",      SeekOrigin.END === 2)
+
+// ═══════════════════════════════════════════════════════════════════
+// 2. FsError constructor
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ FsError")
+
+const e1 = FsError.new("ENOENT", "File not found", "/tmp/missing.txt")
+ok("FsError.code",    e1.code === "ENOENT")
+ok("FsError.message", e1.message === "File not found")
+ok("FsError.path",    e1.path === "/tmp/missing.txt")
+
+const e2 = FsError.new("EACCES", "Permission denied", null)
+ok("FsError.path null", e2.path === null)
+
+// ═══════════════════════════════════════════════════════════════════
+// 3. DirEntry constructor
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ DirEntry")
+
+const de = DirEntry.new("file.txt", "/tmp/file.txt", FileType.FILE)
+ok("DirEntry.name",        de.name === "file.txt")
+ok("DirEntry.path",        de.path === "/tmp/file.txt")
+ok("DirEntry.type",        de.type === FileType.FILE)
+ok("DirEntry.isFile()",    de.isFile() === true)
+ok("DirEntry.isDirectory()", de.isDirectory() === false)
+ok("DirEntry.isSymlink()", de.isSymlink() === false)
+
+const de2 = DirEntry.new("mydir", "/tmp/mydir", FileType.DIRECTORY)
+ok("DirEntry dir.isDirectory()", de2.isDirectory() === true)
+ok("DirEntry dir.isFile()",      de2.isFile() === false)
+
+// ═══════════════════════════════════════════════════════════════════
+// 4. WatchEvent constructor
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ WatchEvent")
+
+const we = WatchEvent.new("/tmp/file.txt", "modify")
+ok("WatchEvent.path", we.path === "/tmp/file.txt")
+ok("WatchEvent.type", we.type === "modify")
+
+// ═══════════════════════════════════════════════════════════════════
+// 5. Sync path utilities
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ Path utilities (sync)")
+
+const j = join("foo/bar", "baz.txt")
+ok("join produces path",     j !== "")
+ok("join contains baz.txt",  j.includes("baz.txt"))
+
+ok("base gets filename",     base("/home/user/file.txt") === "file.txt")
+ok("base no dir part",       base("archive.tar.gz") === "archive.tar.gz")
+
+ok("ext .txt",               ext("/home/user/file.txt") === ".txt")
+ok("ext .gz",                ext("archive.tar.gz") === ".gz")
+ok("ext no extension",       ext("README") === "")
+
+ok("dir gets parent",        dir("/home/user/file.txt").includes("user") === true)
+
+const w = cwd()
+ok("cwd non-empty",          w !== "")
+
+const tmp = tempDir()
+ok("tempDir non-empty",      tmp !== "")
+
+// ═══════════════════════════════════════════════════════════════════
+// 6. exists (sync)
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ exists (sync)")
+
+ok("exists cwd",             exists(cwd()) === true)
+ok("exists non-existent",    exists("/this/path/does/not/exist/xyz123") === false)
+
+// ═══════════════════════════════════════════════════════════════════
+// 7. writeFile / readText / appendFile
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ writeFile / readText / appendFile")
+
+async function testReadWrite(): void {
+    const TMP = join(tempDir(), "tsn-rw-test.txt")
+    await writeFile(TMP, "hello tsn")
+    ok("exists after writeFile",  exists(TMP) === true)
+
+    const text = await readText(TMP)
+    ok("readText content",        text === "hello tsn")
+
+    await appendFile(TMP, " world")
+    const text2 = await readText(TMP)
+    ok("appendFile appends",      text2 === "hello tsn world")
+
+    await writeText(TMP, "overwritten")
+    const text3 = await readText(TMP)
+    ok("writeText overwrites",    text3 === "overwritten")
+    await remove(TMP)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 8. readFile (returns bytes)
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ readFile (bytes)")
+
+async function testReadFileBytes(): void {
+    const TMP = join(tempDir(), "tsn-bytes-test.txt")
+    await writeFile(TMP, "abc")
+    const bytes = await readFile(TMP)
+    ok("readFile bytes length",  bytes.length === 3)
+    ok("readFile bytes[0] = 97", bytes[0] === 97)   // 'a'
+    ok("readFile bytes[1] = 98", bytes[1] === 98)   // 'b'
+    ok("readFile bytes[2] = 99", bytes[2] === 99)   // 'c'
+    await remove(TMP)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 9. stat
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ stat")
+
+async function testStat(): void {
+    const TMP = join(tempDir(), "tsn-stat-test.txt")
+    await writeFile(TMP, "stat test content")
+
+    const s = await stat(TMP)
+    ok("stat.type FILE",         s.type === FileType.FILE)
+    ok("stat.size > 0",          s.size > 0)
+    ok("stat.modified > 0",      s.modified > 0)
+    ok("stat.isFile()",          s.isFile() === true)
+    ok("stat.isDirectory()",     s.isDirectory() === false)
+    ok("stat.isSymlink()",       s.isSymlink() === false)
+    await remove(TMP)
+
+    const tmpDirPath = join(tempDir(), "tsn-stat-dir")
+    try {
+        await remove(tmpDirPath)
+    } catch (_) {}
+    await mkdir(tmpDirPath)
+
+    const ds = await stat(tmpDirPath)
+    ok("stat dir.type DIRECTORY", ds.type === FileType.DIRECTORY)
+    ok("stat dir.isDirectory()",  ds.isDirectory() === true)
+    ok("stat dir.isFile()",       ds.isFile() === false)
+
+    await remove(tmpDirPath)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 10. mkdir / mkdirAll / readDir / DirEntry iteration
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ mkdir / mkdirAll / readDir")
+
+async function testDirOps(): void {
+    const D = join(tempDir(), "tsn-dir-test")
+    try { await removeAll(D) } catch (_) {}
+
+    await mkdir(D)
+    ok("mkdir creates dir",       exists(D) === true)
+
+    // nested mkdirAll
+    const nested = join(D, join("a", "b"))
+    await mkdirAll(nested)
+    ok("mkdirAll nested",         exists(nested) === true)
+
+    // populate
+    await writeFile(join(D, "x.txt"), "x")
+    await writeFile(join(D, "y.txt"), "y")
+
+    // readDir → Dir object
+    const d = await readDir(D)
+    ok("Dir object non-null",     d !== null)
+
+    let count = 0
+    let entry = d.read()
+    while (entry !== null) {
+        count++
+        ok("DirEntry.name non-empty", entry.name !== "")
+        ok("DirEntry.path non-empty", entry.path !== "")
+        entry = d.read()
+    }
+    ok("readDir found entries",   count >= 2)
+    d.close()
+
+    await removeAll(D)
+    ok("removeAll cleans up",     exists(D) === false)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 11. open / File handle operations (read/write/seek/flush/close)
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ File handle (open / read / write / seek / close)")
+
+async function testFileHandle(): void {
+    const fp = join(tempDir(), "tsn-fh-test.txt")
+    await writeFile(fp, "ABCDEFGHIJ")
+
+    // Open for reading
+    const f = await open(fp, OpenMode.READ)
+    ok("File.path set",      f.path !== "")
+
+    const chunk1 = f.read(5)
+    ok("File.read(5)",       chunk1 === "ABCDE")
+
+    const chunk2 = f.read(5)
+    ok("File.read next 5",   chunk2 === "FGHIJ")
+
+    const eof = f.read(5)
+    ok("File.read at EOF",   eof === "")
+
+    // Seek back to start
+    const pos = f.seek(0, SeekOrigin.START)
+    ok("File.seek returns 0", pos === 0)
+
+    const rechunk = f.read(3)
+    ok("File.read after seek", rechunk === "ABC")
+
+    f.close()
+
+    // Open for writing (truncate)
+    const fw = await open(fp, OpenMode.WRITE)
+    const written = fw.write("HELLO")
+    ok("File.write returns byte count", written === 5)
+    fw.flush()
+    fw.close()
+
+    const check = await readText(fp)
+    ok("File.write content",  check === "HELLO")
+
+    // Append mode
+    const fa = await open(fp, OpenMode.APPEND)
+    fa.write(" WORLD")
+    fa.close()
+
+    const appended = await readText(fp)
+    ok("File append mode",    appended === "HELLO WORLD")
+
+    await remove(fp)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 12. rename / copy
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ rename / copy")
+
+async function testRenameAndCopy(): void {
+    const src = join(tempDir(), "tsn-src.txt")
+    const dst = join(tempDir(), "tsn-dst.txt")
+    const cpy = join(tempDir(), "tsn-cpy.txt")
+
+    await writeFile(src, "rename me")
+    await rename(src, dst)
+    ok("rename: dst exists",   exists(dst) === true)
+    ok("rename: src gone",     exists(src) === false)
+
+    await copy(dst, cpy)
+    ok("copy: dst still exists", exists(dst) === true)
+    ok("copy: cpy exists",       exists(cpy) === true)
+    const cpyText = await readText(cpy)
+    ok("copy content match",     cpyText === "rename me")
+
+    await remove(dst)
+    await remove(cpy)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 13. Error handling: missing file → FsError
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ Error handling: FsError")
+
+async function testErrors(): void {
+    // readText of non-existent file
+    try {
+        await readText("/no/such/path/file.txt")
+        failed++
+        print("  ✗ Expected FsError for missing readText")
+    } catch (e) {
+        ok("readText missing → FsError.code",    e.code !== null)
+        ok("readText missing → FsError.message", e.message !== "")
+        ok("readText missing → FsError.path",    e.path !== null)
+    }
+
+    // stat of non-existent path
+    try {
+        await stat("/no/such/path/xyz.txt")
+        failed++
+        print("  ✗ Expected FsError for missing stat")
+    } catch (e) {
+        ok("stat missing → FsError",             e.code === "ENOENT")
+    }
+
+    // mkdir over existing dir
+    const D = join(tempDir(), "tsn-err-dir")
+    await mkdir(D)
+    try {
+        await mkdir(D)
+        failed++
+        print("  ✗ Expected FsError for duplicate mkdir")
+    } catch (e) {
+        ok("mkdir duplicate → FsError",          e.code === "EEXIST")
+    }
+    await remove(D)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// 14. Watcher (polling)
+// ═══════════════════════════════════════════════════════════════════
+print("\n█ Watcher")
+
+async function testWatcher(): void {
+    const wp = join(tempDir(), "tsn-watch-test.txt")
+    await writeFile(wp, "initial")
+
+    const w = await watch(wp)
+    ok("Watcher created",        w !== null)
+    ok("Watcher.path set",       w.path !== "")
+
+    // next() should return null (no change yet)
+    const ev1 = w.next()
+    ok("Watcher.next() null initially", ev1 === null)
+
+    // Modify the file (mtime change)
+    await writeFile(wp, "modified content")
+    const ev2 = w.next()
+    ok("Watcher detects modify",   ev2 !== null)
+    if (ev2 !== null) {
+        ok("WatchEvent.type modify", ev2.type === "modify")
+        ok("WatchEvent.path set",    ev2.path !== "")
+    }
+
+    w.close()
+    await remove(wp)
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// Launch async tests
+// ═══════════════════════════════════════════════════════════════════
+testReadWrite()
+testReadFileBytes()
+testStat()
+testDirOps()
+testFileHandle()
+testRenameAndCopy()
+testErrors()
+testWatcher()
+
+// ─── sync summary ──────────────────────────────────────────────────
+print("\n══════════════════════════════════════════════")
+print("Sync tests: passed=" + passed.toString() + "  failed=" + failed.toString())
+print("Async tests running...")
+print("══════════════════════════════════════════════")

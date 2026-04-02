@@ -1,0 +1,34 @@
+class Person {
+    name: string;
+    age: number;
+    friends: Person[];
+}
+
+const p = new Person();
+const obj = {
+    nested: {
+        value: 42,
+        getValue: () => 42
+    },
+    list: [p]
+};
+
+const v = obj.nested.getValue()
+v.toString();
+obj.nested.getValue().toString();
+
+
+const { value, getValue } = obj.nested
+
+interface Node {
+    someProp: dynamic;
+}
+
+
+export default function SomeComponent({someProp}: Node) {
+    return someProp;
+}
+
+
+const [a, b] = [1, 2, 3];
+

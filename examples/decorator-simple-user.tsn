@@ -1,0 +1,18 @@
+// Simple user-defined decorator test
+
+function myDecorator(target, context) {
+  print("Decorator called!")
+  print("Class name: " + context.name)
+  return target
+}
+
+@myDecorator
+class Test {
+  constructor() {
+    print("Constructor")
+  }
+}
+
+print("Creating instance...")
+let obj = new Test()
+print("Done!")

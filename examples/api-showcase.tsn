@@ -1,0 +1,167 @@
+import { Server, Request, Response } from 'std:http';
+import { Crypto } from 'std:crypto';
+import { JSON } from 'std:json';
+import { Time } from 'std:time';
+
+const server = new Server();
+const port = 8080;
+
+// In-memory stores
+const users: dynamic[] = [];
+const posts: dynamic[] = [];
+
+print(`🚀 API server starting on http://localhost:${port}`);
+
+// ─── Users ───────────────────────────────────────────────────────────────────
+
+// GET /users — list all users (supports ?role= filter)
+server.get('/users', (req: Request, res: Response) => {
+    const role = req.query.role;
+    if (role !== null) {
+        const filtered = users.filter((u: dynamic) => u.role === role);
+        return res.json({ data: filtered, total: filtered.length });
+    }
+    return res.json({ data: users, total: users.length });
+});
+
+// GET /users/:id — get user by id
+server.get('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id;
+    const user = users.find((u: dynamic) => u.id === id);
+    if (user !== null) {
+        return res.json({ data: user });
+    }
+    return res.status(404).json({ error: 'User not found', id });
+});
+
+// POST /users — create user
+server.post('/users', (req, res) => {
+    const body = JSON.parse(req.body);
+    if (body.name === null) {
+        return res.status(400).json({ error: 'name is required' });
+    }
+    const role = body.role !== null ? body.role : 'user';
+    const user = {
+        id: Crypto.uuid(),
+        name: body.name,
+        email: body.email,
+        role,
+        createdAt: Time.millis(),
+    };
+    users.push(user);
+    return res.status(201).json({ data: user });
+});
+
+// PUT /users/:id — update user
+server.put('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id;
+    const idx = users.findIndex((u: dynamic) => u.id === id);
+    if (idx < 0) {
+        return res.status(404).json({ error: 'User not found', id });
+    }
+    const body = JSON.parse(req.body);
+    const existing = users[idx];
+    const updated = {
+        id: existing.id,
+        name: body.name !== null ? body.name : existing.name,
+        email: body.email !== null ? body.email : existing.email,
+        role: body.role !== null ? body.role : existing.role,
+        createdAt: existing.createdAt,
+        updatedAt: Time.millis(),
+    };
+    users.splice(idx, 1);
+    users.splice(idx, 0, updated);
+    return res.json({ data: updated });
+});
+
+// DELETE /users/:id — delete user
+server.delete('/users/:id', (req: Request, res: Response) => {
+    const id = req.params.id;
+    const idx = users.findIndex((u: dynamic) => u.id === id);
+    if (idx >= 0) {
+        users.splice(idx, 1);
+        return res.status(204).send('');
+    }
+    return res.status(404).json({ error: 'User not found', id });
+});
+
+// ─── Posts ────────────────────────────────────────────────────────────────────
+
+// GET /posts — list posts (supports ?userId= filter)
+server.get('/posts', (req: Request, res: Response) => {
+    const userId = req.query.userId;
+    if (userId !== null) {
+        const filtered = posts.filter((p: dynamic) => p.userId === userId);
+        return res.json({ data: filtered, total: filtered.length });
+    }
+    return res.json({ data: posts, total: posts.length });
+});
+
+// POST /posts — create post (validates userId references existing user)
+server.post('/posts', (req: Request, res: Response) => {
+    const body = JSON.parse(req.body);
+    if (body.title === null) {
+        return res.status(400).json({ error: 'title is required' });
+    }
+    if (body.userId === null) {
+        return res.status(400).json({ error: 'userId is required' });
+    }
+    const authorIdx = users.findIndex((u: dynamic) => u.id === body.userId);
+    if (authorIdx < 0) {
+        return res.status(422).json({ error: 'userId references a non-existent user' });
+    }
+    const post = {
+        id: Crypto.uuid(),
+        title: body.title,
+        content: body.content !== null ? body.content : '',
+        userId: body.userId,
+        createdAt: Time.millis(),
+    };
+    posts.push(post);
+    return res.status(201).json({ data: post });
+});
+
+// DELETE /posts/:id
+server.delete('/posts/:id', (req: Request, res: Response) => {
+    const id = req.params.id;
+    const idx = posts.findIndex((p: dynamic) => p.id === id);
+    if (idx >= 0) {
+        posts.splice(idx, 1);
+        return res.status(204).send('');
+    }
+    return res.status(404).json({ error: 'Post not found', id });
+});
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+// GET /v1/id — generate a UUID
+server.get('/v1/id', (req: Request, res: Response) => {
+    return res.json({ id: Crypto.uuid() });
+});
+
+// GET /search?q=... — search users and posts by name/title
+server.get('/search', (req: Request, res: Response) => {
+    const q = req.query.q;
+    if (q === null) {
+        return res.status(400).json({ error: 'q param is required' });
+    }
+    const matchedUsers = users.filter((u: dynamic) => u.name.includes(q));
+    const matchedPosts = posts.filter((p: dynamic) => p.title.includes(q));
+    return res.json({
+        query: q,
+        users: matchedUsers,
+        posts: matchedPosts,
+    });
+});
+
+// GET /stats — server-wide statistics
+server.get('/stats', (req: Request, res: Response) => {
+    const adminCount = users.filter((u: dynamic) => u.role === 'admin').length;
+    return res.json({
+        users: users.length,
+        posts: posts.length,
+        admins: adminCount,
+    });
+});
+
+server.listen(port);

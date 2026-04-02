@@ -1,0 +1,12 @@
+// Test field initializers
+
+class Test {
+    private value: int = 42
+
+    getValue(): int {
+        return this.value
+    }
+}
+
+const t = new Test()
+print("Value: " + t.getValue())

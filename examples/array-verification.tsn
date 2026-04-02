@@ -1,0 +1,13 @@
+
+try {
+    print("Test Array Build");
+    const arr: int[] = [1]; // Using int[]
+    print("Array created");
+    print("Length: " + arr.length);
+
+    print("Popping...");
+    const popped = arr.pop();
+    print("Popped: " + popped);
+} catch (e) {
+    print("Error caught: " + e);
+}

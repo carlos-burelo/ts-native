@@ -1,0 +1,25 @@
+[workspace]
+members = [
+    "crates/tsn-core",
+    "crates/tsn-lexer",
+    "crates/tsn-parser",
+    "crates/tsn-checker",
+    "crates/tsn-compiler",
+    "crates/tsn-types",
+    "crates/tsn-vm",
+    "crates/tsn-cli",
+    "crates/tsn-lsp",
+]
+resolver = "2"
+
+[workspace.dependencies]
+rustc-hash = "2.1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 1

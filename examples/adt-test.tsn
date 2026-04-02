@@ -1,0 +1,10 @@
+type Shape =
+    | Circle(radius: float)
+    | Rectangle(width: float, height: float)
+
+const c = Circle(radius: 5.0)
+const area = match c {
+    Circle(radius: r) => 3.14 * r * r,
+    Rectangle(width: w, height: h) => w * h,
+}
+print(area)

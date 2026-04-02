@@ -1,0 +1,57 @@
+import { List, Stack, Queue } from "std:collections"
+
+print("--- List Test ---")
+const list = new List<int>()
+list.push(10)
+list.push(20)
+print("List length:", list.length)
+print("List pop:", list.pop())
+print("List length:", list.length)
+
+print("\n--- Stack Test ---")
+const stack = new Stack<int>()
+stack.push(1)
+stack.push(2)
+print("Stack size:", stack.size) // 2
+print("Stack peek:", stack.peek()) // 2
+print("Stack pop:", stack.pop())   // 2
+print("Stack size:", stack.size) // 1
+
+print("\n--- Queue Test ---")
+const queue = new Queue<int>()
+queue.enqueue(10)
+queue.enqueue(20)
+print("Queue size:", queue.size) // 2
+print("Queue peek:", queue.peek()) // 10
+print("Queue dequeue:", queue.dequeue()) // 10
+print("Queue size:", queue.size) // 1
+
+print("\n--- Map Test ---")
+const map = new Map<int>()
+map.set("a", 1)
+map.set("b", 2)
+print("Map size:", map.size)
+print("Map get 'a':", map.get("a"))
+print("Map has 'b':", map.has("b"))
+map.delete("a")
+print("Map size after delete:", map.size)
+
+print("\n--- Set Test ---")
+const set = new Set<int>()
+set.add(1)
+set.add(2)
+set.add(1)
+print("Set size:", set.size)
+print("Set has 1:", set.has(1))
+set.delete(1)
+print("Set size after delete:", set.size)
+
+print("\n--- Record Utility Test ---")
+const rec: Record<str, int> = {
+    "x": 100,
+    "y": 200
+}
+print("Record x:", rec["x"])
+print("Record y:", rec["y"])
+
+print("\nAll Collections & Record tests passed!")

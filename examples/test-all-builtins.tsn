@@ -1,0 +1,41 @@
+// Test all builtin generic types defined in TypeScript
+
+// Test Array<T>
+class IntContainer {
+    private items: Array<int> = []
+
+    add(item: int): void {
+        // Would add item
+    }
+}
+
+// Test Future<T>
+class AsyncHandler {
+    private pending: Future<str>
+
+    constructor(f: Future<str>) {
+        this.pending = f
+    }
+}
+
+// Test Map<K, V>
+class Cache {
+    private storage: Map<str, int>
+
+    constructor(m: Map<str, int>) {
+        this.storage = m
+    }
+}
+
+// Test Set<T>
+class UniqueItems {
+    private items: Set<int>
+
+    constructor(s: Set<int>) {
+        this.items = s
+    }
+}
+
+// Test with instantiation
+const container = new IntContainer()
+print("All builtin types work!")

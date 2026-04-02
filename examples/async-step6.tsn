@@ -1,0 +1,20 @@
+/**
+ * Test 6: Catch de async que hace throw
+ */
+async function throws(): void {
+    print("  Async lanzando error")
+    throw Error("Error de prueba")
+}
+
+async function catches(): void {
+    print("✅ TEST 6: Intentando capturar error")
+    try {
+        await throws()
+        print("❌ NO DEBE VERSE: Después de await que throw")
+    } catch (e: dynamic) {
+        print("✅ TEST 6: Error capturado correctamente")
+    }
+}
+
+catches()
+print("=".repeat(60))

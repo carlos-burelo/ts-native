@@ -1,0 +1,27 @@
+// global.tsn — Builtin: global functions always in scope
+
+export function print(...args: dynamic[]): void {
+    __console_log(...args);
+}
+
+export function debug(...args: dynamic[]): void {
+    __console_debug(...args);
+}
+
+export function assert(condition: bool, message?: str): void {
+    if (!condition) {
+        throw message ?? "Assertion failed";
+    }
+}
+
+export function input(prompt?: str): str {
+    return __io_read_line(prompt);
+}
+
+export const NaN: float = 0.0 / 0.0;
+export const Infinity: float = 1.0 / 0.0;
+
+export const Symbol = {
+    iterator: __symbol_iterator(),
+    asyncIterator: __symbol_async_iterator(),
+};

@@ -1,0 +1,27 @@
+/**
+ * Type Alias Test
+ */
+
+// Test 1: Simple type alias
+type StringAlias = str
+const s: StringAlias = "hello"
+
+// Test 2: Number alias
+type NumberAlias = int
+const n: NumberAlias = 42
+
+// Test 3: Function type alias
+type BinaryOp = (a: int, b: int) => int
+
+function add(a: int, b: int): int {
+    return a + b
+}
+
+const op: BinaryOp = add
+const result = op(10, 20)
+
+// Test 4: Object type alias (if supported)
+// type Point = { x: int, y: int }
+// const p: Point = { x: 10, y: 20 }
+
+const test = 1

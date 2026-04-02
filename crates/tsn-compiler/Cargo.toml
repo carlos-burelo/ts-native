@@ -1,0 +1,10 @@
+[package]
+name = "tsn-compiler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tsn-core    = { path = "../tsn-core" }
+rustc-hash  = { workspace = true }
+tsn-types = { path = "../tsn-types" }
+rust_decimal = { version = "1", features = ["serde"] }

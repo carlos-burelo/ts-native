@@ -1,0 +1,12 @@
+// Check if native is in globals
+print("Test 1: Checking native registration");
+const hasNative = native_Array_length !== undefined && native_Array_length !== null;
+print("native_Array_length exists:", hasNative);
+
+// Test array length
+const a = [1, 2, 3];
+print("Test 2: Array.length");
+const len = a.length;
+print("Length result:", len);
+
+print("Done");

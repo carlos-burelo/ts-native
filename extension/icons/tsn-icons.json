@@ -1,0 +1,13 @@
+{
+  "iconDefinitions": {
+    "_tsn": {
+      "iconPath": "./tsn-file.svg"
+    }
+  },
+  "fileExtensions": {
+    "tsn": "_tsn"
+  },
+  "languageIds": {
+    "tsn": "_tsn"
+  }
+}

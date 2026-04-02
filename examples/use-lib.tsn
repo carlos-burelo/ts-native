@@ -1,0 +1,6 @@
+import { message, getMessage } from './lib'
+
+print("Imported message:")
+print(message)
+print("Function result:")
+print(getMessage())

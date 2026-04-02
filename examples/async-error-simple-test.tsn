@@ -1,0 +1,18 @@
+// Simple test for async error handling
+
+async function testBasicError(): void {
+    try {
+        await Future.error("Test error")
+        print("ERROR: Should not reach here")
+    } catch (e) {
+        print("SUCCESS: Error caught correctly")
+    }
+}
+
+async function main(): void {
+    print("Starting async error handling test...")
+    await testBasicError()
+    print("Test completed successfully!")
+}
+
+main()

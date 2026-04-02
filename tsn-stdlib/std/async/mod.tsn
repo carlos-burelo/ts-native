@@ -1,0 +1,9 @@
+// std:async module
+
+export function spawn(callee: dynamic, ...args: dynamic[]): dynamic {
+    return __async_spawn(callee, ...args);
+}
+
+export function sleep(ms: int): void {
+    return __async_sleep(ms);
+}

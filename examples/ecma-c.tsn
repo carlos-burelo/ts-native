@@ -1,0 +1,3 @@
+// Default Export (Named)
+const val = "defaultC"
+export default val

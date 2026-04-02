@@ -1,0 +1,53 @@
+// Demonstration that decorator types are globally available
+// No imports needed!
+
+// Using FieldDecoratorContext directly
+function validateField(value, context: FieldDecoratorContext): void {
+  print("=== Field Decorator ===")
+  print("Name: " + context.name)
+  print("Kind: " + context.kind)
+  print("Static: " + context.static)
+  print("Private: " + context.private)
+}
+
+// Using MethodDecoratorContext directly  
+function logMethod(target, context: MethodDecoratorContext) {
+  print("\n=== Method Decorator ===")
+  print("Name: " + context.name)
+  print("Kind: " + context.kind)
+  print("Static: " + context.static)
+  return target
+}
+
+// Using ClassDecoratorContext directly
+// Note: Class decorators currently only receive target
+function sealClass(target) {
+  print("\n=== Class Decorator ===")
+  print("Class sealed")
+  return target
+}
+
+// Demonstrating that we can use these types without any imports!
+@sealClass
+class Product {
+  @validateField
+  name: str
+  
+  @validateField
+  price: int
+  
+  constructor() {
+    this.name = "Widget"
+    this.price = 100
+    print("\n=== Constructor ===")
+  }
+}
+
+print("\n=== Creating instance ===")
+let product = new Product()
+
+print("\n=== Instance created ===")
+print("Product: " + product.name)
+print("Price: " + product.price)
+
+print("\n✓ All decorator types work globally without imports!")

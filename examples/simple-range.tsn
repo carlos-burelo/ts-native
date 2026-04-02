@@ -1,0 +1,5 @@
+// Test creating range via literal syntax
+print("Testing range literal 0..3")
+for (const x of 0..3) {
+  print(x)
+}

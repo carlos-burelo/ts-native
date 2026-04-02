@@ -1,0 +1,19 @@
+// Simple test for Future primitives
+
+function main(): void {
+	// Test Future.value
+	const resolved = Future.value(42)
+	print("Created resolved Future")
+	
+	// Test Future.error
+	const rejected = Future.error("Test error")
+	print("Created rejected Future")
+	
+	// Test Future.delayed
+	const delayed = Future.delayed(100)
+	print("Created delayed Future (100ms)")
+	
+	print("Future primitives test complete")
+}
+
+main()

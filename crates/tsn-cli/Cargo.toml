@@ -1,0 +1,25 @@
+[package]
+name = "tsn-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "tsn"
+path = "src/main.rs"
+
+[dependencies]
+tsn-core     = { path = "../tsn-core" }
+tsn-lexer    = { path = "../tsn-lexer" }
+tsn-parser   = { path = "../tsn-parser" }
+tsn-checker  = { path = "../tsn-checker" }
+tsn-compiler = { path = "../tsn-compiler" }
+tsn-vm       = { path = "../tsn-vm" }
+tsn-lsp      = { path = "../tsn-lsp" }
+tower-lsp    = "0.20"
+bincode = "1"
+
+[build-dependencies]
+tsn-lexer    = { path = "../tsn-lexer" }
+tsn-parser   = { path = "../tsn-parser" }
+tsn-compiler = { path = "../tsn-compiler" }
+bincode = "1"

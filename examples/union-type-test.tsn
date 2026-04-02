@@ -1,0 +1,25 @@
+/**
+ * Union Type Test
+ */
+
+// Test 1: Simple union type
+type StringOrNumber = str | int
+
+const value1: StringOrNumber = "hello"
+const value2: StringOrNumber = 42
+
+// Test 2: Union with type alias
+type ID = str | int
+const id1: ID = "abc123"
+const id2: ID = 999
+
+// Test 3: Function parameter with union
+function printValue(value: str | int): void {
+    // Just a test function
+    const x = value
+}
+
+printValue("test")
+printValue(100)
+
+const test = 1

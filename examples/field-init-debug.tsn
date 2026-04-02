@@ -1,0 +1,14 @@
+// Debug instance field initialization
+
+class Test {
+  field: str = "hello"
+  
+  constructor() {
+    print("Constructor executing")
+  }
+}
+
+print("Creating instance...")
+let obj = new Test()
+print("Created!")
+print("Field value: " + obj.field)

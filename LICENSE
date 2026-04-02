@@ -1,0 +1,93 @@
+TSN Source Available License v1.0
+Copyright (c) 2024-present, TSN Contributors. All rights reserved.
+
+TERMS AND CONDITIONS
+
+1. DEFINITIONS
+
+   "Software" means the TSN compiler, runtime, standard library, language
+   server, and all associated source code in this repository.
+
+   "Author" means the original copyright holder(s) of this Software.
+
+   "You" means the individual or legal entity exercising permissions
+   granted by this License.
+
+   "Commercial Use" means any use of the Software intended for or directed
+   toward commercial advantage or monetary compensation.
+
+   "Competing Product" means any software that provides functionality
+   substantially similar to the Software and is offered to third parties
+   (whether for free or for a fee), including but not limited to
+   programming languages, compilers, runtimes, or developer tools.
+
+2. GRANT OF RIGHTS
+
+   Subject to the terms of this License, the Author grants You a
+   non-exclusive, non-transferable, non-sublicensable, worldwide license to:
+
+   a) View and study the source code for personal or educational purposes.
+   b) Use the Software for personal, academic, or non-commercial projects.
+   c) Modify the source code for personal use.
+   d) Contribute modifications back to the original repository.
+
+3. RESTRICTIONS
+
+   You may NOT, without prior written permission from the Author:
+
+   a) Use the Software for Commercial Use.
+   b) Distribute the Software or any modified version to third parties.
+   c) Sublicense, sell, rent, lease, or transfer the Software or any rights
+      in this License to any third party.
+   d) Create or distribute a Competing Product based on or derived from
+      this Software.
+   e) Use the Software to provide a hosted or managed service to third
+      parties, whether or not for a fee.
+   f) Remove or alter any copyright notices, license terms, or attribution
+      in the Software.
+
+4. CONTRIBUTIONS
+
+   By submitting a contribution (pull request, patch, suggestion, or any
+   other modification) to this repository, You agree that:
+
+   a) You grant the Author an irrevocable, perpetual, worldwide, royalty-free
+      license to use, copy, modify, sublicense, and distribute your
+      contribution under any license, including commercial licenses.
+   b) You represent that you have the right to submit the contribution and
+      that it does not violate any third-party rights.
+
+5. INTELLECTUAL PROPERTY
+
+   The Author retains all intellectual property rights in the Software,
+   including patents, trademarks, and copyrights. This License does not
+   grant you any ownership rights.
+
+6. ATTRIBUTION
+
+   All copies or substantial portions of the Software must retain the
+   original copyright notice and this License text.
+
+7. DISCLAIMER OF WARRANTIES
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, OR NON-INFRINGEMENT. IN NO EVENT SHALL
+   THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY ARISING
+   FROM THE USE OF THE SOFTWARE.
+
+8. TERMINATION
+
+   This License terminates automatically if You violate any of its terms.
+   Upon termination, You must cease all use and destroy all copies of the
+   Software in your possession.
+
+9. COMMERCIAL LICENSING
+
+   For Commercial Use, distribution rights, or OEM licensing, contact the
+   Author to obtain a separate commercial license agreement.
+
+---
+
+For permissions beyond the scope of this License, contact:
+https://github.com/[carlos-burelo]/ts-native

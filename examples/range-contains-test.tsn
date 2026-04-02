@@ -1,0 +1,12 @@
+const r1 = 5..10
+print("Testing 5..10")
+print("r1.start:")
+print(r1.start)
+print("r1.end:")
+print(r1.end)
+print("r1.inclusive:")
+print(r1.inclusive)
+print("Contains 10?")
+print(r1.contains(10))
+print("Contains 9?")
+print(r1.contains(9))

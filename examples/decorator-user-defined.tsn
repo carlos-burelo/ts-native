@@ -1,0 +1,60 @@
+// Test user-defined decorators
+
+// Class decorator - logs class name
+function logged(target, context) {
+  print("@logged decorator applied to class: " + context.name)
+  return target
+}
+
+// Field decorator - marks field as immutable
+function immutable(value, context): void {
+  print("@immutable decorator on field: " + context.name)
+}
+
+// Multiple decorators on same class
+function first(target, context) {
+  print("@first decorator executed")
+  return target
+}
+
+function second(target, context) {
+  print("@second decorator executed")
+  return target
+}
+
+print("=== Test 1: Class decorator ===")
+@logged
+class Calculator {
+  constructor() {
+    print("Calculator constructor")
+  }
+}
+
+let calc = new Calculator()
+
+print("\n=== Test 2: Field decorator ===")
+class Product {
+  @immutable
+  name: str
+  
+  constructor() {
+    this.name = "Widget"
+    print("Product constructor")
+  }
+}
+
+let prod = new Product()
+print("Product name: " + prod.name)
+
+print("\n=== Test 3: Multiple decorators ===")
+@first
+@second
+class Service {
+  constructor() {
+    print("Service constructor")
+  }
+}
+
+let svc = new Service()
+print("\nAll tests completed!")
+

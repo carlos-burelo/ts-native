@@ -1,0 +1,4 @@
+print("TEST OUTPUT")
+print("Line 2")
+const x = 42
+print(x)

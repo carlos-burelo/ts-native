@@ -1,0 +1,42 @@
+// Example using typed decorators
+// Decorator types are globally available (no import needed)
+// Available types: FieldDecoratorContext, ClassDecoratorContext, MethodDecoratorContext, etc.
+
+// Field decorator with typed context
+function logged(value, context: FieldDecoratorContext): void {
+  print("Field decorator on: " + context.name)
+  print("  Kind: " + context.kind)
+  print("  Static: " + context.static)
+  print("  Private: " + context.private)
+  
+  context.addInitializer(() => {
+    print("  Initializer executed for: " + context.name)
+  })
+}
+
+// Class decorator with typed context
+// Note: Class decorators currently only receive target
+function sealed(target) {
+  print("Class decorator on target")
+  return target
+}
+
+@sealed
+class User {
+  @logged
+  name: str
+  
+  @logged
+  age: int
+  
+  constructor() {
+    this.name = "Alice"
+    this.age = 30
+    print("Constructor called")
+  }
+}
+
+print("Creating user...")
+let user = new User()
+print("User name: " + user.name)
+print("User age: " + user.age)

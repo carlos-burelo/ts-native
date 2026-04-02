@@ -1,0 +1,352 @@
+import {} from '../src/tsn'
+
+/**
+ * TSN Comprehensive Test Suite
+ * Tests all major language features in a single file
+ */
+
+print("========================================")
+print("TSN COMPREHENSIVE TEST SUITE")
+print("========================================")
+
+// ============================================
+// 1. PRIMITIVES & BASIC TYPES
+// ============================================
+print("\n--- 1. PRIMITIVES ---")
+
+const num: int = 42
+const text: str = "Hello TSN"
+const flag: bool = true
+const floatNum: float = 3.14
+
+print("int: " + num)
+print("str: " + text)
+print("bool: " + flag)
+print("float: " + floatNum)
+
+// ============================================
+// 2. NULLABLE TYPES
+// ============================================
+print("\n--- 2. NULLABLE TYPES ---")
+
+const nullable1: int? = null
+const nullable2: int? = 100
+
+const safe1: int = nullable1 ?? 0
+const safe2: int = nullable2 ?? 0
+
+print("null ?? 0 = " + safe1)
+print("100 ?? 0 = " + safe2)
+
+// ============================================
+// 3. ARRAYS
+// ============================================
+print("\n--- 3. ARRAYS ---")
+
+const numbers: int[] = [1, 2, 3, 4, 5]
+print("Array length: " + numbers.length)
+
+numbers.push(6)
+print("After push: " + numbers.length)
+
+const last = numbers.pop()
+print("Popped value: " + last)
+
+// ============================================
+// 4. ENUMS
+// ============================================
+print("\n--- 4. ENUMS ---")
+
+enum Status {
+    Pending = 0,
+    Active = 1,
+    Completed = 2
+}
+
+const status1: Status = Status.Active
+const status2: Status = Status.Completed
+
+print("Status.Active: " + status1)
+print("Status.Completed: " + status2)
+
+// ============================================
+// 5. INTERFACES
+// ============================================
+print("\n--- 5. INTERFACES ---")
+
+interface Person {
+    name: str
+    age: int
+}
+
+const person: Person = {
+    name: "Alice",
+    age: 30
+}
+
+print("Person name: " + person.name)
+print("Person age: " + person.age)
+
+// ============================================
+// 6. CLASSES
+// ============================================
+print("\n--- 6. CLASSES ---")
+
+class Counter {
+    value: int
+
+    constructor(start: int) {
+        this.value = start
+    }
+
+    increment(): void {
+        this.value = this.value + 1
+    }
+
+    getValue(): int {
+        return this.value
+    }
+}
+
+const counter = new Counter(10)
+print("Initial value: " + counter.getValue())
+counter.increment()
+print("After increment: " + counter.getValue())
+
+// ============================================
+// 7. CLASS IMPLEMENTS INTERFACE
+// ============================================
+print("\n--- 7. CLASS IMPLEMENTS INTERFACE ---")
+
+interface Printable {
+    toString(): str
+}
+
+class Book implements Printable {
+    title: str
+
+    constructor(title: str) {
+        this.title = title
+    }
+
+    toString(): str {
+        return "Book: " + this.title
+    }
+}
+
+const book = new Book("TypeScript Native")
+print(book.toString())
+
+// ============================================
+// 8. GENERICS
+// ============================================
+print("\n--- 8. GENERICS ---")
+
+function identity<T>(value: T): T {
+    return value
+}
+
+const numId: int = identity<int>(42)
+const strId: str = identity<str>("Generic Test")
+
+print("identity(42): " + numId)
+print("identity(text): " + strId)
+
+class Box<T> {
+    value: T
+
+    constructor(value: T) {
+        this.value = value
+    }
+
+    getValue(): T {
+        return this.value
+    }
+}
+
+const intBox: Box<int> = new Box<int>(100)
+const strBox: Box<str> = new Box<str>("Boxed")
+
+print("Box<int>: " + intBox.getValue())
+print("Box<str>: " + strBox.getValue())
+
+// ============================================
+// 9. FUNCTIONS
+// ============================================
+print("\n--- 9. FUNCTIONS ---")
+
+function add(a: int, b: int): int {
+    return a + b
+}
+
+function greet(name: str): str {
+    return "Hello, " + name
+}
+
+const sum = add(5, 3)
+const greeting = greet("World")
+
+print("add(5, 3): " + sum)
+print(greeting)
+
+// ============================================
+// 10. ARROW FUNCTIONS
+// ============================================
+print("\n--- 10. ARROW FUNCTIONS ---")
+
+const multiply = (a: int, b: int): int => {
+    return a * b
+}
+
+const square = (x: int): int => x * x
+
+print("multiply(4, 5): " + multiply(4, 5))
+print("square(7): " + square(7))
+
+// ============================================
+// 11. FOR-OF LOOPS
+// ============================================
+print("\n--- 11. FOR-OF LOOPS ---")
+
+const items = [10, 20, 30]
+print("Items:")
+for (const item of items) {
+    print("  " + item)
+}
+
+// ============================================
+// 12. WHILE LOOPS
+// ============================================
+print("\n--- 12. WHILE LOOPS ---")
+
+let count = 0
+while (count < 3) {
+    print("Count: " + count)
+    count = count + 1
+}
+
+// ============================================
+// 13. IF-ELSE STATEMENTS
+// ============================================
+print("\n--- 13. IF-ELSE STATEMENTS ---")
+
+const score = 85
+
+if (score >= 90) {
+    print("Grade: A")
+} else if (score >= 80) {
+    print("Grade: B")
+} else {
+    print("Grade: C")
+}
+
+// ============================================
+// 14. MATCH EXPRESSIONS
+// ============================================
+print("\n--- 14. MATCH EXPRESSIONS ---")
+
+const day = 2
+const dayName = match day {
+    1 => "Monday",
+    2 => "Tuesday",
+    3 => "Wednesday",
+    _ => "Other"
+}
+print("Day " + day + " is " + dayName)
+
+// ============================================
+// 15. TRY-CATCH
+// ============================================
+print("\n--- 15. TRY-CATCH ---")
+
+try {
+    print("Inside try block")
+    const testArray: int[] = [1, 2, 3]
+    print("Array created successfully")
+} catch (e) {
+    print("Error caught: " + e)
+}
+
+// ============================================
+// 16. ASYNC/AWAIT
+// ============================================
+print("\n--- 16. ASYNC/AWAIT ---")
+
+async function fetchData(): str {
+    return "Async data loaded"
+}
+
+async function testAsync(): void {
+    const data = await fetchData()
+    print(data)
+}
+
+testAsync()
+
+// ============================================
+// 17. NAMED ARGUMENTS
+// ============================================
+print("\n--- 17. NAMED ARGUMENTS ---")
+
+function createUser(name: str, age: int, city: str): str {
+    return name + " (" + age + ") from " + city
+}
+
+const user1 = createUser("Bob", 25, "NYC")
+const user2 = createUser(name: "Carol", age: 28, city: "LA")
+
+print(user1)
+print(user2)
+
+// ============================================
+// 18. OPTIONAL PARAMETERS
+// ============================================
+print("\n--- 18. OPTIONAL PARAMETERS ---")
+
+function greetOptional(name: str, title?: str): str {
+    if (title === null) {
+        return "Hello, " + name
+    } else {
+        return "Hello, " + title + " " + name
+    }
+}
+
+print(greetOptional("Alice"))
+print(greetOptional("Bob", "Dr."))
+
+// ============================================
+// 19. TYPE ALIASES
+// ============================================
+print("\n--- 19. TYPE ALIASES ---")
+
+type UserID = int
+type Username = str
+
+const userId: UserID = 12345
+const username: Username = "john_doe"
+
+print("User ID: " + userId)
+print("Username: " + username)
+
+// ============================================
+// 20. NAMESPACE
+// ============================================
+print("\n--- 20. NAMESPACE ---")
+
+namespace Math {
+    export function square(x: int): int {
+        return x * x
+    }
+
+    export const PI: float = 3.14159
+}
+
+print("Math.square(5): " + Math.square(5))
+print("Math.PI: " + Math.PI)
+
+// ============================================
+// FINAL SUMMARY
+// ============================================
+print("\n========================================")
+print("ALL TESTS COMPLETED SUCCESSFULLY!")
+print("========================================")

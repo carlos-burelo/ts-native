@@ -1,0 +1,11 @@
+// Minimal test
+
+function dec(a, b) {
+  print("Decorator: a=" + a + ", b=" + b)
+  return a
+}
+
+@dec
+class Test {}
+
+print("Done")

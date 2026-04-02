@@ -1,0 +1,21 @@
+/**
+ * Union Type Debug Test
+ */
+
+type StringOrNumber = str | int
+
+// This should work
+const validStr: StringOrNumber = "hello"
+const validNum: StringOrNumber = 42
+
+// These should fail
+const invalidBool: StringOrNumber = true
+const invalidFloat: StringOrNumber = 3.14
+
+// Let's also test direct assignments
+const directStr: str = "test"
+const directInt: int = 100
+const directBool: bool = false
+
+// And a wrong direct assignment
+const wrongDirect: str = 123

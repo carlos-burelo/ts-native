@@ -1,0 +1,10 @@
+// Minimal test with field initializer
+
+class Test {
+  x: int = 42
+}
+
+print("Class defined")
+let obj = new Test()
+print("Instance created")
+print("x = " + obj.x)

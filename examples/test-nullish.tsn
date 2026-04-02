@@ -1,0 +1,11 @@
+let x: str? = "hello"
+let result = x ?? "default"
+print(result)
+
+let y: str? = null
+let result2 = y ?? "default"
+print(result2)
+
+// Precedence test
+let a = x ?? "fallback" === "hello"
+print(a)

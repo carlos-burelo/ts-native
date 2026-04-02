@@ -1,0 +1,63 @@
+import { fetch, HTTP } from "std:http";
+
+
+async function testFetch() {
+    print("--- Testing fetch(url) ---");
+    try {
+        let resp = await fetch("https://httpbin.org/get");
+        print("Status:" + resp.status);
+        print("OK:" + resp.ok);
+        let text = await resp.text();
+        print("Body length:" + text.length);
+        // print("Body:", text);
+    } catch (e) {
+        print("Error in fetch(url):" + e);
+    }
+
+    print("\n--- Testing fetch(url, init) with POST ---");
+    try {
+        let resp = await fetch("https://httpbin.org/post", {
+            method: 1, // Method.POST
+            headers: {
+                "Content-Type": "application/json",
+                "X-Custom-Header": "TSN-Native"
+            },
+            body: '{"test": "data"}'
+        });
+        print("Status:" + resp.status);
+        let json = resp.json();
+        print("Response JSON test field:" + json.json.test);
+    } catch (e) {
+        print("Error in fetch(url, init):" + e);
+    }
+
+    print("\n--- Testing HTTP.fetch(url) ---");
+    try {
+        let resp = await HTTP.fetch("https://httpbin.org/get");
+        print("Status:"+ resp.status);
+    } catch (e) {
+        print("Error in HTTP.fetch:" + e);
+    }
+}
+
+testFetch();
+
+
+class A {
+    static get(): void{
+        print("get");
+    }
+}
+
+A.get();
+
+const a = {
+    b: {
+        c: {
+            d: 1
+        }
+    }
+}
+
+
+a.b.c.d 

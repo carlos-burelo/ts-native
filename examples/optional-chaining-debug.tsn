@@ -1,0 +1,7 @@
+// Debug test for optional chaining
+
+const x: int? = 42
+const y: int? = x
+
+print("Test simple assignment:")
+print(y)

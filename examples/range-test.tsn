@@ -1,0 +1,25 @@
+// Test de range literals
+
+print("=== Test 1: Exclusive range (0..5) ===")
+for (const i of 0..5) {
+    print(i)
+}
+
+print("\n=== Test 2: Inclusive range (0..=5) ===")
+for (const i of 0..=5) {
+    print(i)
+}
+
+print("\n=== Test 3: Range con valores mayores (10..15) ===")
+for (const i of 10..15) {
+    print(i)
+}
+
+print("\n=== Test 4: Range con step manual ===")
+for (const i of 0..=10) {
+    if (i % 2 === 0) {
+        print(i)
+    }
+}
+
+print("\nTodos los tests de ranges completados!")

@@ -1,0 +1,17 @@
+{
+	"chat.tools.terminal.autoApprove": {
+		"timeout": true,
+		"ForEach-Object": true
+	},
+	"files.exclude": {
+		// ".claude": true,
+		// "target": true,
+		"node_modules": true,
+		".archive": true,
+		".github":true,
+	},
+	"search.exclude": {
+		"**/.archive": true
+	},
+	"tsn.server.path": "C:\\Users\\x\\dev\\ts-native\\target\\debug\\tsn-lsp.exe"
+}

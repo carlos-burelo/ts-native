@@ -1,0 +1,24 @@
+/**
+ * Test crítico: ¿El await realmente reanuda la ejecución?
+ */
+
+async function getValue(): int {
+    print("  [getValue] Retornando 42")
+    return 42
+}
+
+async function testAwait(): void {
+    print("[testAwait] ANTES del await")
+    const result = await getValue()
+    print("[testAwait] DESPUÉS del await")
+    print("[testAwait] Valor recibido: " + result.toString())
+    print("[testAwait] ✅ Si ves esto, await funciona correctamente")
+}
+
+async function main(): void {
+    print("=== TEST CRÍTICO: AWAIT REANUDA EJECUCIÓN ===")
+    await testAwait()
+    print("=== FIN DE MAIN ===")
+}
+
+main()

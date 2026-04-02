@@ -1,0 +1,386 @@
+{
+  "name": "tsn-language",
+  "displayName": "TSN Language Support",
+  "description": "Syntax highlighting, diagnostics, hover, go-to-definition, completions, rename, run and debug for the TSN language.",
+  "version": "0.2.0",
+  "publisher": "tsn",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tsn-lang/ts-native"
+  },
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.82.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Debuggers",
+    "Themes"
+  ],
+  "activationEvents": [
+    "onLanguage:tsn",
+    "onCommand:tsn.restartServer",
+    "onCommand:tsn.stopServer",
+    "onCommand:tsn.showServerLog",
+    "onCommand:tsn.runFile",
+    "onCommand:tsn.runFileInTerminal",
+    "onCommand:tsn.showAst",
+    "onCommand:tsn.showTokens",
+    "onCommand:tsn.disasmFile",
+    "onCommand:tsn.benchFile",
+    "onCommand:tsn.doctor",
+    "onCommand:tsn.installRuntime"
+  ],
+  "main": "./extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "tsn",
+        "aliases": [
+          "TSN",
+          "tsn"
+        ],
+        "extensions": [
+          ".tsn"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "tsn",
+        "scopeName": "source.tsn",
+        "path": "./syntaxes/tsn.tmLanguage.json"
+      }
+    ],
+    "iconThemes": [
+      {
+        "id": "tsn-icons",
+        "label": "TSN Icons",
+        "path": "./icons/tsn-icons.json"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "tsn"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "tsn",
+        "label": "TSN",
+        "languages": [
+          "tsn"
+        ],
+        "initialConfigurations": [
+          {
+            "type": "tsn",
+            "request": "launch",
+            "name": "Run TSN File",
+            "program": "${file}",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "verbose": false,
+            "debugPhases": []
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "TSN: Run file",
+            "description": "Run the current TSN file",
+            "body": {
+              "type": "tsn",
+              "request": "launch",
+              "name": "Run TSN File",
+              "program": "^\"\\${file}\"",
+              "args": [],
+              "cwd": "^\"\\${workspaceFolder}\"",
+              "verbose": false,
+              "debugPhases": []
+            }
+          },
+          {
+            "label": "TSN: Run with AST dump",
+            "description": "Run and print the AST",
+            "body": {
+              "type": "tsn",
+              "request": "launch",
+              "name": "TSN – AST dump",
+              "program": "^\"\\${file}\"",
+              "cwd": "^\"\\${workspaceFolder}\"",
+              "verbose": true,
+              "debugPhases": [
+                "ast"
+              ]
+            }
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "program": {
+                "type": "string",
+                "description": "Absolute path to the .tsn file to run.",
+                "default": "${file}"
+              },
+              "args": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Extra arguments passed after -- to the TSN program.",
+                "default": []
+              },
+              "cwd": {
+                "type": "string",
+                "description": "Working directory for the TSN process.",
+                "default": "${workspaceFolder}"
+              },
+              "verbose": {
+                "type": "boolean",
+                "description": "Print stage-level progress messages (--verbose).",
+                "default": false
+              },
+              "noRun": {
+                "type": "boolean",
+                "description": "Compile but skip execution (--noRun).",
+                "default": false
+              },
+              "debugPhases": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "tokens",
+                    "ast",
+                    "bytecode",
+                    "symbols",
+                    "binds",
+                    "modules",
+                    "types",
+                    "errors",
+                    "trace",
+                    "calls",
+                    "consts",
+                    "scope",
+                    "graph"
+                  ]
+                },
+                "description": "Debug phases to enable (--debug=phase1,phase2,...).",
+                "default": []
+              }
+            }
+          }
+        }
+      }
+    ],
+    "commands": [
+      {
+        "command": "tsn.restartServer",
+        "title": "Restart Language Server",
+        "category": "TSN"
+      },
+      {
+        "command": "tsn.stopServer",
+        "title": "Stop Language Server",
+        "category": "TSN"
+      },
+      {
+        "command": "tsn.showServerLog",
+        "title": "Show Language Server Log",
+        "category": "TSN"
+      },
+      {
+        "command": "tsn.runFile",
+        "title": "Run File",
+        "category": "TSN",
+        "icon": "$(play)"
+      },
+      {
+        "command": "tsn.runFileInTerminal",
+        "title": "Run File in Terminal",
+        "category": "TSN",
+        "icon": "$(terminal)"
+      },
+      {
+        "command": "tsn.showAst",
+        "title": "Show AST",
+        "category": "TSN",
+        "icon": "$(symbol-structure)"
+      },
+      {
+        "command": "tsn.showTokens",
+        "title": "Show Tokens",
+        "category": "TSN"
+      },
+      {
+        "command": "tsn.disasmFile",
+        "title": "Show Bytecode Disassembly",
+        "category": "TSN",
+        "icon": "$(symbol-keyword)"
+      },
+      {
+        "command": "tsn.benchFile",
+        "title": "Benchmark File",
+        "category": "TSN",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "tsn.doctor",
+        "title": "Doctor (Check Runtime)",
+        "category": "TSN",
+        "icon": "$(pulse)"
+      },
+      {
+        "command": "tsn.installRuntime",
+        "title": "Install Runtime",
+        "category": "TSN",
+        "icon": "$(cloud-download)"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "tsn.runFile",
+        "key": "ctrl+f5",
+        "when": "resourceLangId == tsn && !inDebugMode"
+      },
+      {
+        "command": "workbench.action.debug.start",
+        "key": "f5",
+        "when": "resourceLangId == tsn && !inDebugMode && !debuggersAvailable"
+      }
+    ],
+    "menus": {
+      "editor/title/run": [
+        {
+          "command": "tsn.runFile",
+          "when": "resourceLangId == tsn",
+          "group": "navigation@1"
+        },
+        {
+          "command": "tsn.runFileInTerminal",
+          "when": "resourceLangId == tsn",
+          "group": "navigation@2"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "tsn.runFile",
+          "when": "resourceLangId == tsn",
+          "group": "tsn@1"
+        },
+        {
+          "command": "tsn.runFileInTerminal",
+          "when": "resourceLangId == tsn",
+          "group": "tsn@2"
+        },
+        {
+          "command": "tsn.showAst",
+          "when": "resourceLangId == tsn",
+          "group": "tsn@3"
+        },
+        {
+          "command": "tsn.disasmFile",
+          "when": "resourceLangId == tsn",
+          "group": "tsn@4"
+        },
+        {
+          "command": "tsn.doctor",
+          "when": "resourceLangId == tsn",
+          "group": "tsn@5"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "tsn.runFile",
+          "when": "resourceExtname == .tsn",
+          "group": "tsn@1"
+        },
+        {
+          "command": "tsn.runFileInTerminal",
+          "when": "resourceExtname == .tsn",
+          "group": "tsn@2"
+        },
+        {
+          "command": "tsn.benchFile",
+          "when": "resourceExtname == .tsn",
+          "group": "tsn@3"
+        }
+      ],
+      "commandPalette": [
+        {
+          "command": "tsn.installRuntime",
+          "when": "true"
+        },
+        {
+          "command": "tsn.doctor",
+          "when": "true"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "TSN",
+      "properties": {
+        "tsn.server.path": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the tsn-lsp binary. Leave empty to auto-detect from TSN_HOME/bin, workspace target/{release,debug}, or PATH."
+        },
+        "tsn.cli.path": {
+          "type": "string",
+          "default": "",
+          "description": "Absolute path to the tsn binary. Leave empty to auto-detect from TSN_HOME/bin, workspace target/{release,debug}, or PATH."
+        },
+        "tsn.inlayHints.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable inlay hints for types and parameter names."
+        },
+        "tsn.run.verbose": {
+          "type": "boolean",
+          "default": false,
+          "description": "Pass --verbose to tsn when running files."
+        },
+        "tsn.run.debugPhases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "tokens",
+              "ast",
+              "bytecode",
+              "symbols",
+              "binds",
+              "modules",
+              "types",
+              "errors",
+              "trace",
+              "calls",
+              "consts",
+              "scope",
+              "graph"
+            ]
+          },
+          "default": [],
+          "description": "Default debug phases to enable when running files."
+        },
+        "tsn.codeLens.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show TSN CodeLens actions (Run, Bench, Disasm, AST) at the top of .tsn files."
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.82.0"
+  }
+}

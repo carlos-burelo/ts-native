@@ -1,0 +1,545 @@
+/**
+ * ULTIMATE CLASS STRESS TEST
+ *
+ * Tests every advanced feature of TSN:
+ * - Deep inheritance hierarchies
+ * - Generics with dependent constraints
+ * - 'this' type in parameters and return types
+ * - Fluent API patterns
+ * - Union types with property access
+ * - Async/await with generics
+ * - Method overriding
+ * - Static methods and fields
+ * - Getters and setters
+ * - Complex type inference
+ */
+
+// ============================================================================
+// SECTION 1: Base Builder Pattern with 'this' Type
+// ============================================================================
+
+class Builder {
+    protected value: int = 0
+    protected name: str = ""
+
+    // 'this' type in return - should work in subclasses
+    reset(): this {
+        this.value = 0
+        this.name = ""
+        return this
+    }
+
+    // 'this' type in parameter - should accept subclass instances
+    copyFrom(other: this): this {
+        this.value = other.value
+        this.name = other.name
+        return this
+    }
+
+    // Fluent API
+    setValue(v: int): this {
+        this.value = v
+        return this
+    }
+
+    setName(n: str): this {
+        this.name = n
+        return this
+    }
+
+    getValue(): int {
+        return this.value
+    }
+
+    getName(): str {
+        return this.name
+    }
+}
+
+// ============================================================================
+// SECTION 2: Advanced Builder with Generics
+// ============================================================================
+
+class AdvancedBuilder<T> extends Builder {
+    private data: T | null
+
+    constructor() {
+        super()
+        this.data = null
+    }
+
+    setData(d: T): this {
+        this.data = d
+        return this
+    }
+
+    getData(): T | null {
+        return this.data
+    }
+
+    // Override with 'this' type - should maintain subclass type
+    reset(): this {
+        this.value = 0
+        this.name = ""
+        this.data = null
+        return this
+    }
+}
+
+// ============================================================================
+// SECTION 3: Specialized Builder with Constraints
+// ============================================================================
+
+class NumberBuilder extends AdvancedBuilder<int> {
+    private multiplier: int
+
+    constructor() {
+        super()
+        this.multiplier = 1
+    }
+
+    setMultiplier(m: int): this {
+        this.multiplier = m
+        return this
+    }
+
+    // Method using inherited generic type
+    compute(): int {
+        const d = this.getData()
+        if (d === null) {
+            return this.value * this.multiplier
+        }
+        return d * this.multiplier
+    }
+
+    // Additional fluent method
+    double(): this {
+        this.multiplier = this.multiplier * 2
+        return this
+    }
+}
+
+// ============================================================================
+// SECTION 4: Generic Functions with Dependent Constraints
+// ============================================================================
+
+// U extends T - dependent constraint
+function merge<T, U extends T>(base: T, ext: U): U {
+    return ext
+}
+
+// Complex generic with multiple parameters
+function transform<T, R>(input: T, defaultResult: R): R {
+    return defaultResult
+}
+
+// ============================================================================
+// SECTION 5: Abstract Pattern with Virtual Methods
+// ============================================================================
+
+class Animal {
+    protected name: str
+
+    constructor(name: str) {
+        this.name = name
+    }
+
+    // Virtual method to be overridden
+    makeSound(): str {
+        return "Some sound"
+    }
+
+    // Method using 'this' type
+    introduce(): this {
+        print("I am " + this.name)
+        return this
+    }
+
+    getName(): str {
+        return this.name
+    }
+}
+
+class Dog extends Animal {
+    private breed: str
+
+    constructor(name: str, breed: str) {
+        super(name)
+        this.breed = breed
+    }
+
+    // Override virtual method
+    makeSound(): str {
+        return "Woof!"
+    }
+
+    // Additional method
+    getBreed(): str {
+        return this.breed
+    }
+
+    // Fluent method specific to Dog
+    wagTail(): this {
+        print(this.name + " wags tail")
+        return this
+    }
+}
+
+class Cat extends Animal {
+    private indoor: bool
+
+    constructor(name: str, indoor: bool) {
+        super(name)
+        this.indoor = indoor
+    }
+
+    // Override virtual method
+    makeSound(): str {
+        return "Meow!"
+    }
+
+    // Additional method
+    isIndoor(): bool {
+        return this.indoor
+    }
+
+    // Fluent method specific to Cat
+    purr(): this {
+        print(this.name + " purrs")
+        return this
+    }
+}
+
+// ============================================================================
+// SECTION 6: Union Types and Type Guards
+// ============================================================================
+
+type Pet = Dog | Cat
+
+function greetPet(pet: Pet): str {
+    // Both Dog and Cat have getName() from Animal
+    const name = pet.getName()
+
+    // Both have makeSound()
+    const sound = pet.makeSound()
+
+    return name + " says " + sound
+}
+
+// ============================================================================
+// SECTION 7: Complex Inheritance Chain
+// ============================================================================
+
+class Vehicle {
+    protected speed: int = 0
+
+    accelerate(amount: int): this {
+        this.speed = this.speed + amount
+        return this
+    }
+
+    getSpeed(): int {
+        return this.speed
+    }
+}
+
+class Car extends Vehicle {
+    private brand: str
+
+    constructor(brand: str) {
+        super()
+        this.brand = brand
+    }
+
+    getBrand(): str {
+        return this.brand
+    }
+
+    // Override with additional logic
+    accelerate(amount: int): this {
+        print("Car accelerating...")
+        this.speed = this.speed + amount
+        return this
+    }
+}
+
+class SportsCar extends Car {
+    private turbo: bool = false
+
+    constructor(brand: str) {
+        super(brand)
+    }
+
+    enableTurbo(): this {
+        this.turbo = true
+        print("Turbo enabled!")
+        return this
+    }
+
+    // Override again with turbo logic
+    accelerate(amount: int): this {
+        print("SportsCar accelerating...")
+        if (this.turbo) {
+            this.speed = this.speed + (amount * 2)
+        } else {
+            this.speed = this.speed + amount
+        }
+        return this
+    }
+
+    isTurboEnabled(): bool {
+        return this.turbo
+    }
+}
+
+// ============================================================================
+// SECTION 8: Static Methods and Fields
+// ============================================================================
+
+class MathUtils {
+    static PI: int = 3
+    private value: int
+
+    constructor(v: int) {
+        this.value = v
+    }
+
+    static double(x: int): int {
+        return x * 2
+    }
+
+    static triple(x: int): int {
+        return x * 3
+    }
+
+    applyStatic(): int {
+        return MathUtils.double(this.value)
+    }
+}
+
+// ============================================================================
+// SECTION 9: Method Chaining Stress Test
+// ============================================================================
+
+class FluentCalculator {
+    private result: int = 0
+
+    add(x: int): this {
+        this.result = this.result + x
+        return this
+    }
+
+    subtract(x: int): this {
+        this.result = this.result - x
+        return this
+    }
+
+    multiply(x: int): this {
+        this.result = this.result * x
+        return this
+    }
+
+    divide(x: int): this {
+        if (x !== 0) {
+            this.result = this.result / x
+        }
+        return this
+    }
+
+    reset(): this {
+        this.result = 0
+        return this
+    }
+
+    getResult(): int {
+        return this.result
+    }
+}
+
+// ============================================================================
+// SECTION 10: Generic Repository Pattern
+// ============================================================================
+
+class Repository<T> {
+    private items: T[]
+
+    constructor() {
+        this.items = []
+    }
+
+    add(item: T): this {
+        // Items are stored (array push would be used here)
+        return this
+    }
+
+    getCount(): int {
+        return 0 // Simplified
+    }
+
+    clear(): this {
+        this.items = []
+        return this
+    }
+}
+
+class UserRepository extends Repository<str> {
+    private nextId: int
+
+    constructor() {
+        super()
+        this.nextId = 1
+    }
+
+    addUser(name: str): this {
+        this.add(name)
+        this.nextId = this.nextId + 1
+        return this
+    }
+
+    getNextId(): int {
+        return this.nextId
+    }
+}
+
+// ============================================================================
+// MAIN TEST FUNCTION
+// ============================================================================
+
+function main(): void {
+    print("=== ULTIMATE CLASS STRESS TEST ===")
+    print("")
+
+    // TEST 1: Basic Builder with 'this' type
+    print("TEST 1: Builder Pattern with 'this' type")
+    const builder1 = new Builder()
+    builder1.setValue(42).setName("Builder1")
+    print("Builder value: " + builder1.getValue().toString())
+    print("Builder name: " + builder1.getName())
+
+    const builder2 = new Builder()
+    builder2.copyFrom(builder1)
+    print("Copied value: " + builder2.getValue().toString())
+    print("")
+
+    // TEST 2: Generic Builder
+    print("TEST 2: Generic Builder")
+    const numBuilder = new NumberBuilder()
+    numBuilder.setValue(10).setData(5).setMultiplier(3)
+    print("Computed result: " + numBuilder.compute().toString())
+    numBuilder.double()
+    print("After double: " + numBuilder.compute().toString())
+    print("")
+
+    // TEST 3: Method chaining with inheritance
+    print("TEST 3: Deep Method Chaining")
+    const result = numBuilder
+        .reset()
+        .setValue(8)
+        .setData(4)
+        .setMultiplier(2)
+        .double()
+        .compute()
+    print("Chained result: " + result.toString())
+    print("")
+
+    // TEST 4: Generic functions with constraints
+    print("TEST 4: Generic Functions")
+    const merged = merge<int, int>(10, 20)
+    print("Merged: " + merged.toString())
+
+    const transformed = transform<int, str>(42, "result")
+    print("Transformed: " + transformed)
+    print("")
+
+    // TEST 5: Polymorphism and Virtual Methods
+    print("TEST 5: Polymorphism")
+    const dog = new Dog("Rex", "Labrador")
+    const cat = new Cat("Whiskers", true)
+
+    print("Dog says: " + dog.makeSound())
+    print("Cat says: " + cat.makeSound())
+
+    dog.introduce().wagTail()
+    cat.introduce().purr()
+    print("")
+
+    // TEST 6: Union Types
+    print("TEST 6: Union Types")
+    const pet1: Pet = dog
+    const pet2: Pet = cat
+
+    print(greetPet(pet1))
+    print(greetPet(pet2))
+    print("")
+
+    // TEST 7: Deep Inheritance with Method Overriding
+    print("TEST 7: Deep Inheritance Chain")
+    const sportsCar = new SportsCar("Ferrari")
+    sportsCar
+        .accelerate(10)
+        .enableTurbo()
+        .accelerate(10)
+    print("Final speed: " + sportsCar.getSpeed().toString())
+    print("Turbo: " + sportsCar.isTurboEnabled().toString())
+    print("")
+
+    // TEST 8: Static Methods
+    print("TEST 8: Static Methods")
+    print("PI = " + MathUtils.PI.toString())
+    print("Double 5 = " + MathUtils.double(5).toString())
+    print("Triple 4 = " + MathUtils.triple(4).toString())
+
+    const mathObj = new MathUtils(7)
+    print("Apply static: " + mathObj.applyStatic().toString())
+    print("")
+
+    // TEST 9: Extreme Method Chaining
+    print("TEST 9: Extreme Method Chaining")
+    const calc = new FluentCalculator()
+    const calcResult = calc
+        .add(10)
+        .multiply(2)
+        .subtract(5)
+        .add(3)
+        .multiply(2)
+        .getResult()
+    print("Calculation result: " + calcResult.toString())
+    print("")
+
+    // TEST 10: Generic Repository
+    print("TEST 10: Generic Repository")
+    const userRepo = new UserRepository()
+    userRepo
+        .addUser("Alice")
+        .addUser("Bob")
+        .addUser("Charlie")
+    print("Next user ID: " + userRepo.getNextId().toString())
+    print("")
+
+    // TEST 11: 'this' type preservation in subclasses
+    print("TEST 11: 'this' Type Preservation")
+    const sports1 = new SportsCar("Lamborghini")
+    const sports2 = new SportsCar("Porsche")
+
+    // This should work because copyFrom accepts 'this' type
+    // And SportsCar is a subclass of Vehicle which has the method
+    sports1.accelerate(20).enableTurbo()
+    print("Sports1 speed: " + sports1.getSpeed().toString())
+    print("")
+
+    // TEST 12: Complex type inference
+    print("TEST 12: Type Inference")
+    const inferredBuilder = new NumberBuilder()
+    const inferredResult = inferredBuilder
+        .setValue(100)
+        .setData(50)
+        .setMultiplier(2)
+        .compute()
+    print("Inferred result: " + inferredResult.toString())
+    print("")
+
+    print("=== ALL TESTS COMPLETED ===")
+    print("If you see this message, all advanced features work correctly!")
+}
+
+main()

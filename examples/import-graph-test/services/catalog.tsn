@@ -1,0 +1,62 @@
+// services/catalog.tsn — Product catalog service
+
+import { Product, Category, bulkTotal, MAX_STOCK } from '../models/product.tsn';
+import { add, clamp }                              from '../utils/math.tsn';
+import { padStart }                                from '../utils/strings.tsn';
+
+export const CATALOG_VERSION: int = 1;
+export const DEFAULT_PAGE_SIZE: int = 20;
+
+export class Catalog {
+    items: Product[];
+
+    constructor() {
+        this.items = [];
+    }
+
+    add(product: Product): void {
+        this.items.push(product);
+    }
+
+    findById(id: int): Product | null {
+        for (const p of this.items) {
+            if (p.id === id) return p;
+        }
+        return null;
+    }
+
+    inStock(): Product[] {
+        const result: Product[] = [];
+        for (const p of this.items) {
+            if (p.isInStock()) result.push(p);
+        }
+        return result;
+    }
+
+    byCategory(cat: Category): Product[] {
+        const result: Product[] = [];
+        for (const p of this.items) {
+            if (p.category === cat) result.push(p);
+        }
+        return result;
+    }
+
+    totalInventoryValue(): float {
+        let total: float = 0.0;
+        for (const p of this.items) {
+            total = total + p.totalValue();
+        }
+        return total;
+    }
+
+    report(): str {
+        const count: int = this.items.length;
+        const inStockCount: int = this.inStock().length;
+        return "Catalog: " + count.toString() + " items, " + inStockCount.toString() + " in stock";
+    }
+}
+
+export function discountedBulkOrder(product: Product, qty: int, pct: int): float {
+    const safeQty: int = clamp(qty, 0, MAX_STOCK);
+    return bulkTotal(product.price, safeQty, pct);
+}

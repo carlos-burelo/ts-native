@@ -1,0 +1,14 @@
+class Test {
+  x: int
+  
+  constructor() {
+    print("Constructor called")
+    this.x = 99
+    print("x set to: " + this.x)
+  }
+}
+
+print("Creating...")
+let obj = new Test()
+print("Created")
+print("Final x: " + obj.x)

@@ -1,0 +1,21 @@
+class Person {
+    name: str;
+    age: int;
+    friends: Person[];
+}
+
+const p = new Person();
+const obj = {
+    nested: {
+        value: 42,
+        getValue: () => 42
+    },
+    list: [p]
+};
+
+// These chains should work in LSP:
+obj.nested.getValue().toString();
+obj.list.push(p);
+obj.list[0].friends.length;
+p.friends[0].name.length.toString();
+

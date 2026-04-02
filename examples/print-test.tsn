@@ -1,0 +1,7 @@
+// Test SUPER simple
+
+print("Hello from TSN!")
+print("Test 1")
+print("Test 2")
+const x = 42
+print("x = " + x)

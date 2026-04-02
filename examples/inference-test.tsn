@@ -1,0 +1,20 @@
+
+// Test 1: Explicit Generic Arguments
+function identity<T>(a: T): T { return a; }
+
+const explicitInt = identity<int>(10);
+const explicitStr = identity<str>("hello");
+
+// Test 2: Recursive Inference (Array)
+function first<T>(arr: T[]): T { return arr[0]; }
+const arr = [1, 2, 3];
+const f = first(arr);
+
+// Test 3: Class
+class Container<T> { 
+   value: T;
+   constructor(v: T) { 
+       this.value = v;
+   }
+}
+const c = new Container<str>("s");

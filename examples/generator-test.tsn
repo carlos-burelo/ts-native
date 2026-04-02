@@ -1,0 +1,14 @@
+function* check() {
+    print("In check")
+    yield 1
+    yield 2
+}
+print("Defining check done")
+const gen = check()
+print("Generator created")
+const v1 = gen.next()
+print("Yield 1:")
+print(v1)
+const v2 = gen.next()
+print("Yield 2:")
+print(v2)

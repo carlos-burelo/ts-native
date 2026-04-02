@@ -1,0 +1,97 @@
+import { Range } from "std:collections";
+
+// ─── Destructuring ─────────────────────────────────────────────────────────
+
+// Object destructuring
+const obj = { x: 10, y: 20, z: 30 };
+const { x, y } = obj;
+print("destructuring object:", x, y);
+
+// Array destructuring
+const arr = [1, 2, 3, 4, 5];
+const [a, b, c] = arr;
+print("destructuring array:", a, b, c);
+
+// Destructuring with `_` to discard positions
+const [first, _, third] = arr;
+print("skip with _:", first, third);
+
+// Nested destructuring
+const data = { point: [100, 200] };
+const { point: [px, py] } = data;
+print("nested destructuring:", px, py);
+
+// Default values
+const { name = "default", age = 0 } = { name: "Alice" };
+print("defaults:", name, age);
+
+// Rest in destructuring
+const [head, ...tail] = arr;
+print("rest:", head, tail);
+
+// Holes are NOT allowed — the following would be a parse error:
+// const [a,,b] = arr;  // ❌ "array destructuring holes are not allowed"
+
+
+// ─── Range literals ────────────────────────────────────────────────────────
+
+const r1 = 0..5;         // exclusive: 0,1,2,3,4
+const r2 = 1..=5;        // inclusive: 1,2,3,4,5
+
+print("range start:", r1.start, "end:", r1.end, "len:", r1.length);
+print("range toString:", r1.toString(), r2.toString());
+
+// contains
+print("r1.contains(3):", r1.contains(3));   // true
+print("r1.contains(5):", r1.contains(5));   // false (exclusive)
+print("r2.contains(5):", r2.contains(5));   // true  (inclusive)
+
+// toArray
+const arr2 = (0..4).toArray();
+print("toArray:", arr2);
+
+// step
+const stepped = (0..10).step(3);
+print("step(3):", stepped);   // [0, 3, 6, 9]
+
+// for-of with range
+for (const i of 0..3) {
+    print("for-of range:", i);
+}
+
+// std:collections Range constructor
+const r3 = Range.from(5, 10);
+const r4 = Range.fromInclusive(5, 10);
+print("Range.from:", r3.toString());
+print("Range.fromInclusive:", r4.toString());
+
+
+// ─── Pipeline operator ─────────────────────────────────────────────────────
+
+function double(n: int): int { return n * 2; }
+function addN(n: int, x: int): int { return n + x; }
+function clamp(lo: int, hi: int, v: int): int {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+
+// Simple pipeline: x |> f  →  f(x)
+const v1 = 5 |> double;
+print("5 |> double =", v1);  // 10
+
+// Placeholder pipeline: x |> f(_, y)  →  f(x, y)
+const v2 = 7 |> addN(_, 3);
+print("7 |> addN(_, 3) =", v2);  // 10
+
+// Multiple uses of _ in one pipeline
+const v3 = 4 |> addN(_, _);
+print("4 |> addN(_, _) =", v3);  // 8
+
+// Placeholder with clamp
+const v4 = 15 |> clamp(0, _, 10);
+print("15 |> clamp(0, _, 10) =", v4);  // 10
+
+// Chained pipelines (wrap each step in parens)
+const v5 = (3 |> double) |> double;
+print("3 |> double |> double =", v5);  // 12

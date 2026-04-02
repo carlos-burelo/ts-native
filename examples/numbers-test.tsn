@@ -1,0 +1,103 @@
+// numbers-test.tsn — all numeric literal syntaxes in TSN
+
+import { console } from "std:console";
+
+// ── Integer ──────────────────────────────────────────────────────────────────
+const a: int = 42;
+const b: int = 0;
+const c: int = -7;
+const million: int = 1_000_000;
+const big: int = 9_007_199_254_740_991;
+
+// ── Float ─────────────────────────────────────────────────────────────────────
+const pi: float = 3.14159;
+const e: float = 2.718_28;
+const sci1: float = 1e10;
+const sci2: float = 1E10;
+const sci3: float = 2.5e-3;
+const sci4: float = 6.022e+23;
+const sci5: float = 1_000.5;
+const small: float = 0.001;
+
+// ── Binary (0b / 0B) ──────────────────────────────────────────────────────────
+const bin1: int = 0b1010;
+const bin2: int = 0B11001100;
+const bin3: int = 0b1111_0000_1111_0000;
+
+// ── Octal (0o / 0O) ───────────────────────────────────────────────────────────
+const oct1: int = 0o777;
+const oct2: int = 0O644;
+const oct3: int = 0o7_7_7;
+
+// ── Hex (0x / 0X) ─────────────────────────────────────────────────────────────
+const hex1: int = 0xFF;
+const hex2: int = 0XDeAdBeEf;
+const hex3: int = 0xFF_FF_FF;
+const hex4: int = 0x00;
+
+// ── BigInt (n suffix) ─────────────────────────────────────────────────────────
+const big1: bigint = 42n;
+const big2: bigint = 9_007_199_254_740_993n;
+const big3: bigint = 0b1010n;
+const big4: bigint = 0o777n;
+const big5: bigint = 0xDEADBEEFn;
+
+// ── Decimal (d suffix — arbitrary precision) ──────────────────────────────────
+const dec1: decimal = 3.14d;
+const dec2: decimal = 100d;
+const dec3: decimal = 0.1d;
+const dec4: decimal = 1_000_000d;
+const dec5: decimal = decimal.parse("123.456789012345678901234567890");
+const dec6: decimal = decimal.ZERO;
+const dec7: decimal = decimal.ONE;
+
+// ── Operations ───────────────────────────────────────────────────────────────
+const sum: int       = a + b + bin1 + oct1 + hex1;
+const floatSum: float = pi + e + sci3;
+const decSum: decimal = dec1 + dec3;
+
+// ── Print all ────────────────────────────────────────────────────────────────
+print("=== Integer ===");
+print("42          =", a);
+print("1_000_000   =", million);
+print("MAX_SAFE    =", big);
+
+print("=== Float ===");
+print("3.14159     =", pi);
+print("2.5e-3      =", sci3);
+print("6.022e+23   =", sci4);
+print("1_000.5     =", sci5);
+
+print("=== Binary ===");
+print("0b1010      =", bin1);
+print("0b1111_0000 =", bin3);
+
+print("=== Octal ===");
+print("0o777       =", oct1);
+print("0o644       =", oct2);
+
+print("=== Hex ===");
+print("0xFF        =", hex1);
+print("0xDeAdBeEf  =", hex2);
+print("0xFF_FF_FF  =", hex3);
+
+print("=== BigInt ===");
+print("42n         =", big1);
+print("big safe+2  =", big2);
+print("0b1010n     =", big3);
+print("0xDEADBEEFn =", big5);
+
+print("=== Decimal ===");
+print("3.14d           =", dec1);
+print("0.1d            =", dec3);
+print("parsed          =", dec5);
+print("ZERO            =", dec6);
+print("ONE             =", dec7);
+print("3.14d + 0.1d    =", decSum);
+print("toFixed(2)      =", dec1.toFixed(2));
+print("toFloat         =", dec1.toFloat());
+print("abs(-3.14d)     =", dec1.negate().abs());
+
+print("=== Mixed ops ===");
+print("sum(int)        =", sum);
+print("sum(float)      =", floatSum);

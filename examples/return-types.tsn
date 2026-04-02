@@ -1,0 +1,57 @@
+// Test for various return types
+
+export async function testObject(): { x: int, y: str } {
+    return { x: 1, y: "hello" };
+}
+
+export async function testTuple(): [int, str] {
+    return [1, "hello"];
+}
+
+export async function testArray(): int[] {
+    return [1, 2, 3];
+}
+
+export function testSyncObject(): { x: int, y: str } {
+    return { x: 1, y: "hello" };
+}
+
+export function testSyncTuple(): [int, str] {
+    return [1, "hello"];
+}
+
+export function testSyncArray(): int[] {
+    return [1, 2, 3];
+}
+
+export function testUnion(): int | str {
+    return 1;
+}
+
+export async function testFutureUnion(): int | str {
+    return 1;
+}
+
+export function testIntersection(): { x: int } & { y: str } {
+    return { x: 1, y: "hello" };
+}
+
+export async function testFutureIntersection(): { x: int } & { y: str } {
+    return { x: 1, y: "hello" };
+}
+
+export function testNullable(): int? {
+    return 1;
+}
+
+export async function testFutureNullable(): int? {
+    return 1;
+}
+
+export function testFunctionType(): (a: int) => str {
+    return function(a: int): str { return "hello"; };
+}
+
+export async function testFutureFunctionType(): (a: int) = str> {
+    return function(a: int): str { return "hello"; };
+}

@@ -1,0 +1,6 @@
+// Simple async test
+function simpleTest(): void {
+    print("Test completed")
+}
+
+simpleTest()

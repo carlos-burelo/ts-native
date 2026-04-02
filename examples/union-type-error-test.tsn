@@ -1,0 +1,10 @@
+/**
+ * Union Type Error Test
+ */
+
+type StringOrNumber = str | int
+
+// ERROR: Should fail - bool is not in the union
+const value: StringOrNumber = true
+
+const test = 1

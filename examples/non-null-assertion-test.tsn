@@ -1,0 +1,28 @@
+// Test for non-null assertion operator (!)
+
+interface User {
+    name: str
+    age: int
+}
+
+const user1: User? = { name: "Alice", age: 30 }
+const user2: User? = null
+
+// Test 1: Non-null assertion on non-null value
+const name1: str = user1!.name
+print("Test 1 - user1!.name:")
+print(name1)
+
+// Test 2: Unwrap nullable type with !
+const user3: User? = { name: "Bob", age: 25 }
+const unwrapped: User = user3!
+print("Test 2 - user3! unwrapped:")
+print(unwrapped.name)
+print(unwrapped.age)
+
+// Test 3: Chain ! with member access
+const age1: int = user1!.age
+print("Test 3 - user1!.age:")
+print(age1)
+
+print("Non-null assertion tests completed!")

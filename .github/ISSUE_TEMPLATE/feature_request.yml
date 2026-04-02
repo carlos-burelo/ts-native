@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a new language/runtime/compiler feature
+labels: ["enhancement"]
+body:
+  - type: input
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What concrete limitation are you hitting today?
+      placeholder: No SSA IR pass pipeline for optimization and JIT prep
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the API, semantics, or behavior you want.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Other options you evaluated and tradeoffs.
+    validations:
+      required: false
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact
+      description: Who benefits and what might break?
+    validations:
+      required: false

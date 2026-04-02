@@ -1,0 +1,96 @@
+// std:net — Network and URL utilities
+
+/**
+ * Checks if str is a valid IP address.
+ */
+export function isIp(s: str): bool {
+    return __net_is_ip(s)
+}
+
+/**
+ * Checks if str is a valid IPv4 address.
+ */
+export function isIpv4(s: str): bool {
+    return __net_is_ipv4(s)
+}
+
+/**
+ * Checks if str is a valid IPv6 address.
+ */
+export function isIpv6(s: str): bool {
+    return __net_is_ipv6(s)
+}
+
+/**
+ * Joins host and port.
+ */
+export function joinHostPort(host: str, port: int): str {
+    return __net_join_host_port(host, port)
+}
+
+/**
+ * Splits host:port str. Returns [host, port].
+ */
+export function splitHostPort(s: str): [str, str] {
+    return __net_split_host_port(s)
+}
+
+export class URL {
+    href: str;
+    protocol: str;
+    hostname: str;
+    port: int | null;
+    pathname: str;
+    search: str;
+    hash: str;
+
+    constructor(url: str) {
+        const raw = __net_parse_url(url);
+        this.href = raw.href;
+        this.protocol = raw.protocol;
+        this.hostname = raw.hostname;
+        this.port = raw.port;
+        this.pathname = raw.pathname;
+        this.search = raw.search;
+        this.hash = raw.hash;
+    }
+
+    toString(): str {
+        return this.href;
+    }
+}
+
+/**
+ * Resolves a next URL relative to a base URL.
+ */
+export function resolveUrl(base: str, next: str): str {
+    return __net_resolve_url(base, next)
+}
+
+/**
+ * Parses a query str into an object.
+ */
+export function parseQuery(s: str): dynamic {
+    return __net_parse_query(s)
+}
+
+/**
+ * Encodes a str for URI component.
+ */
+export function encodeUriComponent(s: str): str {
+    return __net_enc_uri_component(s)
+}
+
+/**
+ * Decodes a URI component.
+ */
+export function decodeUriComponent(s: str): str {
+    return __net_dec_uri_component(s)
+}
+
+/**
+ * Generates Basic Auth header value.
+ */
+export function basicAuth(user: str, pass: str): str {
+    return __net_basic_auth(user, pass)
+}

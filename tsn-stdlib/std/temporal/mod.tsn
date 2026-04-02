@@ -1,0 +1,390 @@
+// std:temporal - High-level Date/Time API
+
+export namespace Temporal {
+    export enum Month {
+        January = 1,
+        February = 2,
+        March = 3,
+        April = 4,
+        May = 5,
+        June = 6,
+        July = 7,
+        August = 8,
+        September = 9,
+        October = 10,
+        November = 11,
+        December = 12
+    }
+
+    export enum DayOfWeek {
+        Monday = 1,
+        Tuesday = 2,
+        Wednesday = 3,
+        Thursday = 4,
+        Friday = 5,
+        Saturday = 6,
+        Sunday = 7
+    }
+
+    // Helper for ISO padding
+    function pad2(n: int): str {
+        let s = n.toString();
+        return s.length < 2 ? "0" + s : s;
+    }
+
+    function pad4(n: int): str {
+        let s = n.toString();
+        while (s.length < 4) s = "0" + s;
+        return s;
+    }
+
+    function pad3(n: int): str {
+        let s = n.toString();
+        while (s.length < 3) s = "0" + s;
+        return s;
+    }
+
+    export class Instant {
+        epochMilliseconds: int;
+        constructor(ms: int) { this.epochMilliseconds = ms; }
+        
+        get epochSeconds(): int { return __math_trunc(this.epochMilliseconds / 1000); }
+        
+        toString(): str { return __time_to_iso(this.epochMilliseconds); }
+
+        static from(s: str): Instant { return new Instant(__time_from_iso(s)); }
+        static fromEpochMilliseconds(ms: int): Instant { return new Instant(ms); }
+        static fromEpochSeconds(s: int): Instant { return new Instant(s * 1000); }
+
+        static compare(a: Instant, b: Instant): int {
+            if (a.epochMilliseconds < b.epochMilliseconds) return -1;
+            if (a.epochMilliseconds > b.epochMilliseconds) return 1;
+            return 0;
+        }
+
+        equals(other: Instant): bool { return this.epochMilliseconds === other.epochMilliseconds; }
+
+        add(duration: Duration): Instant { return new Instant(this.epochMilliseconds + duration.totalMilliseconds); }
+        subtract(duration: Duration): Instant { return new Instant(this.epochMilliseconds - duration.totalMilliseconds); }
+
+        since(other: Instant): Duration { return new Duration(this.epochMilliseconds - other.epochMilliseconds); }
+        until(other: Instant): Duration { return new Duration(other.epochMilliseconds - this.epochMilliseconds); }
+    }
+
+    export class PlainDate {
+        year: int;
+        month: int;
+        day: int;
+
+        constructor(y: int, m: int, d: int) {
+            this.year = y;
+            this.month = m;
+            this.day = d;
+        }
+
+        get dayOfWeek(): int {
+            return __time_to_parts(__time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0)).weekday;
+        }
+
+        get dayOfYear(): int {
+            let start = __time_from_parts(this.year, 1, 1, 0, 0, 0, 0);
+            let current = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
+            return __math_trunc((current - start) / 86400000) + 1;
+        }
+
+        get daysInMonth(): int {
+            if (this.month === 2) return this.inLeapYear ? 29 : 28;
+            if (this.month === 4 || this.month === 6 || this.month === 9 || this.month === 11) return 30;
+            return 31;
+        }
+
+        get inLeapYear(): bool {
+            return (this.year % 4 === 0 && this.year % 100 !== 0) || (this.year % 400 === 0);
+        }
+
+        toString(): str {
+            return pad4(this.year) + "-" + pad2(this.month) + "-" + pad2(this.day);
+        }
+
+        static from(s: str): PlainDate {
+            let p = __time_to_parts(__time_from_iso(s));
+            return new PlainDate(p.year, p.month, p.day);
+        }
+
+        equals(other: PlainDate): bool {
+            return this.year === other.year && this.month === other.month && this.day === other.day;
+        }
+
+        add(duration: Duration): PlainDate {
+            let ms = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let res = __time_to_parts(ms + duration.totalMilliseconds);
+            return new PlainDate(res.year, res.month, res.day);
+        }
+
+        subtract(duration: Duration): PlainDate {
+            let ms = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let res = __time_to_parts(ms - duration.totalMilliseconds);
+            return new PlainDate(res.year, res.month, res.day);
+        }
+
+        since(other: PlainDate): Duration {
+            let ms1 = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let ms2 = __time_from_parts(other.year, other.month, other.day, 0, 0, 0, 0);
+            return new Duration(ms1 - ms2);
+        }
+
+        until(other: PlainDate): Duration {
+            let ms1 = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let ms2 = __time_from_parts(other.year, other.month, other.day, 0, 0, 0, 0);
+            return new Duration(ms2 - ms1);
+        }
+    }
+
+    export class PlainTime {
+        hour: int;
+        minute: int;
+        second: int;
+        millisecond: int;
+
+        constructor(h: int, m: int, s: int, ms: int) {
+            this.hour = h;
+            this.minute = m;
+            this.second = s;
+            this.millisecond = 0;
+            if (ms !== null) this.millisecond = ms;
+        }
+
+        toString(): str {
+            return pad2(this.hour) + ":" + pad2(this.minute) + ":" + pad2(this.second) + "." + pad3(this.millisecond);
+        }
+
+        static from(s: str): PlainTime {
+            // Simplified parsing
+            let t = s;
+            if (t.includes("T")) t = t.split("T")[1];
+            if (t.includes("Z")) t = t.split("Z")[0];
+            
+            let parts = t.split(":");
+            let h = parts[0].toInt();
+            let m = parts[1].toInt();
+            let s_part = parts[2] || "0";
+            let sec = 0;
+            let ms = 0;
+            if (s_part.includes(".")) {
+                let s_sub = s_part.split(".");
+                sec = s_sub[0].toInt();
+                ms = s_sub[1].substring(0, 3).toInt();
+            } else {
+                sec = s_part.toInt();
+            }
+            return new PlainTime(h, m, sec, ms);
+        }
+
+        add(duration: Duration): PlainTime {
+            let totalMs = (this.hour * 3600 + this.minute * 60 + this.second) * 1000 + this.millisecond + duration.totalMilliseconds;
+            let res = __time_to_parts(totalMs);
+            return new PlainTime(res.hour % 24, res.minute, res.second, res.millisecond);
+        }
+
+        since(other: PlainTime): Duration {
+            let ms1 = (this.hour * 3600 + this.minute * 60 + this.second) * 1000 + this.millisecond;
+            let ms2 = (other.hour * 3600 + other.minute * 60 + other.second) * 1000 + other.millisecond;
+            return new Duration(ms1 - ms2);
+        }
+
+        until(other: PlainTime): Duration {
+            let ms1 = (this.hour * 3600 + this.minute * 60 + this.second) * 1000 + this.millisecond;
+            let ms2 = (other.hour * 3600 + other.minute * 60 + other.second) * 1000 + other.millisecond;
+            return new Duration(ms2 - ms1);
+        }
+    }
+
+    export class PlainDateTime {
+        year: int; month: int; day: int;
+        hour: int; minute: int; second: int; millisecond: int;
+
+        constructor(y: int, mo: int, d: int, h: int, mi: int, s: int, ms: int) {
+            this.year = y; this.month = mo; this.day = d;
+            this.hour = h; this.minute = mi; this.second = s;
+            this.millisecond = 0;
+            if (ms !== null) this.millisecond = ms;
+        }
+
+        toPlainDate(): PlainDate { return new PlainDate(this.year, this.month, this.day); }
+        toPlainTime(): PlainTime { return new PlainTime(this.hour, this.minute, this.second, this.millisecond); }
+
+        toString(): str {
+            return this.toPlainDate().toString() + "T" + this.toPlainTime().toString();
+        }
+
+        static from(s: str): PlainDateTime {
+            let p = __time_to_parts(__time_from_iso(s));
+            return new PlainDateTime(p.year, p.month, p.day, p.hour, p.minute, p.second, p.millisecond);
+        }
+
+        add(duration: Duration): PlainDateTime {
+            let ms = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let res = __time_to_parts(ms + duration.totalMilliseconds);
+            return new PlainDateTime(res.year, res.month, res.day, res.hour, res.minute, res.second, res.millisecond);
+        }
+
+        since(other: PlainDateTime): Duration {
+            let ms1 = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let ms2 = __time_from_parts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
+            return new Duration(ms1 - ms2);
+        }
+
+        until(other: PlainDateTime): Duration {
+            let ms1 = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let ms2 = __time_from_parts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
+            return new Duration(ms2 - ms1);
+        }
+    }
+
+    export class Duration {
+        totalMilliseconds: int;
+        
+        constructor(ms: int) {
+            this.totalMilliseconds = ms;
+        }
+
+        get years(): int { return __math_trunc(this.totalMilliseconds / 31104000000); }
+        get months(): int { return __math_trunc((this.totalMilliseconds % 31104000000) / 2592000000); }
+        get days(): int { return __math_trunc((this.totalMilliseconds % 2592000000) / 86400000); }
+        get hours(): int { return __math_trunc((this.totalMilliseconds % 86400000) / 3600000); }
+        get minutes(): int { return __math_trunc((this.totalMilliseconds % 3600000) / 60000); }
+        get seconds(): int { return __math_trunc((this.totalMilliseconds % 60000) / 1000); }
+        get milliseconds(): int { return this.totalMilliseconds % 1000; }
+
+        get sign(): int { return this.totalMilliseconds < 0 ? -1 : 1; }
+
+        toString(): str {
+            let absMs = this.totalMilliseconds < 0 ? -this.totalMilliseconds : this.totalMilliseconds;
+            let d = new Duration(absMs);
+            let s = (this.totalMilliseconds < 0 ? "-" : "") + "P";
+            if (d.years > 0) s = s + d.years.toString() + "Y";
+            if (d.months > 0) s = s + d.months.toString() + "M";
+            if (d.days > 0) s = s + d.days.toString() + "D";
+            s = s + "T";
+            if (d.hours > 0) s = s + d.hours.toString() + "H";
+            if (d.minutes > 0) s = s + d.minutes.toString() + "M";
+            if (d.seconds > 0 || d.milliseconds > 0) {
+                let secs = d.seconds;
+                if (d.milliseconds > 0) {
+                    s = s + secs.toString() + "." + pad3(d.milliseconds) + "S";
+                } else {
+                    s = s + secs.toString() + "S";
+                }
+            }
+            if (s.endsWith("T")) s = s.substring(0, s.length - 1);
+            if (s === "P" || s === "-P") s = "PT0S";
+            return s;
+        }
+
+        static from(s: str): Duration {
+            let ms = 0;
+            let p = s;
+            if (p.startsWith("-")) p = p.substring(1);
+            if (p.startsWith("P")) p = p.substring(1);
+            
+            let datePart = p;
+            let timePart = "";
+            if (p.includes("T")) {
+                let parts = p.split("T");
+                datePart = parts[0];
+                timePart = parts[1];
+            }
+
+            if (datePart.includes("Y")) {
+                let val = datePart.split("Y")[0].toInt();
+                ms = ms + val * 31104000000;
+                datePart = datePart.split("Y")[1];
+            }
+            if (datePart.includes("M")) {
+                let val = datePart.split("M")[0].toInt();
+                ms = ms + val * 2592000000;
+                datePart = datePart.split("M")[1];
+            }
+            if (datePart.includes("D")) {
+                let val = datePart.split("D")[0].toInt();
+                ms = ms + val * 86400000;
+            }
+
+            if (timePart !== "") {
+                if (timePart.includes("H")) {
+                    let val = timePart.split("H")[0].toInt();
+                    ms = ms + val * 3600000;
+                    timePart = timePart.split("H")[1];
+                }
+                if (timePart.includes("M")) {
+                    let val = timePart.split("M")[0].toInt();
+                    ms = ms + val * 60000;
+                    timePart = timePart.split("M")[1];
+                }
+                if (timePart.includes("S")) {
+                    let val = timePart.split("S")[0];
+                    if (val.includes(".")) {
+                        let s_sub = val.split(".");
+                        ms = ms + s_sub[0].toInt() * 1000 + s_sub[1].substring(0, 3).toInt();
+                    } else {
+                        ms = ms + val.toInt() * 1000;
+                    }
+                }
+            }
+            return new Duration(s.startsWith("-") ? -ms : ms);
+        }
+    }
+
+    export class ZonedDateTime {
+        epochMilliseconds: int;
+        timeZone: str;
+
+        constructor(ms: int, tz: str) {
+            this.epochMilliseconds = ms;
+            this.timeZone = "UTC";
+            if (tz !== null) this.timeZone = tz;
+        }
+
+        get year(): int { return __time_to_parts(this.epochMilliseconds).year; }
+        get month(): int { return __time_to_parts(this.epochMilliseconds).month; }
+        get day(): int { return __time_to_parts(this.epochMilliseconds).day; }
+        get hour(): int { return __time_to_parts(this.epochMilliseconds).hour; }
+        get minute(): int { return __time_to_parts(this.epochMilliseconds).minute; }
+        get second(): int { return __time_to_parts(this.epochMilliseconds).second; }
+        
+        toString(): str {
+            return __time_to_iso(this.epochMilliseconds) + "[" + this.timeZone + "]";
+        }
+
+        static from(s: str): ZonedDateTime {
+            let ms = __time_from_iso(s);
+            let tz = "UTC";
+            if (s.includes("[")) tz = s.split("[")[1].split("]")[0];
+            return new ZonedDateTime(ms, tz);
+        }
+    }
+
+    export namespace Now {
+        export function instant(): Instant { return new Instant(__time_now()); }
+
+        export function plainDateISO(): PlainDate {
+            let p = __time_to_parts(__time_now());
+            return new PlainDate(p.year, p.month, p.day);
+        }
+
+        export function zonedDateTimeISO(tz: str = "UTC"): ZonedDateTime {
+            return new ZonedDateTime(__time_now(), tz);
+        }
+
+        export function timeZoneId(): str { return "UTC"; }
+    }
+}
+
+// Top-level re-exports for convenience
+export const Now = Temporal.Now;
+export const Instant = Temporal.Instant;
+export const PlainDate = Temporal.PlainDate;
+export const PlainTime = Temporal.PlainTime;
+export const PlainDateTime = Temporal.PlainDateTime;
+export const Duration = Temporal.Duration;
+export const ZonedDateTime = Temporal.ZonedDateTime;

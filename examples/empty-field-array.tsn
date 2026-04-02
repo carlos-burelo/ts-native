@@ -1,0 +1,9 @@
+class Test {
+    constructor() {
+        print("Constructor")
+    }
+}
+
+print("Before")
+const t = new Test()
+print("After")

@@ -1,0 +1,221 @@
+// Complete decorator implementation test
+// Tests all decorator types: class, method, field, accessor, parameter
+
+print("====================================")
+print("COMPLETE DECORATOR IMPLEMENTATION TEST")
+print("====================================\n")
+
+let log: str = ""
+
+// ============================================================================
+// DECORATOR FUNCTIONS
+// ============================================================================
+
+function logDecorator(value: dynamic, context: DecoratorContextBase): dynamic {
+  log = log + "[@" + context.kind + ":" + context.name + "] "
+  return value
+}
+
+function initDecorator(value: dynamic, context: DecoratorContextBase): dynamic {
+  log = log + "[init:" + context.name + "] "
+  context.addInitializer(() => {
+    log = log + "[run:" + context.name + "] "
+  })
+  return value
+}
+
+function paramDecorator(value: dynamic, context: ParameterDecoratorContext): void {
+  log = log + "[param:" + context.name + ":" + context.index + "] "
+}
+
+// ============================================================================
+// TEST 1: CLASS DECORATOR
+// ============================================================================
+
+print("Test 1: Class Decorator")
+log = ""
+
+@logDecorator
+class TestClass {
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj1 = new TestClass()
+print("Expected: [@class:TestClass] [constructor] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 2: FIELD DECORATORS
+// ============================================================================
+
+print("Test 2: Field Decorators")
+log = ""
+
+class FieldTest {
+  @logDecorator
+  name: str = "test"
+  
+  @initDecorator
+  age: int = 25
+  
+  @logDecorator
+  static count: int = 0
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj2 = new FieldTest()
+print("Expected: [@field:name] [@field:age] [init:age] [@field:count] [run:age] [constructor] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 3: METHOD DECORATORS
+// ============================================================================
+
+print("Test 3: Method Decorators")
+log = ""
+
+class MethodTest {
+  @logDecorator
+  greet(): void {
+    log = log + "[greet] "
+  }
+  
+  @logDecorator
+  static info(): void {
+    log = log + "[info] "
+  }
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj3 = new MethodTest()
+obj3.greet()
+MethodTest.info()
+print("Expected: [@method:greet] [@method:info] [constructor] [greet] [info] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 4: ACCESSOR DECORATORS
+// ============================================================================
+
+print("Test 4: Accessor Decorators")
+log = ""
+
+class AccessorTest {
+  value_field: int = 42
+  
+  @logDecorator
+  get value(): int {
+    return this.value_field
+  }
+  
+  @logDecorator
+  set value(v: int): void {
+    this.value_field = v
+  }
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj4 = new AccessorTest()
+let val = obj4.value
+obj4.value = 100
+print("Expected: [@accessor:value] [@accessor:value] [constructor] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 5: PARAMETER DECORATORS
+// ============================================================================
+
+print("Test 5: Parameter Decorators")
+log = ""
+
+class ParamTest {
+  process(@paramDecorator x: int, @paramDecorator y: int): int {
+    log = log + "[process] "
+    return x + y
+  }
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj5 = new ParamTest()
+let result = obj5.process(10, 20)
+print("Expected: [param:x:0] [param:y:1] [constructor] [process] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 6: INITIALIZERS
+// ============================================================================
+
+print("Test 6: Initializer Execution Order")
+log = ""
+
+class InitTest {
+  @initDecorator
+  first: str = "a"
+  
+  @initDecorator
+  second: str = "b"
+  
+  @initDecorator
+  static third: str = "c"
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj6 = new InitTest()
+print("Expected: [init:first] [init:second] [init:third] [run:third] [run:first] [run:second] [constructor] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// TEST 7: COMBINED DECORATORS
+// ============================================================================
+
+print("Test 7: Multiple Decorators on Same Member")
+log = ""
+
+function dec1(value: dynamic, context: DecoratorContextBase): dynamic {
+  log = log + "[dec1:" + context.kind + "] "
+  return value
+}
+
+function dec2(value: dynamic, context: DecoratorContextBase): dynamic {
+  log = log + "[dec2:" + context.kind + "] "
+  return value
+}
+
+class MultiTest {
+  @dec1
+  @dec2
+  name: str = "test"
+  
+  constructor() {
+    log = log + "[constructor] "
+  }
+}
+
+let obj7 = new MultiTest()
+print("Expected: [dec1:field] [dec2:field] [constructor] ")
+print("Actual:   " + log + "\n")
+
+// ============================================================================
+// SUMMARY
+// ============================================================================
+
+print("====================================")
+print("TEST COMPLETE")
+print("====================================")

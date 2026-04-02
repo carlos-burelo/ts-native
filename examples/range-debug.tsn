@@ -1,0 +1,17 @@
+// Simple range debug test
+const r = new Range(0, 3, false)
+print("Range created")
+print(r.start)
+print(r.end)
+print(r.inclusive)
+
+const iter = r.getIterator()
+print("Iterator created")
+print(iter.current)
+print(iter.end)
+print(iter.inclusive)
+print(iter.hasNext())
+
+const val = iter.next()
+print("First value:")
+print(val)

@@ -1,0 +1,99 @@
+// Test: Null-safety operators
+// ?.  (optional chaining)
+// ??  (nullish coalescing)
+// !   (non-null assertion) - TODO
+
+interface User {
+    name: str
+    age: int
+    address?: Address
+}
+
+interface Address {
+    city: str
+    zip: int
+}
+
+// Test 1: Null coalescing operator ??
+print("=== Test 1: Nullish Coalescing (??) ===")
+
+const value1: int? = null
+const value2: int? = 42
+
+const result1: int = value1 ?? 0
+const result2: int = value2 ?? 0
+
+print("null ?? 0 = ")
+print(result1)  // Should print: 0
+
+print("42 ?? 0 = ")
+print(result2)  // Should print: 42
+
+// Test 2: Chaining null coalescing
+print("\n=== Test 2: Chaining ?? ===")
+
+const val1: int? = null
+const val2: int? = null
+const val3: int? = 100
+
+const chained: int = val1 ?? val2 ?? val3 ?? 999
+print("null ?? null ?? 100 ?? 999 = ")
+print(chained)  // Should print: 100
+
+// Test 3: Optional chaining with ?.
+print("\n=== Test 3: Optional Chaining (?.) ===")
+
+const user: User? = {
+    name: "Alice",
+    age: 30,
+    address: null
+}
+
+// Safe navigation - should not crash if null
+const cityName: str? = user?.address?.city
+print("user?.address?.city when address is null: ")
+if (cityName == null) {
+    print("null (correct!)")
+} else {
+    print(cityName)
+}
+
+// Test 4: Combining ?. and ??
+print("\n=== Test 4: Combining ?. and ?? ===")
+
+const user2: User? = {
+    name: "Bob",
+    age: 25,
+    address: {
+        city: "NYC",
+        zip: 10001
+    }
+}
+
+const city1: str = user?.address?.city ?? "Unknown"
+const city2: str = user2?.address?.city ?? "Unknown"
+
+print("User with no address: ")
+print(city1)  // Should print: Unknown
+
+print("User with address: ")
+print(city2)  // Should print: NYC
+
+// Test 5: Optional chaining with null user
+print("\n=== Test 5: Optional chaining with null ===")
+
+const nullUser: User? = null
+const safeName: str? = nullUser?.name
+const safeAge: int? = nullUser?.age
+
+print("null?.name = ")
+if (safeName == null) {
+    print("null (correct!)")
+}
+
+print("null?.age = ")
+if (safeAge == null) {
+    print("null (correct!)")
+}
+
+print("\n=== All null-safety operator tests completed! ===")

@@ -1,0 +1,14 @@
+// Test await continuation
+
+async function getValue(): int {
+    return 42
+}
+
+async function main(): void {
+    print("Antes de await")
+    const result = await getValue()
+    print("Después de await")
+    print("Completado")
+}
+
+main()

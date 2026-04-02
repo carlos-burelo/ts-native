@@ -1,0 +1,73 @@
+
+// Custom Type Definitions
+interface MyType { x: int; }
+interface A { }
+interface B { }
+interface C { }
+interface D { }
+interface Map<K, V> { }
+class List<T> { }
+
+// Primitives & Basic References
+let v_string: str;
+let v_int: int;
+let v_float: float;
+let v_boolean: bool;
+let v_void: void;
+let v_null: null;
+let v_char: char;
+let v_decimal: decimal;
+let v_bigint: bigint;
+let v_unknown: dynamic;
+let v_never: never;
+let v_symbol: symbol;
+let v_range: range;
+let v_custom: MyType;
+
+// Built-in Generic Types
+let v_future: Future<str>;
+
+
+// Generics
+let v_generic_1: List<str>;
+let v_generic_2: Map<str, int>;
+let v_generic_nested: Map<str, List<int>>;
+
+// Arrays
+let v_array_1: str[];
+let v_array_2: int[][]; // Recursive Array
+let v_array_generic: List<str>[];
+
+// Union Types
+let v_union_1: str | int;
+let v_union_2: A | B | C;
+let v_union_array: str | int[];
+
+// Intersection Types
+let v_intersect_1: A & B;
+let v_intersect_2: A & B & C;
+let v_complex_union_intersect: A & B | C & D;
+
+// Function Types
+let v_func_1: (a: str) => void;
+let v_func_2: (a: int, b: bool) => str;
+let v_func_generic: (item: T) => List<T>;
+
+// Object Literals
+let v_obj_1: { x: int };
+let v_obj_2: { x: int; y: str };
+let v_obj_3: { x: int, y: str }; // Comma vs Semicolon
+let v_obj_opt: { x?: int };
+
+// Complex Combinations
+let v_complex_1: {
+    data: List<str | int>[];
+    meta: { version: int; author?: str };
+    callback: (status: int) => void;
+};
+
+class TestClass<T> {
+    prop: T;
+}
+
+type MyAlias = str | int;

@@ -1,0 +1,12 @@
+// Test: Verificar que 'any' type ha sido eliminado
+
+// ❌ Esto debería causar un error de parser
+// const x: any = "hello"
+
+// ✅ Esto debería funcionar - usa 'dynamic'
+const x: dynamic = "hello"
+const y: dynamic = 42
+const z: dynamic = null
+
+print("Test: 'any' type eliminado correctamente")
+print("Unknown type funciona como reemplazo")

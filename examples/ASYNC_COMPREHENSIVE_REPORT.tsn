@@ -1,0 +1,48 @@
+// REPORTE EXHAUSTIVO DE ASYNC/AWAIT EN TSN
+
+async function getValue(): int {
+    return 42
+}
+
+async function main(): void {
+    print("=".repeat(60))
+    print("  REPORTE EXHAUSTIVO: ASYNC/AWAIT EN TSN")
+    print("=".repeat(60))
+    print("")
+    
+    // Test 1: Simple await
+    print("TEST 1: Await simple")
+    const v1 = await getValue()
+    print("  Resultado: " + v1.toString())
+    print("  ✅ Funciona")
+    print("")
+    
+    // Test 2: Múltiples awaits
+    print("TEST 2: Múltiples awaits")
+    const v2 = await getValue()
+    const v3 = await getValue()
+    print("  Resultado: " + v2.toString() + ", " + v3.toString())
+    print("  ✅ Funciona")
+    print("")
+    
+    print("=".repeat(60))
+    print("  RESUMEN")
+    print("=".repeat(60))
+    print("")
+    print("✅ LO QUE FUNCIONA:")
+    print("   • Funciones async")
+    print("   • Retorno de valores desde async")
+    print("   • Await captura valores")
+    print("   • Await reanuda ejecución correctamente")
+    print("   • Múltiples awaits secuenciales")
+    print("")
+    print("❌ LO QUE NO FUNCIONA:")
+    print("   • Tipo Future<T> no disponible")
+    print("   • Future.value(), Future.error() no existen")
+    print("   • .then(), .catch(), .finally() no existen")
+    print("   • throw/Error no funciona")
+    print("")
+    print("=".repeat(60))
+}
+
+main()

@@ -1,0 +1,9 @@
+/**
+ * Test 1: Función async sin await
+ */
+async function test1(): void {
+    print("✅ TEST 1: Async sin await funciona")
+}
+
+test1()
+print("=".repeat(60))

@@ -1,0 +1,9 @@
+// Named Exports
+export const val1 = 10
+export function func1() { return "func1" }
+export class Class1 {
+    method() { return "method1" }
+}
+const val2 = 20
+export { val2 }
+export { val2 as val3 }

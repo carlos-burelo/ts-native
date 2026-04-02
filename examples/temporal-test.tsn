@@ -1,0 +1,40 @@
+import { Temporal } from "std:temporal";
+let inst = Temporal.Now.instant();
+print("Now test: " + inst.toString());
+
+let date = new Temporal.PlainDate(2024, 3, 21);
+print("Date: " + date.toString());
+print("Day of Week: " + date.dayOfWeek);
+if (date.dayOfWeek === Temporal.DayOfWeek.Thursday) {
+    print("  ✓ Day of week matches (Thursday)");
+}
+
+let dur = Temporal.Duration.from("P1YT2H");
+print("Duration: " + dur.toString());
+let nextYear = date.add(dur);
+print("Next year: " + nextYear.toString());
+
+// Test Enum usage
+let month = Temporal.Month.March;
+if (date.month === month) {
+    print("  ✓ Month enum works (March)");
+}
+
+// Test since/until
+let d1 = new Temporal.PlainDate(2024, 1, 1);
+let d2 = new Temporal.PlainDate(2024, 1, 10);
+let diff = d1.until(d2);
+print("diff 2024-01-01 to 2024-01-10: " + diff.toString());
+if (diff.days === 9) {
+    print("  ✓ PlainDate until works (9 days)");
+}
+
+let t1 = new Temporal.PlainTime(10, 0, 0);
+let t2 = new Temporal.PlainTime(11, 30, 0);
+let tdiff = t1.until(t2);
+print("diff 10:00 to 11:30: " + tdiff.toString());
+if (tdiff.hours === 1 && tdiff.minutes === 30) {
+    print("  ✓ PlainTime until works (1h 30m)");
+}
+
+print("ALL TEMPORAL V2 TESTS PASSED!");

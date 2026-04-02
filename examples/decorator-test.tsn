@@ -1,0 +1,65 @@
+// Test decorator implementation
+// Decorators should execute and initializers should run
+
+// Simple field decorator
+function logField(value: dynamic, context: FieldDecoratorContext): void {
+  print("Field decorator called: " + context.name)
+  
+  // Add initializer
+  function init(): void {
+    print("Field initializer executed: " + context.name)
+  }
+  context.addInitializer(init)
+}
+
+// Method decorator
+function logMethod(value: dynamic, context: MethodDecoratorContext): dynamic {
+  print("Method decorator called: " + context.name)
+  
+  function init(): void {
+    print("Method initializer executed: " + context.name)
+  }
+  context.addInitializer(init)
+  
+  return value
+}
+
+// Class decorator
+function sealed(value: dynamic, context: ClassDecoratorContext): dynamic {
+  print("Class decorator called: " + context.name)
+  
+  function init(): void {
+    print("Class initializer executed: " + context.name)
+  }
+  context.addInitializer(init)
+  
+  return value
+}
+
+@sealed
+class TestClass {
+  @logField
+  name: str = "test"
+  
+  @logField
+  static count: int = 0
+  
+  @logMethod
+  greet(): void {
+    print("Hello from " + this.name)
+  }
+  
+  @logMethod
+  static info(): void {
+    print("Static method called")
+  }
+}
+
+print("Creating instance...")
+let obj = new TestClass()
+
+print("\nCalling methods...")
+obj.greet()
+TestClass.info()
+
+print("\nTest complete!")

@@ -1,0 +1,8 @@
+// Try to instantiate range directly  
+const r = new range(0, 5, false)
+print("range instance:")
+print(r)
+print("start:")
+print(r.start)
+print("end:")
+print(r.end)

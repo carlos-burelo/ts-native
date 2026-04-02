@@ -1,0 +1,18 @@
+// Test field initializer with union type
+
+class Test {
+    private data: int | null = null
+
+    setData(d: int): void {
+        this.data = d
+    }
+
+    getData(): int | null {
+        return this.data
+    }
+}
+
+const t = new Test()
+print("Initial: " + t.getData())
+t.setData(42)
+print("After set: " + t.getData())

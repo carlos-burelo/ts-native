@@ -1,0 +1,437 @@
+/**
+ * Real-world async error handling scenarios
+ * Demonstrates production-grade error handling patterns
+ */
+
+// ============================================================================
+// SCENARIO 1: Database Connection with Retry Logic
+// ============================================================================
+
+class DatabaseError extends Error {
+    code: int
+    
+    constructor(message: str, code: int) {
+        super(message)
+        this.code = code
+    }
+}
+
+async function connectWithRetry(maxRetries: int): bool {
+    let attempt = 0
+    let backoffMs = 100
+    
+    while (attempt < maxRetries) {
+        try {
+            print(`Connecting to database (attempt ${attempt + 1})...`)
+            
+            // Simulate connection attempt
+            if (attempt < 2) {
+                throw new DatabaseError("Connection timeout", 1001)
+            }
+            
+            print("✓ Connected successfully!")
+            return true
+            
+        } catch (e) {
+            attempt = attempt + 1
+            
+            if (attempt >= maxRetries) {
+                print(`✗ Failed after ${maxRetries} attempts`)
+                throw e
+            }
+            
+            // Exponential backoff
+            print(`  Retrying in ${backoffMs}ms...`)
+            await Future.delayed(backoffMs, () => { return 0 })
+            backoffMs = backoffMs * 2
+        }
+    }
+    
+    return false
+}
+
+// ============================================================================
+// SCENARIO 2: API Rate Limiting with Circuit Breaker
+// ============================================================================
+
+class CircuitBreaker {
+    failureCount: int
+    threshold: int
+    isOpen: bool
+    resetTimeout: int
+    
+    constructor(threshold: int, resetTimeout: int) {
+        this.failureCount = 0
+        this.threshold = threshold
+        this.isOpen = false
+        this.resetTimeout = resetTimeout
+    }
+}
+
+const breaker = new CircuitBreaker(3, 5000)
+
+async function callAPIWithCircuitBreaker(endpoint: str): str {
+    if (breaker.isOpen) {
+        print("⚠ Circuit breaker is OPEN - rejecting request")
+        throw "Circuit breaker open - too many failures"
+    }
+    
+    try {
+        print(`Calling API: ${endpoint}`)
+        
+        // Simulate API call that might fail
+        if (breaker.failureCount > 0) {
+            throw "API rate limit exceeded"
+        }
+        
+        breaker.failureCount = 0
+        return "API response data"
+        
+    } catch (e) {
+        breaker.failureCount = breaker.failureCount + 1
+        print(`✗ API call failed (failures: ${breaker.failureCount})`)
+        
+        if (breaker.failureCount >= breaker.threshold) {
+            breaker.isOpen = true
+            print("⚠ Circuit breaker opened!")
+            
+            // Auto-reset after timeout
+            Future.delayed(breaker.resetTimeout, () => {
+                breaker.isOpen = false
+                breaker.failureCount = 0
+                print("✓ Circuit breaker reset")
+                return 0
+            })
+        }
+        
+        throw e
+    }
+}
+
+// ============================================================================
+// SCENARIO 3: Graceful Degradation with Fallbacks
+// ============================================================================
+
+async function fetchUserProfile(userId: int): str {
+    throw "Primary service unavailable"
+}
+
+async function fetchFromCache(userId: int): str {
+    throw "Cache miss"
+}
+
+async function fetchDefault(): str {
+    return "Guest User"
+}
+
+async function getUserProfileWithFallback(userId: int): str {
+    // Try primary service
+    try {
+        return await fetchUserProfile(userId)
+    } catch (e) {
+        print(`Primary service failed: ${e}`)
+    }
+    
+    // Try cache
+    try {
+        return await fetchFromCache(userId)
+    } catch (e) {
+        print(`Cache failed: ${e}`)
+    }
+    
+    // Return default
+    try {
+        return await fetchDefault()
+    } catch (e) {
+        print(`Default failed: ${e}`)
+        throw "All fallbacks exhausted"
+    }
+}
+
+// ============================================================================
+// SCENARIO 4: Transaction Rollback on Error
+// ============================================================================
+
+class Transaction {
+    operationCount: int
+    
+    constructor() {
+        this.operationCount = 0
+    }
+}
+
+const globalTx = new Transaction()
+
+async function beginTransaction(): Transaction {
+    print("Starting transaction...")
+    globalTx.operationCount = 0
+    return globalTx
+}
+
+async function executeOperation(tx: Transaction, opId: int): void {
+    print(`  Executing operation ${opId}`)
+    
+    // Simulate operation failure
+    if (opId == 3) {
+        throw "Operation 3 failed"
+    }
+    
+    tx.operationCount = tx.operationCount + 1
+}
+
+async function commitTransaction(tx: Transaction): void {
+    print("Committing transaction...")
+}
+
+async function rollbackTransaction(tx: Transaction): void {
+    print("Rolling back transaction...")
+    tx.operationCount = 0
+}
+
+async function performTransactionalWork(): void {
+    const tx = await beginTransaction()
+    
+    try {
+        await executeOperation(tx, 1)
+        await executeOperation(tx, 2)
+        await executeOperation(tx, 3)  // This will fail
+        await executeOperation(tx, 4)
+        
+        await commitTransaction(tx)
+        print("✓ Transaction completed successfully")
+        
+    } catch (e) {
+        print(`✗ Transaction failed: ${e}`)
+        await rollbackTransaction(tx)
+        throw e
+    }
+}
+
+// ============================================================================
+// SCENARIO 5: Resource Pool Management
+// ============================================================================
+
+class ResourcePool {
+    available: int
+    total: int
+    
+    constructor(size: int) {
+        this.available = size
+        this.total = size
+    }
+}
+
+const pool = new ResourcePool(3)
+
+async function acquireResource(): int {
+    if (pool.available == 0) {
+        throw "No resources available"
+    }
+    
+    pool.available = pool.available - 1
+    print(`Resource acquired (available: ${pool.available})`)
+    return pool.available
+}
+
+function releaseResource(): void {
+    pool.available = pool.available + 1
+    print(`Resource released (available: ${pool.available})`)
+}
+
+async function useResourceSafely(): void {
+    let resourceId = 0
+    
+    try {
+        resourceId = await acquireResource()
+        
+        // Simulate work that might fail
+        if (pool.available < 2) {
+            throw "Operation failed during resource use"
+        }
+        
+        print("Work completed successfully")
+        
+    } catch (e) {
+        print(`Error during work: ${e}`)
+        throw e
+        
+    } finally {
+        // ALWAYS release resource
+        releaseResource()
+    }
+}
+
+// ============================================================================
+// SCENARIO 6: Parallel Operations with Partial Success
+// ============================================================================
+
+async function processItem(id: int): str {
+    if (id == 2 || id == 4) {
+        throw `Failed to process item ${id}`
+    }
+    return `Processed ${id}`
+}
+
+async function processAllItems(): void {
+    const successCount = 3
+    const failureCount = 2
+    
+    print("\n=== Processing Results ===")
+    print(`Successful: ${successCount}`)
+    print(`Failed: ${failureCount}`)
+    
+    if (failureCount > 0) {
+        print("⚠ Some items failed to process")
+    }
+}
+
+// ============================================================================
+// SCENARIO 7: Timeout with Graceful Cleanup
+// ============================================================================
+
+async function longRunningOperation(): str {
+    print("Starting long operation...")
+    await Future.delayed(3000, () => { return 0 })
+    return "Operation completed"
+}
+
+async function operationWithTimeout(): str {
+    try {
+        const future = longRunningOperation()
+        const result = await future.timeout(1000)
+        return result
+    } catch (e) {
+        print(`✗ Operation timed out: ${e}`)
+        throw "Timeout exceeded"
+    }
+}
+
+// ============================================================================
+// SCENARIO 8: Error Aggregation and Reporting
+// ============================================================================
+
+class ErrorReport {
+    errorCount: int
+    timestamp: int
+    
+    constructor() {
+        this.errorCount = 0
+        this.timestamp = 0
+    }
+}
+
+const globalReport = new ErrorReport()
+
+async function validateData(data: int): bool {
+    let hasErrors = false
+    
+    if (data < 0) {
+        globalReport.errorCount = globalReport.errorCount + 1
+        hasErrors = true
+    }
+    
+    if (data > 100) {
+        globalReport.errorCount = globalReport.errorCount + 1
+        hasErrors = true
+    }
+    
+    if (hasErrors) {
+        throw "Validation failed"
+    }
+    
+    return true
+}
+
+async function processWithValidation(): void {
+    globalReport.errorCount = 0
+    
+    try {
+        await validateData(-5)
+        await validateData(200)
+        await validateData(50)
+    } catch (e) {
+        print("\n=== Validation Error Report ===")
+        print(`Errors detected: ${globalReport.errorCount}`)
+    }
+}
+
+// ============================================================================
+// MAIN: Run All Scenarios
+// ============================================================================
+
+async function main(): void {
+    print("=================================================================")
+    print("     PRODUCTION ASYNC ERROR HANDLING SCENARIOS")
+    print("=================================================================\n")
+    
+    // Scenario 1: Retry Logic
+    print("\n--- SCENARIO 1: Database Connection with Retry ---")
+    try {
+        await connectWithRetry(3)
+    } catch (e) {
+        print(`Final error: ${e}`)
+    }
+    
+    // Scenario 2: Circuit Breaker
+    print("\n--- SCENARIO 2: Circuit Breaker Pattern ---")
+    let i = 0
+    while (i < 5) {
+        try {
+            await callAPIWithCircuitBreaker("/api/data")
+        } catch (e) {
+            // Continue
+        }
+        i = i + 1
+    }
+    
+    // Scenario 3: Fallback Chain
+    print("\n--- SCENARIO 3: Graceful Degradation ---")
+    try {
+        const profile = await getUserProfileWithFallback(123)
+        print(`✓ Got profile: ${profile}`)
+    } catch (e) {
+        print(`✗ Failed to get profile: ${e}`)
+    }
+    
+    // Scenario 4: Transaction Rollback
+    print("\n--- SCENARIO 4: Transactional Operations ---")
+    try {
+        await performTransactionalWork()
+    } catch (e) {
+        print("Transaction error handled")
+    }
+    
+    // Scenario 5: Resource Management
+    print("\n--- SCENARIO 5: Resource Pool ---")
+    let j = 0
+    while (j < 4) {
+        try {
+            await useResourceSafely()
+        } catch (e) {
+            print("Resource error handled")
+        }
+        j = j + 1
+    }
+    
+    // Scenario 6: Parallel Processing
+    print("\n--- SCENARIO 6: Parallel Operations ---")
+    await processAllItems()
+    
+    // Scenario 7: Timeout
+    print("\n--- SCENARIO 7: Operation Timeout ---")
+    try {
+        await operationWithTimeout()
+    } catch (e) {
+        print("Timeout error handled")
+    }
+    
+    // Scenario 8: Error Reporting
+    print("\n--- SCENARIO 8: Error Aggregation ---")
+    await processWithValidation()
+    
+    print("\n=================================================================")
+    print("     ALL SCENARIOS COMPLETED")
+    print("=================================================================")
+}
+
+main()

@@ -1,0 +1,14 @@
+// Test without decorator first
+
+class Test {
+  name: str = "test"
+  
+  constructor() {
+    print("Constructor called")
+  }
+}
+
+print("Creating...")
+let obj = new Test()
+print("Created")
+print("Name: " + obj.name)

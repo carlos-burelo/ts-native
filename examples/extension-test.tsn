@@ -1,0 +1,12 @@
+extension StringTools on str {
+    shout(): str {
+        return this + "!"
+    }
+    repeat(n: int): str {
+        return this
+    }
+}
+
+const s = "hello"
+print(s.shout())
+print(s.repeat(3))

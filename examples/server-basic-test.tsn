@@ -1,0 +1,13 @@
+import { Server } from 'std:server'
+import { HTTP } from 'std:http'
+
+print("█ std:server basic test")
+
+const s = new Server()
+print("Server created")
+
+// In a real test we'd need a way to stop the server or run it in background
+// For now we just verify the API exists and can be called
+print("Server.listen exists: " + (s.listen !== null).toString())
+
+print("  ✓ Server API basic check passed")

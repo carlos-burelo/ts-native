@@ -1,0 +1,134 @@
+/**
+ * Comprehensive Interface Implementation Test
+ */
+
+// ============================================================================
+// Test 1: Simple Interface Implementation
+// ============================================================================
+
+interface Printable {
+    toString(): str
+    format(): str
+}
+
+class Document implements Printable {
+    content: str
+
+    constructor(content: str) {
+        this.content = content
+    }
+
+    toString(): str {
+        return "Document: " + this.content
+    }
+
+    format(): str {
+        return "[" + this.toString() + "]"
+    }
+}
+
+const doc = new Document("Hello World")
+const docStr = doc.toString()
+const docFormat = doc.format()
+
+// ============================================================================
+// Test 2: Multiple Interface Implementation
+// ============================================================================
+
+interface Named {
+    getName(): str
+}
+
+interface Identifiable {
+    getId(): int
+}
+
+class User implements Named, Identifiable {
+    name: str
+    id: int
+
+    constructor(name: str, id: int) {
+        this.name = name
+        this.id = id
+    }
+
+    getName(): str {
+        return this.name
+    }
+
+    getId(): int {
+        return this.id
+    }
+}
+
+const user = new User("Alice", 42)
+const userName = user.getName()
+const userId = user.getId()
+
+// ============================================================================
+// Test 3: Interface with Properties
+// ============================================================================
+
+interface Point2D {
+    x: int
+    y: int
+    distance(): int
+}
+
+class Point implements Point2D {
+    x: int
+    y: int
+
+    constructor(x: int, y: int) {
+        this.x = x
+        this.y = y
+    }
+
+    distance(): int {
+        return this.x * this.x + this.y * this.y
+    }
+}
+
+const p = new Point(3, 4)
+const px = p.x
+const py = p.y
+const dist = p.distance()
+
+// ============================================================================
+// Test 4: Extends + Implements
+// ============================================================================
+
+class BaseEntity {
+    id: int
+
+    constructor(id: int) {
+        this.id = id
+    }
+}
+
+interface Timestamped {
+    getTimestamp(): int
+}
+
+class Article extends BaseEntity implements Timestamped {
+    title: str
+    timestamp: int
+
+    constructor(id: int, title: str, timestamp: int) {
+        super(id)
+        this.title = title
+        this.timestamp = timestamp
+    }
+
+    getTimestamp(): int {
+        return this.timestamp
+    }
+}
+
+const article = new Article(1, "TSN Compiler", 2025)
+const articleId = article.id
+const articleTitle = article.title
+const articleTimestamp = article.getTimestamp()
+
+// All tests passed if we get here
+const success = 1

@@ -1,0 +1,30 @@
+
+const asyncCounter = {
+    [Symbol.asyncIterator]() {
+        let i = 0;
+        return {
+            async next() {
+                print("next() called, i =", i);
+                if (i < 5) {
+                    i++;
+                    let res = { value: i, done: false };
+                    print("next() returning", res);
+                    return res;
+                } else {
+                    print("next() returning DONE");
+                    return { value: null, done: true };
+                }
+            }
+        };
+    }
+};
+
+async function test() {
+    print("--- testForAwait ---");
+    for await (const x of asyncCounter) {
+        print("Got:", x);
+    }
+    print("Done!");
+}
+
+test();

@@ -1,0 +1,65 @@
+use parking_lot::Mutex;
+use std::collections::HashMap;
+use std::sync::Arc;
+use tsn_types::{value::new_array, Value};
+
+use std::sync::OnceLock;
+static METADATA: OnceLock<Mutex<HashMap<String, HashMap<String, Value>>>> = OnceLock::new();
+
+fn metadata() -> &'static Mutex<HashMap<String, HashMap<String, Value>>> {
+    METADATA.get_or_init(|| Mutex::new(HashMap::new()))
+}
+
+pub fn reflect_define_meta(args: &[Value]) -> Result<Value, String> {
+    let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
+    let val = args.get(1).cloned().unwrap_or(Value::Null);
+    let target = args.get(2).map(|v| v.to_string()).unwrap_or_default();
+
+    let mut meta = metadata().lock();
+    meta.entry(target).or_default().insert(key, val);
+
+    Ok(Value::Null)
+}
+
+pub fn reflect_get_meta(args: &[Value]) -> Result<Value, String> {
+    let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
+    let target = args.get(1).map(|v| v.to_string()).unwrap_or_default();
+
+    let meta = metadata().lock();
+    let val = meta
+        .get(&target)
+        .and_then(|m| m.get(&key))
+        .cloned()
+        .unwrap_or(Value::Null);
+
+    Ok(val)
+}
+
+pub fn reflect_has_meta(args: &[Value]) -> Result<Value, String> {
+    let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
+    let target = args.get(1).map(|v| v.to_string()).unwrap_or_default();
+
+    let meta = metadata().lock();
+    let has = meta
+        .get(&target)
+        .map(|m| m.contains_key(&key))
+        .unwrap_or(false);
+
+    Ok(Value::Bool(has))
+}
+
+pub fn reflect_get_meta_keys(args: &[Value]) -> Result<Value, String> {
+    let target = args.get(0).map(|v| v.to_string()).unwrap_or_default();
+
+    let meta = metadata().lock();
+    let keys: Vec<Value> = meta
+        .get(&target)
+        .map(|m| {
+            m.keys()
+                .map(|k| Value::Str(Arc::from(k.as_str())))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Ok(new_array(keys))
+}

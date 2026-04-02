@@ -1,0 +1,446 @@
+/**
+ * Pruebas exhaustivas de los 7 cambios arquitectónicos
+ *
+ * Cambio 1: Scope::resolve iterativo  (sin stack overflow en closures profundas)
+ * Cambio 2: Nullable → Union           (Type? == Type | null)
+ * Cambio 3: &&= / ||= / ??=           (short-circuit correcto)
+ * Cambio 4: Int / Int → Float          (división produce float, no int truncado)
+ * Cambio 5: Diagnóstico unificado      (internal – se verifica que el compilador no explota)
+ * Cambio 6: Async thread pool          (múltiples async concurrentes)
+ * Cambio 7: IR tipado                  (ops aritméticas especializadas i32/f64)
+ */
+
+var passed: int = 0
+var failed: int = 0
+
+function assert(condition: bool, name: str): void {
+    if (condition) {
+        print("  ✅ " + name)
+        passed = passed + 1
+    } else {
+        print("  ❌ FAIL: " + name)
+        failed = failed + 1
+    }
+}
+
+function section(title: str): void {
+    print("\n══════════════════════════════════════")
+    print("  " + title)
+    print("══════════════════════════════════════")
+}
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 1 – Scope::resolve iterativo
+//   Antes: recursivo → stack overflow con closures muy anidadas.
+//   Ahora: bucle iterativo, sin límite de profundidad.
+// ═══════════════════════════════════════════════════════════
+section("1 · Scope::resolve iterativo")
+
+// Captura variable del scope exterior desde varios niveles de anidamiento
+function depth_test(): int {
+    const outer: int = 100
+    function d1(): int {
+        function d2(): int {
+            function d3(): int {
+                function d4(): int {
+                    function d5(): int {
+                        function d6(): int {
+                            function d7(): int {
+                                function d8(): int {
+                                    function d9(): int {
+                                        function d10(): int {
+                                            return outer   // < 10 niveles profundidad
+                                        }
+                                        return d10()
+                                    }
+                                    return d9()
+                                }
+                                return d8()
+                            }
+                            return d7()
+                        }
+                        return d6()
+                    }
+                    return d5()
+                }
+                return d4()
+            }
+            return d3()
+        }
+        return d2()
+    }
+    return d1()
+}
+
+assert(depth_test() == 100, "resolución de variable a 10 niveles de profundidad")
+
+// Closure que captura un counter y lo modifica
+function make_counter(): () => int {
+    var count: int = 0
+    function inc(): int {
+        count = count + 1
+        return count
+    }
+    return inc
+}
+
+const counter = make_counter()
+assert(counter() == 1, "closure: primera llamada retorna 1")
+assert(counter() == 2, "closure: segunda llamada retorna 2")
+assert(counter() == 3, "closure: tercera llamada retorna 3")
+
+// Closure dentro de closure (upvalue de upvalue)
+function outer_fn(): () => () => int {
+    const x: int = 42
+    function mid(): () => int {
+        function inner(): int {
+            return x
+        }
+        return inner
+    }
+    return mid
+}
+
+const mid = outer_fn()
+const inner = mid()
+assert(inner() == 42, "upvalue encadenado: inner accede al scope de outer_fn")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 2 – Nullable (Type?) se normaliza a Union(Type, null)
+//   La azúcar sintáctica Type? es equivalente en semántica a Type | null.
+// ═══════════════════════════════════════════════════════════
+section("2 · Nullable → Union  (Type?)")
+
+var n1: int? = null
+var n2: int? = 99
+
+assert(n1 == null,  "int? puede contener null")
+assert(n2 == 99,    "int? puede contener int")
+assert(n2 != null,  "int? con valor no es null")
+
+// Asignación posterior
+n1 = 7
+assert(n1 == 7, "int? acepta valor int después de ser null")
+n1 = null
+assert(n1 == null, "int? vuelve a null")
+
+// str? 
+var s: str? = null
+assert(s == null, "str? puede ser null")
+s = "hola"
+assert(s == "hola", "str? puede ser str")
+
+// Operador ?? (null coalescing)
+var a1: int? = null
+var a2: int? = 55
+assert((a1 ?? 0) == 0,  "null ?? 0 == 0")
+assert((a2 ?? 0) == 55, "55 ?? 0 == 55")
+
+// ?? con str
+var s2: str? = null
+assert((s2 ?? "default") == "default", "null ?? 'default' == 'default'")
+s2 = "real"
+assert((s2 ?? "default") == "real", "'real' ?? 'default' == 'real'")
+
+// Nullable en parámetros de función
+function greet(name: str?): str {
+    return "Hola, " + (name ?? "desconocido")
+}
+assert(greet(null) == "Hola, desconocido", "parámetro str? = null usa fallback")
+assert(greet("Ana") == "Hola, Ana",        "parámetro str? = 'Ana' usa el valor")
+
+// Nullable como retorno
+function maybe_double(x: int?): int? {
+    if (x == null) return null
+    return x * 2
+}
+assert(maybe_double(null) == null, "retorno int? null cuando entrada es null")
+assert(maybe_double(5) == 10,      "retorno int? 10 cuando entrada es 5")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 3 – &&= / ||= / ??=  con short-circuit correcto
+// ═══════════════════════════════════════════════════════════
+section("3 · &&= / ||= / ??=")
+
+// ── &&= ──────────────────────────────────────────────────
+// x &&= y ≡ x = x && y   →  si x es falsy, NO se evalúa y, x queda igual.
+var andTrue: bool = true
+andTrue &&= false
+assert(andTrue == false, "true &&= false  → false")
+
+var andFalse: bool = false
+andFalse &&= true
+assert(andFalse == false, "false &&= true  → false  (short-circuit, x no cambia)")
+
+var andTrue2: bool = true
+andTrue2 &&= true
+assert(andTrue2 == true, "true &&= true   → true")
+
+// Short-circuit: el RHS no debe ejecutarse si LHS es falso
+var side_effect: int = 0
+function increment_side(): bool {
+    side_effect = side_effect + 1
+    return true
+}
+var sc1: bool = false
+sc1 &&= increment_side()        // LHS falso → RHS no evaluado
+assert(side_effect == 0, "&&= short-circuit: RHS no se ejecuta cuando LHS es false")
+
+var sc2: bool = true
+sc2 &&= increment_side()        // LHS verdadero → RHS sí evaluado
+assert(side_effect == 1, "&&= NO short-circuit: RHS se ejecuta cuando LHS es true")
+
+// ── ||= ──────────────────────────────────────────────────
+// x ||= y ≡ x = x || y   →  si x es truthy, NO se evalúa y, x queda igual.
+var orFalse: bool = false
+orFalse ||= true
+assert(orFalse == true, "false ||= true  → true")
+
+var orTrue: bool = true
+orTrue ||= false
+assert(orTrue == true, "true ||= false  → true  (short-circuit, x no cambia)")
+
+var orFalse2: bool = false
+orFalse2 ||= false
+assert(orFalse2 == false, "false ||= false → false")
+
+// Short-circuit: el RHS no debe ejecutarse si LHS es verdadero
+var side2: int = 0
+function incr2(): bool {
+    side2 = side2 + 1
+    return true
+}
+var sc3: bool = true
+sc3 ||= incr2()          // LHS verdadero → RHS no evaluado
+assert(side2 == 0, "||= short-circuit: RHS no se ejecuta cuando LHS es true")
+
+var sc4: bool = false
+sc4 ||= incr2()          // LHS falso → RHS sí evaluado
+assert(side2 == 1, "||= NO short-circuit: RHS se ejecuta cuando LHS es false")
+
+// ── ??= ──────────────────────────────────────────────────
+// x ??= y ≡ x = x ?? y   →  si x no es null, NO se evalúa y, x queda igual.
+var nqNull: int? = null
+nqNull ??= 42
+assert(nqNull == 42, "null ??= 42     → 42")
+
+var nqVal: int? = 10
+nqVal ??= 99
+assert(nqVal == 10, "10 ??= 99       → 10  (short-circuit, no-null x no cambia)")
+
+var nqZero: int? = 0
+nqZero ??= 99
+assert(nqZero == 0, "0 ??= 99        → 0   (0 es no-null, short-circuit)")
+
+// Short-circuit: el RHS no debe ejecutarse si LHS no es null
+var side3: int = 0
+function incr3(): int {
+    side3 = side3 + 1
+    return side3
+}
+var sc5: int? = 5
+sc5 ??= incr3()          // LHS no es null → RHS no evaluado
+assert(side3 == 0, "??= short-circuit: RHS no se ejecuta cuando LHS no es null")
+
+var sc6: int? = null
+sc6 ??= incr3()          // LHS es null → RHS sí evaluado
+assert(side3 == 1, "??= NO short-circuit: RHS se ejecuta cuando LHS es null")
+assert(sc6 == 1,   "??= asigna correctamente el valor del RHS")
+
+// Tipos mixtos – ??= sobre str?
+var sNullish: str? = null
+sNullish ??= "asignado"
+assert(sNullish == "asignado", "str? null ??= 'asignado'  → 'asignado'")
+
+sNullish ??= "ignorado"
+assert(sNullish == "asignado", "str? no-null ??= 'ignorado'  → 'asignado' (sin cambio)")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 4 – Int / Int siempre produce Float
+//   La semántica TS/TSN correcta: 5/2 == 2.5, NO 2.
+// ═══════════════════════════════════════════════════════════
+section("4 · Int / Int → Float")
+
+const d1: float = 5 / 2
+assert(d1 == 2.5, "5 / 2 == 2.5   (no integer truncation)")
+
+const d2: float = 10 / 3
+// 10/3 = 3.3333... – verificamos que sea mayor que 3 y menor que 4
+assert(d2 > 3.0 && d2 < 4.0, "10 / 3 está entre 3.0 y 4.0")
+
+const d3: float = 6 / 2
+assert(d3 == 3.0, "6 / 2 == 3.0   (división exacta sigue siendo float)")
+
+const d4: float = 7 / 2
+assert(d4 == 3.5, "7 / 2 == 3.5")
+
+const d5: float = 1 / 4
+assert(d5 == 0.25, "1 / 4 == 0.25")
+
+const d6: float = 0 / 5
+assert(d6 == 0.0, "0 / 5 == 0.0")
+
+// División negativa
+const d7: float = -7 / 2
+assert(d7 == -3.5, "-7 / 2 == -3.5")
+
+const d8: float = 7 / -2
+assert(d8 == -3.5, "7 / -2 == -3.5")
+
+// Division por expresiones int
+const x4: int = 9
+const y4: int = 4
+const d9: float = x4 / y4
+assert(d9 == 2.25, "9 / 4 == 2.25  (variables int)")
+
+// La div float/float sigue funcionando
+const d10: float = 3.0 / 2.0
+assert(d10 == 1.5, "3.0 / 2.0 == 1.5  (float/float sin cambio)")
+
+// Int / Float y Float / Int siguen funcionando
+const d11 = 10 / 4.0
+assert(d11 == 2.5, "10 / 4.0 == 2.5  (int/float)")
+
+const d12 = 9.0 / 4
+assert(d12 == 2.25, "9.0 / 4 == 2.25  (float/int)")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 5 – Diagnóstico unificado (tsn_core::Diagnostic)
+//   No hay superficie de API visible desde .tsn.
+//   La prueba es implícita: el compilador procesa este archivo sin crash.
+// ═══════════════════════════════════════════════════════════
+section("5 · Diagnóstico unificado (prueba implícita)")
+print("  ℹ  Si este archivo compila y ejecuta, el compilador usa el")
+print("     tipo Diagnostic unified sin explosionar. ✅")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 6 – Async thread pool con Arc<AtomicI32> inflight
+// ═══════════════════════════════════════════════════════════
+section("6 · Async / thread pool")
+
+async function fetch_value(id: int): int {
+    return id * 10
+}
+
+async function long_chain(): str {
+    const a = await fetch_value(1)
+    const b = await fetch_value(2)
+    const c = await fetch_value(3)
+    return a + b + c
+}
+
+const chain_result = long_chain()
+assert(chain_result == 60, "cadena de awaits: 10 + 20 + 30 == 60")
+
+// Async con try/catch
+async function might_fail(fail: bool): str {
+    if (fail) {
+        throw Error("error controlado")
+    }
+    return "ok"
+}
+
+async function safe_call(fail: bool): str {
+    try {
+        return await might_fail(fail)
+    } catch (e: dynamic) {
+        return "caught"
+    }
+}
+
+assert(safe_call(false) == "ok",      "async happy path retorna 'ok'")
+assert(safe_call(true)  == "caught",  "async con throw retorna 'caught' desde catch")
+
+// Async recursiva
+async function countdown(n: int): int {
+    if (n <= 0) return 0
+    return n + await countdown(n - 1)
+}
+
+assert(countdown(5) == 15, "async recursiva: 5+4+3+2+1+0 == 15")
+
+// Async void sin retorno explícito
+var async_side: int = 0
+async function side_effect_async(): void {
+    async_side = async_side + 1
+}
+
+side_effect_async()
+assert(async_side == 1, "async void modifica variable externa")
+
+side_effect_async()
+assert(async_side == 2, "segunda llamada async void incrementa de nuevo")
+
+
+// ═══════════════════════════════════════════════════════════
+// CAMBIO 7 – IR tipado (OpAddI32, OpSubI32, OpMulI32, OpDivF64…)
+//   Las instrucciones especializadas no tienen superficie ASM visible,
+//   pero los resultados deben ser idénticos a las ops genéricas.
+// ═══════════════════════════════════════════════════════════
+section("7 · IR tipado (OpAddI32 / OpSubI32 / OpMulI32 / OpDivF64)")
+
+// Aritmética int – usa OpAddI32 / OpSubI32 / OpMulI32
+const i_a: int = 1_000_000
+const i_b: int = 999_999
+
+assert(i_a + i_b == 1_999_999, "int + int (large values)")
+assert(i_a - i_b == 1,          "int - int")
+assert(i_a * 2   == 2_000_000, "int * int (literal)")
+assert(i_b * 0   == 0,          "int * 0 == 0")
+
+// Comprobamos precedencia (MulI32 antes de AddI32)
+assert(2 + 3 * 4 == 14, "2 + 3*4 == 14  (precedencia de multiplicación)")
+assert(2 * 3 + 4 == 10, "2*3 + 4 == 10")
+
+// Aritmética float – usa OpDivF64
+const f_a: float = 1.5
+const f_b: float = 2.5
+
+assert(f_a + f_b == 4.0,  "float + float")
+assert(f_b - f_a == 1.0,  "float - float")
+assert(f_a * f_b == 3.75, "float * float")
+assert(f_b / f_a == (5.0 / 3.0), "float / float  (verifica misma semántica)")
+
+// Mezcla int→float widening
+const w1: float = 3 * 2.0
+assert(w1 == 6.0, "int * float widening = 6.0")
+
+const w2 = 10.0 - 4
+assert(w2 == 6.0, "float - int widening = 6.0")
+
+// Operador ** (potencia)
+assert(2 ** 10 == 1024, "2 ** 10 == 1024")
+assert(3 ** 3  == 27,   "3 ** 3  == 27")
+
+// Módulo
+assert(10 % 3 == 1, "10 % 3 == 1")
+assert(9  % 3 == 0, "9  % 3 == 0")
+assert(-7 % 3 == -1, "-7 % 3 == -1")  // semántica truncate-towards-zero (Rust)
+
+// Operadores de bits (usan opcode genérico, no tipado – deben seguir funcionando)
+assert((0b1010 & 0b1100) == 0b1000, "bitwise AND")
+assert((0b1010 | 0b0101) == 0b1111, "bitwise OR")
+assert((0b1010 ^ 0b1111) == 0b0101, "bitwise XOR")
+assert(1 << 3 == 8,   "left shift")
+assert(16 >> 2 == 4,  "right shift")
+
+
+// ═══════════════════════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════════════════════
+print("\n══════════════════════════════════════")
+print("  RESUMEN FINAL")
+print("══════════════════════════════════════")
+print("  Pasaron: " + passed)
+print("  Fallaron: " + failed)
+
+if (failed == 0) {
+    print("\n  ✅ TODOS LOS TESTS PASARON")
+} else {
+    print("\n  ❌ " + failed + " TEST(S) FALLARON")
+}

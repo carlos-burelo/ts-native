@@ -1,0 +1,36 @@
+function printAll(...args: dynamic[]): void {
+    print("Args length:", args.length)
+    for (let i = 0; i < args.length; i = i + 1) {
+        print("Arg:", args[i])
+    }
+}
+
+function sum(...nums: int[]): void {
+    let total = 0
+    for (let i = 0; i < nums.length; i = i + 1) {
+        total = total + nums[i]
+    }
+    print("Sum:", total)
+}
+
+function greet(prefix: str, ...names: str[]): void {
+    for (let i = 0; i < names.length; i = i + 1) {
+        print(prefix, names[i])
+    }
+}
+
+const mixed = [1, "two", true]
+const nums = [10, 20, 30, 40]
+const names = ["Alice", "Bob"]
+
+print("Testing printAll spread...")
+printAll(...mixed)
+
+print("Testing sum spread...")
+sum(...nums)
+
+print("Testing greet spread...")
+greet("Hello", ...names)
+
+print("Testing mixed positional + spread...")
+printAll("start", ...nums, "end")

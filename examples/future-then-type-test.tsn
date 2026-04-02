@@ -1,0 +1,10 @@
+async function fetchNumber(): int {
+  return 42;
+}
+
+// With explicit param type: n is known to be int
+const b = fetchNumber().then((n: int) => n.toString());
+// Without: n is dynamic, n.toString() is dynamic
+const c = fetchNumber().then((n) => n.toString());
+// Comparison returns bool regardless of n type
+const d = fetchNumber().map((n) => n > 0);

@@ -1,0 +1,41 @@
+// Test error recovery in parser
+// Should continue parsing after errors
+
+// Error: Missing semicolon
+let x = 5
+
+// Error: Incomplete expression
+let y = 
+
+// Should still parse this function
+function testFunction(): void {
+  print("Hello from recovered function")
+}
+
+// Error: Malformed object
+let obj = {
+  name: "test"
+  age:  // missing value
+  city: "NYC"
+}
+
+// Should still parse this
+let valid = "This should work"
+print(valid)
+
+// Error: Incomplete array
+let arr = [1, 2, 
+
+// Should still parse this
+function anotherTest(): void {
+  print("Another function")
+}
+
+// Error: Missing closing brace in object
+let bad = {
+  x: 1,
+  y: 2
+
+// Should continue parsing
+let good = 42
+print(good)

@@ -1,0 +1,34 @@
+// std:reflect — Metaprogramming and Reflection utilities
+
+/**
+ * Defines metadata on a target.
+ */
+export namespace Reflect {
+    /**
+     * Defines metadata on a target.
+     */
+    export function defineMetadata(key: str, value: dynamic, target: str): void {
+        __reflect_define_meta(key, value, target)
+    }
+
+    /**
+     * Gets metadata from a target.
+     */
+    export function getMetadata(key: str, target: str): dynamic {
+        return __reflect_get_meta(key, target)
+    }
+
+    /**
+     * Checks if a target has metadata with the given key.
+     */
+    export function hasMetadata(key: str, target: str): bool {
+        return __reflect_has_meta(key, target)
+    }
+
+    /**
+     * Gets all metadata keys defined on a target.
+     */
+    export function getMetadataKeys(target: str): str[] {
+        return __reflect_get_meta_keys(target)
+    }
+}

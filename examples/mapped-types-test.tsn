@@ -1,0 +1,212 @@
+// ═══════════════════════════════════════════════════════════════════════════════
+// TEST EXHAUSTIVO: keyof / indexed access / mapped types
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let passed = 0
+let failed = 0
+
+function check(label: str, value: bool): void {
+    if (value) {
+        print("✓ " + label)
+        passed = passed + 1
+    } else {
+        print("✗ FAIL: " + label)
+        failed = failed + 1
+    }
+}
+
+// ─── Definiciones de tipos base ───────────────────────────────────────────────
+
+interface Point {
+    x: int
+    y: int
+}
+
+interface Person {
+    name: str
+    age: int
+    active: bool
+}
+
+interface Config {
+    host: str
+    port: int
+    debug: bool
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 1: keyof T
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── keyof T ──")
+
+type PointKeys = keyof Point
+
+function getPointProp(p: Point, key: PointKeys): int {
+    if (key == "x") { return p.x }
+    return p.y
+}
+
+const p: Point = { x: 10, y: 20 }
+check("keyof Point: getPointProp x", getPointProp(p, "x") == 10)
+check("keyof Point: getPointProp y", getPointProp(p, "y") == 20)
+
+type PersonKeys = keyof Person
+function hasPersonKey(key: PersonKeys): bool {
+    return key == "name" || key == "age" || key == "active"
+}
+check("keyof Person: name",   hasPersonKey("name"))
+check("keyof Person: age",    hasPersonKey("age"))
+check("keyof Person: active", hasPersonKey("active"))
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 2: T[K] — indexed access
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── T[K] indexed access ──")
+
+function takesInt(v: Point["x"]): int { return v * 2 }
+function takesStr(v: Person["name"]): str { return "Hello " + v }
+
+check("T[K] int param",  takesInt(7) == 14)
+check("T[K] str param",  takesStr("Alice") == "Hello Alice")
+
+// T["a"] | T["b"] — acceso a dos propiedades distintas
+function sumPoint(px: Point["x"], py: Point["y"]): int {
+    return px + py
+}
+check("T[K] two distinct props", sumPoint(3, 5) == 8)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 3: Mapped type — literal union como fuente
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Mapped types (literal union) ──")
+
+type Flags = { [K in "a" | "b" | "c"]: bool }
+const flags: Flags = { a: true, b: false, c: true }
+check("Flags.a",  flags.a == true)
+check("Flags.b",  flags.b == false)
+check("Flags.c",  flags.c == true)
+
+type IntPair = { [K in "x" | "y"]: int }
+const pair: IntPair = { x: 100, y: 200 }
+check("IntPair.x", pair.x == 100)
+check("IntPair.y", pair.y == 200)
+
+type SingleKey = { [K in "key"]: str }
+const sk: SingleKey = { key: "hello" }
+check("single key mapped", sk.key == "hello")
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 4: Mapped type — keyof T como fuente
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Mapped types (keyof T) ──")
+
+type PointAsInt = { [K in keyof Point]: int }
+const pai: PointAsInt = { x: 1, y: 2 }
+check("keyof source x", pai.x == 1)
+check("keyof source y", pai.y == 2)
+
+type PointCopy = { [K in keyof Point]: Point[K] }
+const pc: PointCopy = { x: 5, y: 15 }
+check("identity mapped x", pc.x == 5)
+check("identity mapped y", pc.y == 15)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 5: Mapped type opcional (?:)
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Optional mapped types ──")
+
+type PartialPoint = { [K in keyof Point]?: Point[K] }
+
+function makePoint(pp: PartialPoint): Point {
+    return { x: pp.x ?? 0, y: pp.y ?? 0 }
+}
+
+const full  = makePoint({ x: 3, y: 7 })
+const partx = makePoint({ x: 9 })
+const empty = makePoint({})
+
+check("partial full x",          full.x == 3)
+check("partial full y",          full.y == 7)
+check("partial x-only x",        partx.x == 9)
+check("partial x-only y default",partx.y == 0)
+check("partial empty x default", empty.x == 0)
+check("partial empty y default", empty.y == 0)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 6: Mapped type readonly
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Readonly mapped types ──")
+
+type ReadonlyPoint = { readonly [K in keyof Point]: Point[K] }
+function readPoint(rp: ReadonlyPoint): int { return rp.x + rp.y }
+
+const rp: ReadonlyPoint = { x: 4, y: 6 }
+check("readonly mapped read", readPoint(rp) == 10)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 7: Transformación de tipo en el valor
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Value type transformation ──")
+
+type Stringified = { [K in keyof Point]: str }
+const sf: Stringified = { x: "10", y: "20" }
+check("stringified x", sf.x == "10")
+check("stringified y", sf.y == "20")
+
+type Presence = { [K in "foo" | "bar" | "baz"]: bool }
+const pr: Presence = { foo: true, bar: true, baz: false }
+check("presence foo", pr.foo == true)
+check("presence bar", pr.bar == true)
+check("presence baz", pr.baz == false)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 8: Compatibilidad estructural con mapped types
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Structural compatibility ──")
+
+type PersonOpt = { [K in keyof Person]?: Person[K] }
+
+const fullPerson: Person = { name: "Bob", age: 30, active: true }
+const asPopt: PersonOpt = fullPerson
+check("full → optional name", asPopt.name == "Bob")
+check("full → optional age",  asPopt.age == 30)
+
+const partPerson: PersonOpt = { name: "Carl" }
+check("partial name",     partPerson.name == "Carl")
+check("partial age null", (partPerson.age ?? -1) == -1)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SECCIÓN 9: Composición — keyof + indexed access + mapped juntos
+// ═══════════════════════════════════════════════════════════════════════════════
+print("── Composition ──")
+
+type ConfigPatch = { [K in keyof Config]?: Config[K] }
+
+function applyPatch(base: Config, patch: ConfigPatch): Config {
+    return {
+        host:  patch.host  ?? base.host,
+        port:  patch.port  ?? base.port,
+        debug: patch.debug ?? base.debug,
+    }
+}
+
+const baseConfig: Config = { host: "localhost", port: 8080, debug: false }
+const patched  = applyPatch(baseConfig, { port: 9000, debug: true })
+const noChange = applyPatch(baseConfig, {})
+
+check("patch port",           patched.port == 9000)
+check("patch debug",          patched.debug == true)
+check("patch host unchanged", patched.host == "localhost")
+check("no-change host",       noChange.host == "localhost")
+check("no-change port",       noChange.port == 8080)
+check("no-change debug",      noChange.debug == false)
+
+// ═══════════════════════════════════════════════════════════════════════════════
+print("──────────────────────────────")
+print("Passed: " + passed)
+print("Failed: " + failed)
+if (failed == 0) {
+    print("ALL TESTS PASSED ✓")
+} else {
+    print("SOME TESTS FAILED ✗")
+}

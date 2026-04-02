@@ -1,0 +1,23 @@
+/**
+ * Intersection Type Test
+ */
+
+interface Named {
+    name: str
+}
+
+interface Aged {
+    age: int
+}
+
+type Person = Named & Aged
+
+// This should work - object has both properties
+const person: Person = {
+    name: "John",
+    age: 30
+}
+
+// Test access
+const personName: str = person.name
+const personAge: int = person.age

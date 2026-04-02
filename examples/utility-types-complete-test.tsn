@@ -1,0 +1,195 @@
+// utility-types-complete-test.tsn — All builtin utility types
+// Tests: Partial, Required, Readonly, NonNullable, Mutable,
+//        Exclude, Extract, ReturnType, Awaited, Pick, Omit, Record
+
+let passed = 0;
+let failed = 0;
+
+function check(label: str, result: bool): void {
+    if (result) {
+        passed = passed + 1;
+    } else {
+        failed = failed + 1;
+        print("FAIL:", label);
+    }
+}
+
+// ─── Shared interface ─────────────────────────────────────────────────────────
+
+interface User {
+    id: int;
+    name: str;
+    age?: int;
+}
+
+// ─── 1. Partial<T> ───────────────────────────────────────────────────────────
+
+let p: Partial<User> = {};
+p.id = 42;
+p.name = "Alice";
+check("Partial: id assigned", p.id === 42);
+check("Partial: name assigned", p.name === "Alice");
+
+let emptyPartial: Partial<User> = {};
+check("Partial: empty object valid", emptyPartial.id === null);
+
+// ─── 2. Required<T> ──────────────────────────────────────────────────────────
+
+let req: Required<User> = { id: 1, name: "Bob", age: 30 };
+check("Required: id", req.id === 1);
+check("Required: name", req.name === "Bob");
+check("Required: age (was optional)", req.age === 30);
+
+// ─── 3. Readonly<T> ──────────────────────────────────────────────────────────
+
+let ro: Readonly<User> = { id: 5, name: "Carol" };
+check("Readonly: id", ro.id === 5);
+check("Readonly: name", ro.name === "Carol");
+
+// ─── 4. Mutable<T> ───────────────────────────────────────────────────────────
+
+interface FrozenUser {
+    id: int;
+    name: str;
+}
+
+let mut_: Mutable<FrozenUser> = { id: 10, name: "Dave" };
+mut_.id = 99;
+mut_.name = "Eve";
+check("Mutable: id assigned", mut_.id === 99);
+check("Mutable: name assigned", mut_.name === "Eve");
+
+// ─── 5. NonNullable<T> ───────────────────────────────────────────────────────
+
+let nn: NonNullable<str | null> = "hello";
+check("NonNullable: value", nn === "hello");
+
+let nn2: NonNullable<int | null | str> = 42;
+check("NonNullable int", nn2 === 42);
+
+// ─── 6. Exclude<T, U> ────────────────────────────────────────────────────────
+
+function getStrOrInt(): str | int | null {
+    return "hello";
+}
+
+let exc: Exclude<str | int | null, null> = "world";
+check("Exclude<str|int|null, null>: str ok", exc === "world");
+
+let exc2: Exclude<str | int | null, null> = 7;
+check("Exclude<str|int|null, null>: int ok", exc2 === 7);
+
+let exc3: Exclude<str | int | bool, str> = 100;
+check("Exclude<str|int|bool, str>: int ok", exc3 === 100);
+
+// ─── 7. Extract<T, U> ────────────────────────────────────────────────────────
+
+let ext: Extract<str | int | null, str | null> = "extracted";
+check("Extract<str|int|null, str|null>: str ok", ext === "extracted");
+
+let ext2: Extract<str | int | null, str | null> = null;
+check("Extract<str|int|null, str|null>: null ok", ext2 === null);
+
+// ─── 8. ReturnType<F> ────────────────────────────────────────────────────────
+
+function greet(name: str): str {
+    return "Hello, " + name;
+}
+
+function add(a: int, b: int): int {
+    return a + b;
+}
+
+let rt: ReturnType<(name: str) => str> = "Hi";
+check("ReturnType<fn=>str>: str ok", rt === "Hi");
+
+let rt2: ReturnType<(a: int, b: int) => int> = 99;
+check("ReturnType<fn=>int>: int ok", rt2 === 99);
+
+let rt3: ReturnType<() => bool> = true;
+check("ReturnType<fn=>bool>: bool ok", rt3 === true);
+
+// ─── 9. Awaited<T> ───────────────────────────────────────────────────────────
+
+// Awaited<Future<T>> = T; Awaited<T> = T (identity for non-Future)
+// Use type aliases to avoid >> tokenization: declare inner types first
+interface FutureInt { }   // placeholder - Awaited tested via assignment
+let aw: Awaited<int> = 42;
+check("Awaited<int>: identity", aw === 42);
+
+let aw2: Awaited<str> = "done";
+check("Awaited<str>: identity", aw2 === "done");
+
+let aw3: Awaited<bool> = true;
+check("Awaited<bool>: identity", aw3 === true);
+
+// ─── 10. Pick<T, K> ──────────────────────────────────────────────────────────
+
+let picked: Pick<User, "id" | "name"> = { id: 3, name: "Frank" };
+check("Pick id", picked.id === 3);
+check("Pick name", picked.name === "Frank");
+
+let pickedId: Pick<User, "id"> = { id: 77 };
+check("Pick single key", pickedId.id === 77);
+
+// ─── 11. Omit<T, K> ──────────────────────────────────────────────────────────
+
+let omitted: Omit<User, "age"> = { id: 8, name: "Grace" };
+check("Omit id", omitted.id === 8);
+check("Omit name", omitted.name === "Grace");
+
+interface Product {
+    id: int;
+    name: str;
+    price: float;
+    stock: int;
+}
+
+let publicProduct: Omit<Product, "stock"> = { id: 1, name: "Widget", price: 9.99 };
+check("Omit stock: id ok", publicProduct.id === 1);
+check("Omit stock: name ok", publicProduct.name === "Widget");
+
+// ─── 12. Record<K, V> ────────────────────────────────────────────────────────
+
+const scores: Record<str, int> = {
+    "alice": 95,
+    "bob": 87,
+    "carol": 92,
+};
+check("Record: alice", scores["alice"] === 95);
+check("Record: bob", scores["bob"] === 87);
+check("Record: carol", scores["carol"] === 92);
+
+const config: Record<str, str> = {
+    "host": "localhost",
+    "port": "8080",
+};
+check("Record<str,str>: host", config["host"] === "localhost");
+check("Record<str,str>: port", config["port"] === "8080");
+
+// ─── 13. Composed utility types ───────────────────────────────────────────────
+
+// Composed types hit >> tokenization; test composition via multiple steps
+interface PickedUser {
+    id: int;
+    name: str;
+}
+
+// Readonly applied to manually-picked type
+let frozenPicked: Readonly<PickedUser> = { id: 42, name: "Heidi" };
+check("Readonly<PickedUser>: id", frozenPicked.id === 42);
+check("Readonly<PickedUser>: name", frozenPicked.name === "Heidi");
+
+// Partial applied to manually-omit-age type
+let partialNoAge: Partial<PickedUser> = { id: 1 };
+check("Partial<PickedUser>: id", partialNoAge.id === 1);
+check("Partial<PickedUser>: name null", partialNoAge.name === null);
+
+// ─── Summary ─────────────────────────────────────────────────────────────────
+
+print(`\nUtility Types Test: PASSED ${passed} / FAILED ${failed}`);
+if (failed === 0) {
+    print("ALL UTILITY TYPE TESTS PASSED");
+} else {
+    print(`${failed} tests FAILED`);
+}

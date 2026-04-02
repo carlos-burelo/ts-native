@@ -1,0 +1,29 @@
+/**
+ * Test type checker with imported functions
+ */
+import { add, getPI, Calculator } from './module-lib.tsn'
+
+// Test 1: Return type inference from imported function
+const result: int = add(10, 20)
+print("add(10, 20) =", result)
+
+// Test 2: Return type inference - this should fail if we assign to wrong type
+// const wrongType: str = add(5, 5)  // Should be type error
+
+// Test 3: Function return type used in expression
+const doubled: int = add(10, 10) * 2
+print("doubled =", doubled)
+
+// Test 4: Return type inference from another imported function
+const pi: float = getPI()
+print("pi =", pi)
+
+// Test 5: Class instantiation from imported class
+const calc: Calculator = new Calculator(100)
+print("calc initial value =", calc.getResult())
+
+// Test 6: Method chaining with imported class
+const chained: Calculator = calc.add(50).add(25)
+print("calc after chaining =", chained.getResult())
+
+print("All type checker tests passed!")

@@ -1,0 +1,14 @@
+// Simple test for ?? operator
+
+const value1: int? = null
+const value2: int? = 42
+
+// This should work: int? ?? int => int
+const result1: int = value1 ?? 0
+const result2: int = value2 ?? 100
+
+print("Test 1: ")
+print(result1)
+
+print("Test 2: ")
+print(result2)

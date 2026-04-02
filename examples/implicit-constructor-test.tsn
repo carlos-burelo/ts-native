@@ -1,0 +1,10 @@
+// Test implicit constructor without initializers
+
+class Test {
+  x: int
+}
+
+print("Class defined")
+let obj = new Test()
+print("Instance created")
+print("x = " + obj.x)

@@ -1,0 +1,11 @@
+function benchmark() {
+    print("Testing Integer Literal Optimization");
+    // This should use OP_ADD_I32
+    print("1 + 2 = " + (1 + 2)); 
+    
+    // This uses variables, so it still uses generic OP_ADD until Type Checker is integrated
+    let a = 10;
+    let b = 20;
+    print("a + b = " + (a + b));
+}
+benchmark();

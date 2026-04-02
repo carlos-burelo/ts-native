@@ -1,0 +1,11 @@
+/**
+ * Test 5: Throw en async
+ */
+async function test5(): void {
+    print("✅ TEST 5: Antes del throw")
+    throw Error("Error de prueba")
+    print("❌ NO DEBE VERSE: Después del throw")
+}
+
+test5()
+print("=".repeat(60))

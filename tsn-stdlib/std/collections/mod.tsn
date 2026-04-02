@@ -1,0 +1,59 @@
+// std:collections module
+
+export class List<T> {
+    private items: T[];
+
+    constructor(initial?: T[]) {
+        this.items = initial ?? [];
+    }
+
+    get length(): int { return this.items.length; }
+
+    add(item: T): void { this.items.push(item); }
+    push(item: T): void { this.items.push(item); }
+    pop(): T | null { return this.items.pop(); }
+    
+    get(index: int): T { return this.items[index]; }
+    set(index: int, val: T): void { this.items[index] = val; }
+
+    clear(): void { this.items = []; }
+    contains(item: T): bool { return this.items.indexOf(item) !== -1; }
+    
+    toArray(): T[] { return this.items; }
+}
+
+export class Stack<T> {
+    private items: T[] = [];
+    push(item: T): void { this.items.push(item); }
+    pop(): T | null { return this.items.pop(); }
+    peek(): T | null { return this.items[this.items.length - 1]; }
+    get size(): int { return this.items.length; }
+    get isEmpty(): bool { return this.items.length === 0; }
+}
+
+export class Queue<T> {
+    private items: T[] = [];
+    enqueue(item: T): void { this.items.push(item); }
+    dequeue(): T | null { return this.items.shift(); }
+    peek(): T | null { return this.items[0]; }
+    get size(): int { return this.items.length; }
+    get isEmpty(): bool { return this.items.length === 0; }
+}
+
+export class Range {
+    static from(start: int, end: int): dynamic {
+        return start..end
+    }
+    static fromInclusive(start: int, end: int): dynamic {
+        return start..=end
+    }
+}
+
+export function range(start: int, end: int, step?: int): int[] {
+    const res = [];
+    const s = step || 1;
+    for (let i = start; i < end; i += s) {
+        res.push(i);
+    }
+    return res;
+}

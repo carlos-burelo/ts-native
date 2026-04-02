@@ -1,0 +1,35 @@
+/**
+ * Module for namespace import testing
+ */
+
+export function getX(): int {
+    return 10
+}
+
+export function getY(): int {
+    return 20
+}
+
+export function getZ(): int {
+    return 30
+}
+
+export function sum(): int {
+    return 10 + 20 + 30
+}
+
+export function product(): int {
+    return 10 * 20 * 30
+}
+
+export class Container {
+    data: int
+
+    constructor(value: int) {
+        this.data = value
+    }
+
+    getData(): int {
+        return this.data
+    }
+}

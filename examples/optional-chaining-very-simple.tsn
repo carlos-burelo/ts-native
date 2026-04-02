@@ -1,0 +1,7 @@
+// Very simple test for optional chaining
+
+const x = { name: "test" }
+const y = x?.name
+
+print("Result:")
+print(y)

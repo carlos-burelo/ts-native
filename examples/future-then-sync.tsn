@@ -1,0 +1,21 @@
+// Test .then() con callbacks síncronos simples (no async)
+
+function testSyncThen(): void {
+    print("testSyncThen: start")
+    
+    const f1 = Future.value(10)
+    print("testSyncThen: got f1")
+    
+    // .then() con lambda síncrona
+    const f2 = f1.then((x: int) => {
+        print("  callback ejecutado con x=" + x.toString())
+        return x + 5
+    })
+    
+    print("testSyncThen: got f2")
+    print("testSyncThen: f2 is pending=" + (f2 == null).toString())
+}
+
+print("Running sync .then() test")
+testSyncThen()
+print("Test completed")

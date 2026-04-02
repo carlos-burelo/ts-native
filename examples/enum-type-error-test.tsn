@@ -1,0 +1,13 @@
+// Test that should FAIL - assigning raw number to enum
+
+enum Color {
+    Red = 0,
+    Green = 1,
+    Blue = 2
+}
+
+// This should be a type error
+const c: Color = 0
+
+print("If you see this, enum type safety is NOT working")
+print(c)

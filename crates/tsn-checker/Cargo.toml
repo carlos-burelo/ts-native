@@ -1,0 +1,10 @@
+[package]
+name = "tsn-checker"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tsn-core    = { path = "../tsn-core" }
+tsn-lexer   = { path = "../tsn-lexer" }
+tsn-parser  = { path = "../tsn-parser" }
+rustc-hash  = { workspace = true }

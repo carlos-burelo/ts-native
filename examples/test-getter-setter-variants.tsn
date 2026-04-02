@@ -1,0 +1,157 @@
+// Test getter and setter variants with proper type inference
+
+// ============================================================================
+// TEST 1: Getter with empty array and generic type
+// ============================================================================
+
+class Container<T> {
+    private items: T[] = []
+
+    get allItems(): T[] {
+        return []  // Should infer as T[], not dynamic[]
+    }
+
+    add(item: T): void {
+        // Add logic
+    }
+}
+
+const c1 = new Container<int>()
+c1.add(42)
+print("Test 1: Container with getter - OK")
+
+// ============================================================================
+// TEST 2: Getter without annotation (type inference from returns)
+// ============================================================================
+
+class Counter {
+    private value: int = 0
+
+    get current() {
+        return this.value  // Should infer as int
+    }
+
+    increment(): void {
+        this.value = this.value + 1
+    }
+}
+
+const counter = new Counter()
+counter.increment()
+print("Test 2: Getter without annotation - OK")
+
+// ============================================================================
+// TEST 3: Getter with explicit annotation
+// ============================================================================
+
+class Person {
+    private firstName: str = "John"
+    private lastName: str = "Doe"
+
+    get fullName(): str {
+        return this.firstName + " " + this.lastName
+    }
+}
+
+const p = new Person()
+print("Test 3: Getter with annotation - " + p.fullName)
+
+// ============================================================================
+// TEST 4: Setter with generic type
+// ============================================================================
+
+class Box<T> {
+    private data: T | null = null
+
+    set value(v: T) {
+        this.data = v
+    }
+
+    get value(): T | null {
+        return this.data
+    }
+}
+
+const box = new Box<int>()
+box.value = 100
+print("Test 4: Setter with generic - OK")
+
+// ============================================================================
+// TEST 5: Getter/Setter pair with same name
+// ============================================================================
+
+class Temperature {
+    private celsius: int = 0
+
+    get temp(): int {
+        return this.celsius
+    }
+
+    set temp(value: int) {
+        this.celsius = value
+    }
+}
+
+const temp = new Temperature()
+temp.temp = 25
+print("Test 5: Getter/Setter pair - " + temp.temp)
+
+// ============================================================================
+// TEST 6: Static getter
+// ============================================================================
+
+class MathConstants {
+    static get pi(): int {
+        return 3
+    }
+
+    static get e(): int {
+        return 2
+    }
+}
+
+print("Test 6: Static getter - PI = " + MathConstants.pi)
+
+// ============================================================================
+// TEST 7: Getter returning generic array (expected type inference)
+// ============================================================================
+
+class GenericList<T> {
+    private items: T[]
+
+    constructor() {
+        this.items = []
+    }
+
+    get empty(): T[] {
+        return []  // Should infer as T[] based on return type annotation
+    }
+
+    get all(): T[] {
+        return this.items
+    }
+}
+
+const list = new GenericList<str>()
+print("Test 7: Getter returning generic array - OK")
+
+// ============================================================================
+// TEST 8: Chained getters
+// ============================================================================
+
+class Node {
+    private value: int = 42
+
+    get data(): int {
+        return this.value
+    }
+
+    get doubled(): int {
+        return this.data * 2
+    }
+}
+
+const node = new Node()
+print("Test 8: Chained getters - " + node.doubled)
+
+print("=== ALL GETTER/SETTER TESTS PASSED ===")

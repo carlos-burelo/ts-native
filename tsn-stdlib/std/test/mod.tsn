@@ -1,0 +1,27 @@
+// std:test module
+
+export function assert(condition: bool, message?: str): void {
+    if (!condition) {
+        throw new Error(message || "Assertion failed");
+    }
+}
+
+export function assertEqual(actual: dynamic, expected: dynamic, message?: str): void {
+    if (actual !== expected) {
+        throw new Error(message || "Expected " + expected + ", but got " + actual);
+    }
+}
+
+export function assertNotEqual(actual: dynamic, expected: dynamic, message?: str): void {
+    if (actual === expected) {
+        throw new Error(message || "Expected " + actual + " NOT to equal " + expected);
+    }
+}
+
+export function fail(message?: str): void {
+    throw new Error(message || "Test failed explicitly");
+}
+
+export function ok(condition: bool, message?: str): void {
+    assert(condition, message);
+}

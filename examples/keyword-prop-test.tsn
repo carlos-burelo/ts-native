@@ -1,0 +1,44 @@
+
+import { fetch } from "std:http";
+
+namespace TestNS {
+    export function get(): str {
+        return "got it";
+    }
+}
+
+const
+
+
+// Test keywords as property names
+print(TestNS.get()); // Using 'get' which is a keyword
+
+class MyClass {
+    async: bool = true;
+    
+    set(val: bool) {
+        this.async = val;
+    }
+}
+
+let c = new MyClass();
+c.set(false);
+print(c.async);
+
+// Test stdlib HTTP which uses 'get'
+import { HTTP } from "std:http";
+// HTTP.get is a keyword 'get'
+// HTTP.post is NOT a keyword (usually)
+print("HTTP test...");
+// This should work if the parser and checker are fine
+// The LSP bug is what we are specifically looking at
+const a = {
+    b: {
+        c: {
+            d: 1
+        }
+    }
+}
+
+
+a.b.c.d 

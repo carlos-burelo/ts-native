@@ -1,0 +1,7 @@
+/**
+ * Test type checker errors with imported functions
+ */
+import { add } from './module-lib.tsn'
+
+// This should cause a type error: add returns int, not str
+const wrongType: str = add(5, 5)

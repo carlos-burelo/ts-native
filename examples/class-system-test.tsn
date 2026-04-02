@@ -1,0 +1,535 @@
+/**
+ * ╔══════════════════════════════════════════════════════════════╗
+ * ║  CLASS SYSTEM STRESS TEST                                    ║
+ * ║  Getters · Setters · Inheritance · Abstract · Override       ║
+ * ╚══════════════════════════════════════════════════════════════╝
+ */
+
+print("╔══════════════════════════════════════════════════════════════╗")
+print("║              CLASS SYSTEM STRESS TEST                        ║")
+print("╚══════════════════════════════════════════════════════════════╝\n")
+
+let passed = 0
+let total = 0
+
+function test(name: str, result: bool): void {
+    total = total + 1
+    if (result) {
+        passed = passed + 1
+        print("✓ " + name)
+    } else {
+        print("✗ FAIL: " + name)
+    }
+}
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 1: BASIC GETTERS & SETTERS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 1: BASIC GETTERS & SETTERS")
+
+class Temperature {
+    private _celsius: float
+
+    constructor(celsius: float) {
+        this._celsius = celsius
+    }
+
+    get celsius(): float {
+        return this._celsius
+    }
+
+    set celsius(value: float) {
+        this._celsius = value
+    }
+
+    get fahrenheit(): float {
+        return this._celsius * 9.0 / 5.0 + 32.0
+    }
+
+    set fahrenheit(value: float) {
+        this._celsius = (value - 32.0) * 5.0 / 9.0
+    }
+}
+
+const temp = new Temperature(0.0)
+test("getter celsius returns initial value", temp.celsius === 0.0)
+test("getter fahrenheit converts correctly", temp.fahrenheit === 32.0)
+
+temp.celsius = 100.0
+test("setter celsius updates value", temp.celsius === 100.0)
+test("getter fahrenheit after celsius set", temp.fahrenheit === 212.0)
+
+temp.fahrenheit = 32.0
+test("setter fahrenheit converts back to celsius", temp.celsius === 0.0)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 2: STATIC GETTERS & SETTERS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 2: STATIC GETTERS & SETTERS")
+
+class Config {
+    private static _debug: bool = false
+    private static _maxRetries: int = 3
+
+    static get debug(): bool {
+        return Config._debug
+    }
+
+    static set debug(value: bool) {
+        Config._debug = value
+    }
+
+    static get maxRetries(): int {
+        return Config._maxRetries
+    }
+
+    static set maxRetries(value: int) {
+        if (value > 0) {
+            Config._maxRetries = value
+        }
+    }
+}
+
+test("static getter initial value", Config.debug === false)
+test("static getter maxRetries initial", Config.maxRetries === 3)
+
+Config.debug = true
+test("static setter updates value", Config.debug === true)
+
+Config.maxRetries = 10
+test("static setter updates maxRetries", Config.maxRetries === 10)
+
+Config.maxRetries = -1
+test("static setter guards invalid value", Config.maxRetries === 10)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 3: GETTER/SETTER INHERITANCE (DYNAMIC CHAIN LOOKUP)
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 3: GETTER/SETTER INHERITANCE")
+
+class Shape {
+    protected _color: str = "white"
+
+    get color(): str {
+        return this._color
+    }
+
+    set color(value: str) {
+        this._color = value
+    }
+
+    get description(): str {
+        return "Shape(" + this._color + ")"
+    }
+}
+
+class Circle extends Shape {
+    private _radius: float
+
+    constructor(radius: float) {
+        super()
+        this._radius = radius
+    }
+
+    get radius(): float {
+        return this._radius
+    }
+
+    set radius(value: float) {
+        this._radius = value
+    }
+
+    // Override description getter
+    get description(): str {
+        return "Circle(r=" + this._radius.toString() + ", " + this._color + ")"
+    }
+}
+
+class ColoredCircle extends Circle {
+    constructor(radius: float, color: str) {
+        super(radius)
+        this._color = color
+    }
+}
+
+const circle = new Circle(5.0)
+test("inherited getter color", circle.color === "white")
+test("own getter radius", circle.radius === 5.0)
+test("overridden getter description", circle.description === "Circle(r=5, white)")
+
+circle.color = "red"
+test("inherited setter color", circle.color === "red")
+
+circle.radius = 10.0
+test("own setter radius", circle.radius === 10.0)
+
+const cc = new ColoredCircle(3.0, "blue")
+test("deep-inherited getter color (2 levels)", cc.color === "blue")
+test("deep-inherited getter radius (1 level)", cc.radius === 3.0)
+
+cc.color = "green"
+test("deep-inherited setter color", cc.color === "green")
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 4: CONSTRUCTOR RETURN VALUE SEMANTICS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 4: CONSTRUCTOR RETURN VALUE")
+
+class Box {
+    value: int
+
+    constructor(v: int) {
+        this.value = v
+    }
+}
+
+const box = new Box(42)
+test("constructor initialises field via this", box.value === 42)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 5: FOR-IN ITERATES CLASS FIELDS (OpObjectKeys)
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 5: FOR-IN ON CLASS INSTANCES")
+
+class Point {
+    x: int
+    y: int
+
+    constructor(x: int, y: int) {
+        this.x = x
+        this.y = y
+    }
+}
+
+const pt = new Point(1, 2)
+let foundX = false
+let foundY = false
+let keyCount = 0
+for (const k in pt) {
+    keyCount = keyCount + 1
+    if (k === "x") { foundX = true }
+    if (k === "y") { foundY = true }
+}
+test("for-in finds field x on class instance", foundX)
+test("for-in finds field y on class instance", foundY)
+test("for-in yields exactly 2 keys", keyCount === 2)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 6: ABSTRACT CLASSES (RUNTIME — INSTANTIATION BLOCKED)
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 6: ABSTRACT CLASSES (RUNTIME)")
+
+abstract class Animal {
+    name: str
+
+    constructor(name: str) {
+        this.name = name
+    }
+
+    abstract speak(): str
+
+    greet(): str {
+        return "I am " + this.name + " and I say: " + this.speak()
+    }
+}
+
+class Dog extends Animal {
+    constructor(name: str) {
+        super(name)
+    }
+
+    override speak(): str {
+        return "Woof!"
+    }
+}
+
+class Cat extends Animal {
+    constructor(name: str) {
+        super(name)
+    }
+
+    override speak(): str {
+        return "Meow!"
+    }
+}
+
+const dog = new Dog("Rex")
+const cat = new Cat("Whiskers")
+
+test("concrete subclass instantiated", dog.name === "Rex")
+test("abstract method overridden in Dog", dog.speak() === "Woof!")
+test("abstract method overridden in Cat", cat.speak() === "Meow!")
+test("inherited concrete method uses overridden abstract", dog.greet() === "I am Rex and I say: Woof!")
+test("inherited concrete method uses overridden abstract (Cat)", cat.greet() === "I am Whiskers and I say: Meow!")
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 7: OVERRIDE MODIFIER
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 7: OVERRIDE MODIFIER")
+
+class Vehicle {
+    protected _speed: int
+
+    constructor() {
+        this._speed = 0
+    }
+
+    get speed(): int {
+        return this._speed
+    }
+
+    accelerate(amount: int): void {
+        this._speed = this._speed + amount
+    }
+
+    describe(): str {
+        return "Vehicle at speed " + this._speed.toString()
+    }
+}
+
+class Car extends Vehicle {
+    private _gear: int
+
+    constructor() {
+        super()
+        this._gear = 1
+    }
+
+    override accelerate(amount: int): void {
+        this._speed = this._speed + amount * 2
+    }
+
+    override describe(): str {
+        return "Car at speed " + this._speed.toString() + " in gear " + this._gear.toString()
+    }
+}
+
+const car = new Car()
+car.accelerate(10)
+test("override accelerate multiplies by 2", car.speed === 20)
+test("override describe uses Car impl", car.describe() === "Car at speed 20 in gear 1")
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 8: READONLY FIELDS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 8: READONLY FIELDS")
+
+class Immutable {
+    readonly id: int
+    mutable: str
+
+    constructor(id: int) {
+        this.id = id
+        this.mutable = "initial"
+    }
+}
+
+const imm = new Immutable(99)
+test("readonly field readable", imm.id === 99)
+test("mutable field readable", imm.mutable === "initial")
+
+imm.mutable = "changed"
+test("mutable field writeable", imm.mutable === "changed")
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 9: GETTER COMPUTED FROM MULTIPLE FIELDS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 9: COMPUTED GETTERS")
+
+class Rectangle {
+    width: float
+    height: float
+
+    constructor(w: float, h: float) {
+        this.width = w
+        this.height = h
+    }
+
+    get area(): float {
+        return this.width * this.height
+    }
+
+    get perimeter(): float {
+        return 2.0 * (this.width + this.height)
+    }
+
+    get isSquare(): bool {
+        return this.width === this.height
+    }
+}
+
+const rect = new Rectangle(4.0, 5.0)
+test("computed getter area", rect.area === 20.0)
+test("computed getter perimeter", rect.perimeter === 18.0)
+test("computed getter isSquare false", rect.isSquare === false)
+
+rect.width = 5.0
+test("getter recomputes after field change", rect.area === 25.0)
+test("computed getter isSquare true after change", rect.isSquare === true)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 10: GETTER/SETTER WITH VALIDATION & SIDE EFFECTS
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 10: GETTER/SETTER VALIDATION")
+
+class BoundedCounter {
+    private _value: int
+    private _min: int
+    private _max: int
+    private _clampCount: int
+
+    constructor(initial: int, min: int, max: int) {
+        this._min = min
+        this._max = max
+        this._value = initial
+        this._clampCount = 0
+    }
+
+    get value(): int {
+        return this._value
+    }
+
+    set value(v: int) {
+        if (v < this._min) {
+            this._value = this._min
+            this._clampCount = this._clampCount + 1
+        } else if (v > this._max) {
+            this._value = this._max
+            this._clampCount = this._clampCount + 1
+        } else {
+            this._value = v
+        }
+    }
+
+    get clampCount(): int {
+        return this._clampCount
+    }
+}
+
+const counter = new BoundedCounter(5, 0, 10)
+test("getter returns initial value", counter.value === 5)
+
+counter.value = 7
+test("setter accepts valid value", counter.value === 7)
+
+counter.value = 15
+test("setter clamps to max", counter.value === 10)
+
+counter.value = -3
+test("setter clamps to min", counter.value === 0)
+
+counter.value = 5
+test("clampCount tracks side effects", counter.clampCount === 2)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 11: CLASS HIERARCHY WITH MIXED FEATURES
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 11: FULL CLASS HIERARCHY")
+
+abstract class Entity {
+    protected _id: int
+    private static _nextId: int = 1
+
+    constructor() {
+        this._id = Entity._nextId
+        Entity._nextId = Entity._nextId + 1
+    }
+
+    get id(): int {
+        return this._id
+    }
+
+    static get nextId(): int {
+        return Entity._nextId
+    }
+
+    abstract toStr(): str
+}
+
+class NamedEntity extends Entity {
+    protected _name: str
+
+    constructor(name: str) {
+        super()
+        this._name = name
+    }
+
+    get name(): str {
+        return this._name
+    }
+
+    override toStr(): str {
+        return "#" + this._id.toString() + ":" + this._name
+    }
+}
+
+class TaggedEntity extends NamedEntity {
+    private _tag: str
+
+    constructor(name: str, tag: str) {
+        super(name)
+        this._tag = tag
+    }
+
+    get tag(): str {
+        return this._tag
+    }
+
+    override toStr(): str {
+        return "#" + this._id.toString() + ":" + this._name + "[" + this._tag + "]"
+    }
+}
+
+const e1 = new NamedEntity("Alice")
+const e2 = new TaggedEntity("Bob", "admin")
+const e3 = new NamedEntity("Carol")
+
+test("entity id auto-increments (e1=1)", e1.id === 1)
+test("entity id auto-increments (e2=2)", e2.id === 2)
+test("entity id auto-increments (e3=3)", e3.id === 3)
+test("static getter nextId", Entity.nextId === 4)
+test("NamedEntity getter name", e1.name === "Alice")
+test("TaggedEntity inherited getter name", e2.name === "Bob")
+test("TaggedEntity own getter tag", e2.tag === "admin")
+test("NamedEntity override toStr", e1.toStr() === "#1:Alice")
+test("TaggedEntity override toStr", e2.toStr() === "#2:Bob[admin]")
+test("deep-inherited getter id (TaggedEntity)", e2.id === 2)
+
+// ══════════════════════════════════════════════════════════════
+// SECTION 12: OBJECT SPREAD WITH CLASS INSTANCES
+// ══════════════════════════════════════════════════════════════
+print("\n█ SECTION 12: OBJECT SPREAD")
+
+class Vec2 {
+    x: float
+    y: float
+
+    constructor(x: float, y: float) {
+        this.x = x
+        this.y = y
+    }
+}
+
+const v = new Vec2(3.0, 4.0)
+const plain = { ...v, z: 0.0 }
+test("spread class instance into object copies x", plain.x === 3.0)
+test("spread class instance into object copies y", plain.y === 4.0)
+test("spread adds extra key z", plain.z === 0.0)
+
+// ══════════════════════════════════════════════════════════════
+// RESULTS
+// ══════════════════════════════════════════════════════════════
+print("\n╔══════════════════════════════════════════════════════════════╗")
+print("║                        RESULTS                               ║")
+print("╚══════════════════════════════════════════════════════════════╝")
+print("")
+print("Total:  " + total.toString())
+print("Passed: " + passed.toString())
+print("Failed: " + (total - passed).toString())
+print("")
+
+if (passed === total) {
+    print("✓✓✓ ALL TESTS PASSED ✓✓✓")
+} else {
+    print("✗ " + (total - passed).toString() + " TEST(S) FAILED")
+}

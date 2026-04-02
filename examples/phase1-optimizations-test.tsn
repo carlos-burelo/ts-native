@@ -1,0 +1,117 @@
+/**
+ * Phase 1 Optimizations Test Suite
+ *
+ * This file tests all Phase 1 optimizations to ensure they work correctly.
+ */
+
+import { JSON } from "std:json"
+
+// ============================================================================
+// STRING OPERATIONS TESTS
+// ============================================================================
+
+// Test 1: String concatenation with template literals
+let name: str = "Alice"
+let age: int = 30
+let greeting: str = `Hello ${name}, you are ${age} years old!`
+print(greeting)
+
+// Test 2: Multiple string concatenations
+let str1: str = "Hello"
+let str2: str = " "
+let str3: str = "World"
+let str4: str = "!"
+let combined: str = str1 + str2 + str3 + str4
+print(combined)
+
+// Test 3: String length property
+let message: str = "TypeScript Native"
+let len: int = message.length
+print(`Message length: ${len}`)
+
+// ============================================================================
+// ARRAY OPERATIONS TESTS
+// ============================================================================
+
+// Test 4: Array length property
+let numbers: int[] = [1, 2, 3, 4, 5]
+let count: int = numbers.length
+print(`Array length: ${count}`)
+
+// Test 5: Array push method (single item)
+let items: str[] = ["apple", "banana"]
+items.push("orange")
+print(`Items after push: ${JSON.stringify(items)}`)
+
+// Test 6: Array pop method
+let stack: int[] = [10, 20, 30]
+let popped: int = stack.pop()
+print(`Popped value: ${popped}`)
+print(`Remaining stack: ${JSON.stringify(stack)}`)
+
+// ============================================================================
+// TYPE GUARD TESTS
+// ============================================================================
+
+// Test 7: null check optimization
+let value: str? = null
+if (value === null) {
+    print("Value is null (optimized check)")
+}
+
+let value2: str? = "test"
+if (value2 !== null) {
+    print("Value is not null (optimized check)")
+}
+
+// Test 8: Array.isArray check
+let arr: int[] = [1, 2, 3]
+let notArr: str = "hello"
+
+
+// Test 9: typeof operator
+let num: int = 42
+let str: str = "hello"
+let bool: bool = true
+
+print(`typeof num: ${typeof num}`)
+print(`typeof str: ${typeof str}`)
+print(`typeof bool: ${typeof bool}`)
+
+// ============================================================================
+// COMPREHENSIVE TEST: All optimizations together
+// ============================================================================
+
+class Person {
+    name: str
+    age: int
+
+    constructor(name: str, age: int) {
+        this.name = name
+        this.age = age
+    }
+
+    greet(): str {
+        return `Hello, I'm ${this.name} and I'm ${this.age} years old`
+    }
+}
+
+let people: Person[] = []
+people.push(new Person("Alice", 30))
+people.push(new Person("Bob", 25))
+people.push(new Person("Charlie", 35))
+
+print(`Total people: ${people.length}`)
+
+for (let i: int = 0; i < people.length; i = i + 1) {
+    let person: Person = people[i]
+    print(person.greet())
+}
+
+// Test instanceof with optimization
+let alice: Person = people[0]
+if (alice instanceof Person) {
+    print("alice is an instance of Person (optimized)")
+}
+
+print("All Phase 1 optimization tests completed successfully!")

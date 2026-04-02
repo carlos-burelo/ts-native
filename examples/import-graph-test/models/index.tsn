@@ -1,0 +1,8 @@
+// models/index.tsn — Barrel: re-exports all model modules as namespaces
+
+export * as user    from './user.tsn';
+export * as product from './product.tsn';
+
+// Also re-export version constants directly for convenience
+export { USER_VERSION }    from './user.tsn';
+export { PRODUCT_VERSION } from './product.tsn';

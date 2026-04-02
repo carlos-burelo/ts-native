@@ -1,0 +1,24 @@
+// std:json — JSON parsing and serialization
+
+/**
+ * Represents any value that can be expressed in JSON:
+ * a primitive (int, float, str, bool, null) or a nested
+ * array / object whose values are also Json.
+ */
+export type Json = dynamic
+
+export namespace JSON {
+    /**
+     * Parses a JSON str into a Json value.
+     */
+    export function parse(text: str): Json {
+        return __json_parse(text)
+    }
+
+    /**
+     * Serializes a Json value into a JSON str.
+     */
+    export function stringify(value: Json, space?: int): str {
+        return __json_stringify(value, space === null ? 0 : space)
+    }
+}

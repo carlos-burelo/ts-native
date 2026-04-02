@@ -1,0 +1,12 @@
+// Test generic array syntax
+
+class Container<T> {
+    private items: T[] = []
+
+    add(item: T): void {
+        // Would add item
+    }
+}
+
+const c = new Container<int>()
+print("Container created")

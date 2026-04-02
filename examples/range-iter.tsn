@@ -1,0 +1,13 @@
+// Test getting iterator
+const r = 0..3
+print("Range:")
+print(r)
+const iter = r.getIterator()
+print("Iterator:")
+print(iter)
+print("Has next?")
+print(iter.hasNext())
+print("Calling next():")
+const val = iter.next()
+print("Value:")
+print(val)

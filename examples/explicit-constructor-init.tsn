@@ -1,0 +1,14 @@
+// Test explicit constructor with field initializer
+
+class Test {
+  x: int = 42
+  
+  constructor() {
+    print("Constructor running")
+  }
+}
+
+print("Class defined")
+let obj = new Test()
+print("Instance created")
+print("x = " + obj.x)

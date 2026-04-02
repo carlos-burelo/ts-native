@@ -1,0 +1,17 @@
+import { writeln } from "std:io"
+import { exists, readFile } from "std:fs"
+import { platform, cwd } from "std:sys"
+
+writeln("--- TSN New STDLIB Test ---")
+writeln("Platform: ", platform())
+writeln("CWD: ", cwd())
+
+const readmeExists = exists("README.md")
+writeln("README.md exists? ", readmeExists)
+
+if (readmeExists) {
+    const content = readFile("README.md")
+    writeln("README length: ", content.length)
+}
+
+writeln("Test passed! 🚀")

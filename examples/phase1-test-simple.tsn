@@ -1,0 +1,70 @@
+/**
+ * Phase 1 Optimizations Simple Test
+ * Tests basic optimizations without imports
+ */
+
+print("=== Phase 1 Optimizations Test ===")
+print("")
+
+// Test 1: Template literal (uses OP_STR_CONCAT)
+print("Test 1: Template Literal Optimization")
+let name: str = "Alice"
+let age: int = 30
+print(`Hello ${name}, you are ${age} years old!`)
+print("")
+
+// Test 2: String concatenation (uses OP_STR_CONCAT for 3+ strings)
+print("Test 2: Multiple String Concatenation")
+let part1: str = "Hello"
+let part2: str = " "
+let part3: str = "World"
+let combined: str = part1 + part2 + part3
+print(combined)
+print("")
+
+// Test 3: String length (uses OP_STR_LENGTH)
+print("Test 3: String Length")
+let message: str = "TypeScript Native"
+let len: int = message.length
+print(`Length of "${message}" is ${len}`)
+print("")
+
+// Test 4: Array length (uses OP_ARRAY_LENGTH)
+print("Test 4: Array Length")
+let numbers: int[] = [1, 2, 3, 4, 5]
+let count: int = numbers.length
+print(`Array has ${count} elements`)
+print("")
+
+// Test 5: Null check (uses OP_IS_NULL)
+print("Test 5: Null Check Optimization")
+let value1: str | null = null
+if (value1 === null) {
+    print("value1 is null - optimized check worked!")
+}
+
+let value2: str | null = "test"
+if (value2 !== null) {
+    print("value2 is not null - optimized check worked!")
+}
+print("")
+
+// Test 6: typeof operator (uses OP_TYPEOF)
+print("Test 6: Typeof Operator")
+let num: int = 42
+let text: str = "hello"
+let flag: bool = true
+print(`typeof 42 = ${typeof num}`)
+print(`typeof "hello" = ${typeof text}`)
+print(`typeof true = ${typeof flag}`)
+print("")
+
+// Test 7: Combined test
+print("Test 7: Combined Optimizations")
+for (let i: int = 0; i < 3; i = i + 1) {
+    let itemText: str = `Item ${i}`
+    print(itemText)
+}
+print("")
+
+print("All tests completed successfully!")

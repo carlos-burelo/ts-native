@@ -1,0 +1,76 @@
+// std:path — Path manipulation module
+
+/**
+ * Normalizes the given path, resolving '..' and '.' segments.
+ */
+export namespace Path {
+    export const sep = "/";
+    export const delimiter = ":";
+
+    /**
+     * Normalizes the given path, resolving '..' and '.' segments.
+     */
+    export function normalize(path: str): str {
+        let p = __path_normalize(path);
+        while (p.includes("\\")) p = p.replace("\\", "/");
+        return p;
+    }
+
+    /**
+     * Joins all given path segments together using the platform-specific separator.
+     */
+    export function join(...segments: str[]): str {
+        let res = "";
+        for (let i = 0; i < segments.length; i++) {
+            if (i > 0) res += "/";
+            res += segments[i];
+        }
+        return normalize(res);
+    }
+
+    /**
+     * Returns the directory name of a path.
+     */
+    export function dirname(path: str): str {
+        const parts = normalize(path).split("/");
+        if (parts.length <= 1) return ".";
+        parts.pop();
+        return parts.join("/");
+    }
+
+    /**
+     * Returns the last portion of a path.
+     */
+    export function basename(path: str, ext?: str): str {
+        const parts = normalize(path).split("/");
+        let base = parts[parts.length - 1];
+        if (base === null) {
+            base = ""
+        };
+
+        if (ext !== null && base.endsWith(ext)) {
+            base = base.substring(0, base.length - ext.length);
+        }
+        return base;
+    }
+
+    /**
+     * Returns the extension of the path.
+     */
+    export function extname(path: str): str {
+        const base = basename(path);
+        const idx = base.lastIndexOf(".");
+        if (idx <= 0) return "";
+        return base.substring(idx);
+    }
+
+    /**
+     * Returns true if the path is absolute.
+     */
+    export function isAbsolute(path: str): bool {
+        if (path.length === 0) return false;
+        if (path[0] === "/") return true;
+        if (path.length >= 2 && path[1] === ":" && path[0].toLowerCase() >= "a" && path[0].toLowerCase() <= "z") return true;
+        return false;
+    }
+}

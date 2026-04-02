@@ -1,0 +1,31 @@
+/**
+ * Module with default export
+ */
+
+// Default export - class
+export default class User {
+    name: str
+    age: int
+
+    constructor(name: str, age: int) {
+        this.name = name
+        this.age = age
+    }
+
+    greet(): str {
+        return "Hello, I am " + this.name
+    }
+
+    isAdult(): bool {
+        return this.age >= 18
+    }
+}
+
+// Can also have named exports alongside default
+export function getDefaultAge(): int {
+    return 18
+}
+
+export function createGuest(): str {
+    return "Guest"
+}

@@ -1,0 +1,61 @@
+// examples/export-type-test.tsn
+import { testFunc, TestClass, TEST_CONST, testLet, TestNS, exportedVar, Math } from './test-mod.tsn';
+
+print("Testing Exported Function...");
+if (testFunc(21) === 42) {
+    print("  ✓ testFunc works");
+} else {
+    print("  ✗ testFunc failed");
+}
+
+print("Testing Exported Class...");
+const instance = new TestClass("hello");
+if (instance.getValue() === "hello") {
+    print("  ✓ TestClass works");
+} else {
+    print("  ✗ TestClass failed");
+}
+
+print("Testing Exported Const...");
+if (TEST_CONST === 123) {
+    print("  ✓ TEST_CONST works");
+} else {
+    print("  ✗ TEST_CONST failed");
+}
+
+print("Testing Exported Let...");
+if (testLet === "initial") {
+    print("  ✓ testLet initial works");
+}
+testLet = "changed";
+if (testLet === "changed") {
+    print("  ✓ testLet reassignment works");
+}
+
+print("Testing Exported Namespace...");
+if (TestNS.FOO === "bar") {
+    print("  ✓ TestNS.FOO works");
+}
+if (TestNS.bar() === "foo") {
+    print("  ✓ TestNS.bar() works");
+}
+const inner = new TestNS.Inner(100);
+if (inner.x === 100) {
+    print("  ✓ TestNS.Inner works");
+}
+
+print("Testing Named Export (export { x as y })...");
+if (exportedVar === "secret") {
+    print("  ✓ Named export works");
+} else {
+    print("  ✗ Named export failed");
+}
+
+print("Testing Star Export (export * from 'std:math')...");
+if (Math.abs(-10) === 10) {
+    print("  ✓ Star export through Math namespace works");
+} else {
+    print("  ✗ Star export failed");
+}
+
+print("Done.");

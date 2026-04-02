@@ -1,0 +1,52 @@
+import { console } from "std:console";
+
+// ── GAP 1: Explicit type args in generic function calls ───────────────────────
+function identity<T>(x: T): T { return x; }
+
+const n: int = identity<int>(42);
+const s: str = identity<str>("hello");
+print("identity<int>(42) =", n);
+print("identity<str>('hello') =", s);
+
+// ── GAP 2: Type inference from arguments ─────────────────────────────────────
+const n2 = identity(99);
+const s2 = identity("world");
+print("identity(99) =", n2);
+print("identity('world') =", s2);
+
+// ── GAP 3: Member access on generic interface ─────────────────────────────────
+interface Box<T> { value: T; }
+
+function unbox<T>(b: Box<T>): T { return b.value; }
+
+const intBox: Box<int> = { value: 42 };
+const strBox: Box<str> = { value: "hi" };
+const unboxed: int = unbox<int>(intBox);
+const unboxedStr: str = unbox<str>(strBox);
+print("unbox<int>({ value: 42 }) =", unboxed);
+print("unbox<str>({ value: 'hi' }) =", unboxedStr);
+
+// ── GAP 3b: Nested generic member access ─────────────────────────────────────
+interface Pair<A, B> {
+  first: A;
+  second: B;
+}
+
+const p: Pair<int, str> = { first: 1, second: "one" };
+const pFirst: int = p.first;
+const pSecond: str = p.second;
+print("pair.first =", pFirst, "pair.second =", pSecond);
+
+// ── GAP 5: Generic class inheritance ─────────────────────────────────────────
+class Container<T> {
+  item: T;
+}
+
+class IntContainer extends Container<int> {}
+
+const ic = new IntContainer();
+print("IntContainer inherits from Container<int>: OK");
+
+// ── Stdlib generic usage (existing) ──────────────────────────────────────────
+const arr: int[] = [1, 2, 3];
+print("arr.length =", arr.length);

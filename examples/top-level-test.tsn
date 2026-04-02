@@ -1,0 +1,20 @@
+// Test top-level code execution (no main function required)
+print("Top-level code works!")
+
+let x: int = 42
+print(x)
+
+class Person {
+	name: str
+	age: int
+	
+	constructor(name: str, age: int) {
+		this.name = name
+		this.age = age
+	}
+}
+
+let p = new Person("Alice", 30)
+
+print(p.name)
+print(p.age)

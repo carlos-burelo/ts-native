@@ -1,0 +1,123 @@
+// shorthand-test.tsn — test object/destructuring shorthands
+
+// ─── 1. Shorthand properties: { x } → { x: x } ────────────────────────────
+print("=== 1. Shorthand properties ===");
+const x = 10;
+const y = 20;
+const obj1 = { x, y };
+print(obj1.x, obj1.y);           // 10 20
+
+const name = "Alice";
+const age = 30;
+const person = { name, age };
+print(person.name, person.age);  // Alice 30
+
+
+// ─── 2. Mixed shorthand + regular ─────────────────────────────────────────
+print("=== 2. Mixed shorthand + regular ===");
+const z = 99;
+const obj2 = { x, y, z: 42, label: "hi" };
+print(obj2.x, obj2.y, obj2.z, obj2.label);  // 10 20 42 hi
+
+
+// ─── 3. Computed property names: { [expr]: value } ─────────────────────────
+print("=== 3. Computed property names ===");
+const key1 = "foo";
+const key2 = "bar";
+const obj3 = { [key1]: 1, [key2]: 2 };
+print(obj3.foo, obj3.bar);       // 1 2
+
+const prefix = "item";
+const obj4 = { [`${prefix}0`]: "found" };
+print(obj4.item0);               // found
+
+
+// ─── 4. Method shorthand: { greet() { ... } } ──────────────────────────────
+print("=== 4. Method shorthand ===");
+const obj5 = {
+    greet() { return "hello"; },
+    double(n) { return n * 2; },
+};
+print(obj5.greet());             // hello
+print(obj5.double(7));           // 14
+
+
+// ─── 5. Method shorthand accessing outer scope ──────────────────────────────
+print("=== 5. Method accessing outer scope ===");
+const base = 100;
+const obj6 = {
+    add(n) { return base + n; },
+};
+print(obj6.add(5));              // 105
+
+
+// ─── 6. Method shorthand with `this` ─────────────────────────────────────
+print("=== 6. Method with this ===");
+const width = 8;
+const height = 5;
+const rect = {
+    width,
+    height,
+    area() { return this.width * this.height; },
+};
+print(rect.width, rect.height);  // 8 5
+print(rect.area());              // 40
+
+
+// ─── 7. Shorthand destructuring ──────────────────────────────────────────
+print("=== 7. Shorthand destructuring ===");
+const point = { x: 3, y: 7 };
+const { x: px, y: py } = point;
+print(px, py);                   // 3 7
+
+
+// ─── 8. Spread in object literal ────────────────────────────────────────────
+print("=== 8. Spread in object literal ===");
+const base_obj = { a: 1, b: 2 };
+const extended = { ...base_obj, c: 3 };
+print(extended.a, extended.b, extended.c);  // 1 2 3
+
+
+// ─── 9. Dynamic computed keys ─────────────────────────────────────────────
+print("=== 9. Dynamic computed keys ===");
+function makeKey(s: str): str { return `__${s}__`; }
+const obj7 = { [makeKey("id")]: 42 };
+print(obj7.__id__);              // 42
+
+
+// ─── 10. Async method shorthand ─────────────────────────────────────────────
+print("=== 10. Async method shorthand ===");
+const obj8 = {
+    async fetchValue() { return 99; },
+};
+const fut = obj8.fetchValue();
+// fut is a Future — just verify we get a non-null value
+print(fut !== null);             // true
+
+
+// ─── 11. Method with multiple params ─────────────────────────────────────
+print("=== 11. Method with multiple params ===");
+const math = {
+    add(a, b) { return a + b; },
+    clamp(lo, hi, v) {
+        if (v < lo) return lo;
+        if (v > hi) return hi;
+        return v;
+    },
+};
+print(math.add(3, 4));           // 7
+print(math.clamp(0, 10, 15));    // 10
+print(math.clamp(0, 10, -5));    // 0
+
+
+// ─── 12. Chained method calls ───────────────────────────────────────────────
+print("=== 12. Shorthand + method chain ===");
+const counter = {
+    value: 0,
+    inc() { this.value = this.value + 1; return this; },
+    get() { return this.value; },
+};
+counter.inc();
+counter.inc();
+counter.inc();
+print(counter.get());            // 3

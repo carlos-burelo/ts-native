@@ -1,0 +1,36 @@
+// Verification of callback typing in stdlib
+
+const arr = [1, 2, 3];
+
+// Array.forEach: (value: dynamic, index: int, array: Array<dynamic>) => void
+arr.forEach((val, idx, array) => {
+    print("val:", val, "idx:", idx);
+});
+
+// Array.map: (value: dynamic, index: int, array: Array<dynamic>) => dynamic
+const mapped = arr.map(v => v * 2);
+
+// Array.reduce
+const sum = arr.reduce((acc, val) => acc + val, 0);
+
+// Set.forEach: (value: dynamic, key: dynamic, set: Set) => void
+const s = new Set([10, 20]);
+s.forEach((v, k, set) => {
+    print("set val:", v, "key:", k);
+});
+
+// Map.forEach: (value: dynamic, key: dynamic, map: Map) => void
+const m = new Map();
+m.set("hello", 42);
+m.forEach((v, k, map) => {
+    print("map val:", v, "key:", k);
+});
+
+// Future chaining
+Future.value("async result").then(res => {
+    print("Future resolved to:", res);
+});
+
+Future.error("failure").catch(err => {
+    print("Caught:", err);
+});

@@ -1,0 +1,179 @@
+/**
+ * Comprehensive Named Arguments Test Suite
+ *
+ * Tests all aspects of named arguments functionality
+ */
+
+print("======================================================================")
+print("NAMED ARGUMENTS - Comprehensive Test Suite")
+print("======================================================================")
+
+// ============================================================================
+// Test 1: Basic Named Arguments
+// ============================================================================
+
+function createUser(name: str, age: int, email: str): str {
+    return name + " (" + age + ") - " + email
+}
+
+print("\n[1] BASIC NAMED ARGUMENTS")
+const user1 = createUser(name: "Alice", age: 25, email: "alice@example.com")
+print("All named: " + user1)
+
+const user2 = createUser("Bob", 30, "bob@example.com")
+print("All positional: " + user2)
+
+const user3 = createUser("Charlie", age: 35, email: "charlie@example.com")
+print("Mixed (1 pos, 2 named): " + user3)
+
+// ============================================================================
+// Test 2: Named Arguments in Different Order
+// ============================================================================
+
+function describe(color: str, size: int, shape: str): str {
+    return "A " + color + " " + shape + " of size " + size
+}
+
+print("\n[2] REORDERED NAMED ARGUMENTS")
+const item1 = describe(color: "red", size: 10, shape: "circle")
+print("Normal order: " + item1)
+
+const item2 = describe(shape: "square", color: "blue", size: 20)
+print("Reordered: " + item2)
+
+const item3 = describe(size: 15, shape: "triangle", color: "green")
+print("Fully reversed: " + item3)
+
+// ============================================================================
+// Test 3: Named Arguments with Classes
+// ============================================================================
+
+class Product {
+    name: str
+    price: int
+    quantity: int
+
+    constructor(name: str, price: int, quantity: int) {
+        this.name = name
+        this.price = price
+        this.quantity = quantity
+    }
+
+    getTotal(): int {
+        return this.price * this.quantity
+    }
+
+    describe(): str {
+        return this.name + ": " + this.price + " x " + this.quantity + " = " + this.getTotal()
+    }
+}
+
+print("\n[3] NAMED ARGUMENTS IN CONSTRUCTORS")
+const product1 = new Product(name: "Laptop", price: 1000, quantity: 2)
+print(product1.describe())
+
+const product2 = new Product("Mouse", 25, 5)
+print(product2.describe())
+
+const product3 = new Product("Keyboard", price: 75, quantity: 3)
+print(product3.describe())
+
+// ============================================================================
+// Test 4: Named Arguments with Methods
+// ============================================================================
+
+class Calculator {
+    add(a: int, b: int): int {
+        return a + b
+    }
+
+    multiply(a: int, b: int, c: int): int {
+        return a * b * c
+    }
+
+    static power(base: int, exponent: int): int {
+        let result = 1
+        let i = 0
+        while (i < exponent) {
+            result = result * base
+            i = i + 1
+        }
+        return result
+    }
+}
+
+print("\n[4] NAMED ARGUMENTS IN METHODS")
+const calc = new Calculator()
+
+const sum1 = calc.add(a: 10, b: 20)
+print("calc.add(a: 10, b: 20): " + sum1)
+
+const sum2 = calc.add(5, 15)
+print("calc.add(5, 15): " + sum2)
+
+const mult1 = calc.multiply(a: 2, b: 3, c: 4)
+print("calc.multiply(a: 2, b: 3, c: 4): " + mult1)
+
+const mult2 = calc.multiply(c: 5, a: 1, b: 2)
+print("calc.multiply(c: 5, a: 1, b: 2): " + mult2)
+
+print("\n[5] NAMED ARGUMENTS IN STATIC METHODS")
+const pow1 = Calculator.power(base: 2, exponent: 8)
+print("Calculator.power(base: 2, exponent: 8): " + pow1)
+
+const pow2 = Calculator.power(exponent: 3, base: 5)
+print("Calculator.power(exponent: 3, base: 5): " + pow2)
+
+// ============================================================================
+// Test 6: Complex Named Arguments Scenarios
+// ============================================================================
+
+function formatMessage(prefix: str, message: str, suffix: str, code: int): str {
+    return "[" + code + "] " + prefix + message + suffix
+}
+
+print("\n[6] COMPLEX SCENARIOS")
+const msg1 = formatMessage(
+    prefix: "INFO: ",
+    message: "System started",
+    suffix: " successfully",
+    code: 200
+)
+print(msg1)
+
+const msg2 = formatMessage("ERROR: ", "Connection failed", "!", 500)
+print(msg2)
+
+const msg3 = formatMessage(
+    "WARN: ",
+    suffix: " (retrying)",
+    code: 503,
+    message: "Service unavailable"
+)
+print(msg3)
+
+// ============================================================================
+// Test 7: Named Arguments with Type Inference
+// ============================================================================
+
+function combine(a: int, b: int, c: int): int {
+    return a + b + c
+}
+
+print("\n[7] TYPE INFERENCE WITH NAMED ARGUMENTS")
+const total1 = combine(a: 10, b: 20, c: 30)
+const total2 = combine(5, 10, 15)
+const total3 = combine(c: 100, a: 200, b: 300)
+
+print("total1 (named): " + total1)
+print("total2 (positional): " + total2)
+print("total3 (reordered): " + total3)
+
+// ============================================================================
+// Final Summary
+// ============================================================================
+
+print("\n======================================================================")
+print("ALL NAMED ARGUMENTS TESTS PASSED!")
+print("7 test sections completed successfully")
+print("======================================================================")

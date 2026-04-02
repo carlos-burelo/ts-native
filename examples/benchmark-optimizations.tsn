@@ -1,0 +1,44 @@
+// Benchmark para medir el impacto de las optimizaciones
+// Test simple de operaciones aritméticas comunes
+
+const iterations = 100000
+
+function testArithmetic(): void {
+	let sum = 0
+	for (let i = 0; i < iterations; i++) {
+		sum = sum + 1
+		sum = sum * 2
+		sum = sum - 1
+		sum = sum / 2
+	}
+	print("Final sum:", sum)
+}
+
+function testComparisons(): void {
+	let count = 0
+	for (let i = 0; i < iterations; i++) {
+		if (i > 50000) {
+			count = count + 1
+		}
+		if (i < 25000) {
+			count = count + 2
+		}
+	}
+	print("Final count:", count)
+}
+
+function main(): void {
+	print("=== VM PERFORMANCE BENCHMARK ===")
+	print("Iterations:", iterations)
+	print("")
+
+	print("Testing arithmetic operations...")
+	testArithmetic()
+
+	print("")
+	print("Testing comparisons...")
+	testComparisons()
+
+	print("")
+	print("Benchmark complete!")
+}

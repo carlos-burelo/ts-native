@@ -1,0 +1,123 @@
+// pipeline-test.tsn — exhaustive pipeline operator tests
+// Covers: simple, placeholder, multi-_, chaining, arrows, complex left, nested, edge cases
+
+// ─── helpers ──────────────────────────────────────────────────────────────────
+function double(n: int): int { return n * 2; }
+function triple(n: int): int { return n * 3; }
+function negate(n: int): int { return -n; }
+function square(n: int): int { return n * n; }
+function inc(n: int): int { return n + 1; }
+
+function add(a: int, b: int): int { return a + b; }
+function sub(a: int, b: int): int { return a - b; }
+function mul(a: int, b: int): int { return a * b; }
+function clamp(lo: int, hi: int, v: int): int {
+    if (v < lo) return lo;
+    if (v > hi) return hi;
+    return v;
+}
+function compose(a: int, b: int): int { return a * 10 + b; }
+function getNum(): int { return 7; }
+
+
+// ─── 1. Simple pipeline: x |> f  →  f(x) ──────────────────────────────────
+print("=== 1. Simple (no placeholder) ===");
+print(5 |> double);       // 10
+print(3 |> triple);       // 9
+print(4 |> negate);       // -4
+print(3 |> square);       // 9
+print(0 |> inc);          // 1
+
+
+// ─── 2. Single placeholder: x |> f(_, y)  →  f(x, y) ──────────────────────
+print("=== 2. Single placeholder ===");
+print(7 |> add(_, 3));            // 10   (_=7 → add(7,3))
+print(7 |> add(3, _));            // 10   (_=7 → add(3,7))
+print(15 |> clamp(0, 20, _));     // 15   (_=15 → clamp(0,20,15))
+print(25 |> clamp(0, 20, _));     // 20   (_=25 → clamp(0,20,25) → 20)
+print(5 |> clamp(0, _, 10));      // 5    (_=5 → clamp(0,5,10) → hi=5)
+print(10 |> sub(20, _));          // 10   (_=10 → sub(20,10))
+print(3 |> mul(_, 4));            // 12
+
+
+// ─── 3. Multiple _ in one call: each _ gets the same piped value ────────────
+print("=== 3. Multiple _ references ===");
+print(4 |> add(_, _));        // 8    (add(4,4))
+print(5 |> compose(_, _));    // 55   (compose(5,5) = 5*10+5)
+print(3 |> mul(_, _));        // 9    (mul(3,3))
+
+
+// ─── 4. Left-associative chains: x |> f |> g  →  g(f(x)) ──────────────────
+print("=== 4. Left-associative chains ===");
+print(2 |> double |> double);                    // 8
+print(2 |> double |> triple);                    // 12
+print(1 |> double |> double |> double);          // 8
+print(5 |> negate |> negate);                    // 5   (double negation)
+print(3 |> inc |> square);                       // 16  (inc→4, square→16)
+print(3 |> square |> double |> inc);             // 19  (9→18→19)
+
+
+// ─── 5. Chained pipelines mixing placeholder and simple steps ────────────────
+print("=== 5. Chained with placeholders ===");
+print(3 |> add(_, 1) |> add(_, 4));              // 3+1=4 → 4+4=8
+print(10 |> clamp(0, 20, _) |> double);          // 10 → 20
+print(5 |> mul(_, 2) |> add(_, 10));             // 10 → 20
+print(2 |> double |> add(_, 6));                 // 4 → 10
+print(7 |> add(_, 3) |> mul(_, 2));              // 10 → 20
+print(5 |> negate |> sub(0, _));                 // -5 → sub(0,-5)=5
+
+
+// ─── 6. Complex left expression ────────────────────────────────────────────
+print("=== 6. Complex left expressions ===");
+print((2 + 3) |> double);                        // 10
+print((10 - 4) |> square);                       // 36
+print(getNum() |> double);                       // 14
+print(getNum() |> add(_, 3));                    // 10
+print((3 * 3) |> negate);                        // -9
+
+
+// ─── 7. Arrow function on right side ───────────────────────────────────────
+print("=== 7. Arrow on right side ===");
+print(5 |> (n => n * 2));                        // 10
+print(5 |> (n => n * n));                        // 25
+print(3 |> (n => n + 100));                      // 103
+
+
+// ─── 8. Binary expression with _ on the right ──────────────────────────────
+print("=== 8. Binary expr with _ ===");
+print(5 |> _ + 1);                               // 6
+print(5 |> _ * 3);                               // 15
+print(10 |> _ - 4);                              // 6
+
+
+// ─── 9. Nested call inside right with _ ────────────────────────────────────
+print("=== 9. Nested call in right ===");
+print(3 |> compose(square(_), 7));               // compose(9,7)=97
+print(4 |> add(double(_), 1));                   // add(8,1)=9
+
+
+// ─── 10. Long chains (4+ steps) ─────────────────────────────────────────────
+print("=== 10. Long chains ===");
+print(1 |> inc |> inc |> inc |> inc);                           // 5
+print(2 |> double |> double |> double |> double);               // 32
+print(1 |> add(_, 1) |> mul(_, 3) |> sub(_, 1));               // (1+1=2)*(3)=6-1=5
+
+
+// ─── 11. Pipeline result used in further expressions ──────────────────────────
+print("=== 11. Result in expressions ===");
+const a = 5 |> double;
+const b = 3 |> triple;
+print(a + b);                                    // 19
+
+const c = 4 |> add(_, 6) |> double;
+print(c);                                        // 20
+
+
+// ─── 12. Ternary using parenthesised pipeline ───────────────────────────────
+print("=== 12. Ternary on pipeline result ===");
+const t1 = (5 |> double) > 5 ? 1 : 0;
+print(t1);                                       // 1  (10 > 5)
+const t2 = (2 |> double) > 5 ? 1 : 0;
+print(t2);                                       // 0  (4 > 5 = false)
+const t3 = (10 |> clamp(0, 20, _)) === 10 ? 1 : 0;
+print(t3);                                       // 1

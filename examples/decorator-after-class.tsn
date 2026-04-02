@@ -1,0 +1,14 @@
+// Test if program completes after class definition
+
+function myDecorator(value, context): void {
+  print("Decorator executed")
+}
+
+print("Before class")
+
+class Test {
+  @myDecorator
+  x: int
+}
+
+print("After class")

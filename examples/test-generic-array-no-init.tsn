@@ -1,0 +1,16 @@
+// Test generic array without initializer
+
+class Container<T> {
+    private items: T[]
+
+    constructor() {
+        this.items = []
+    }
+
+    add(item: T): void {
+        // Would add item
+    }
+}
+
+const c = new Container<int>()
+print("Container created")

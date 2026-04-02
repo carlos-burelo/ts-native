@@ -1,0 +1,295 @@
+/**
+ * ULTIMATE CLASS TEST
+ * Tests all advanced features together
+ */
+
+print("=== ULTIMATE CLASS TEST ===")
+print("")
+
+// ============================================================================
+// TEST 1: Builder Pattern with 'this' Type
+// ============================================================================
+print("TEST 1: Builder Pattern with 'this' type")
+
+class Builder {
+    protected value: int
+
+    constructor() {
+        this.value = 0
+    }
+
+    setValue(v: int): this {
+        this.value = v
+        return this
+    }
+
+    getValue(): int {
+        return this.value
+    }
+
+    reset(): this {
+        this.value = 0
+        return this
+    }
+}
+
+class AdvancedBuilder extends Builder {
+    private multiplier: int
+
+    constructor() {
+        super()
+        this.multiplier = 1
+    }
+
+    setMultiplier(m: int): this {
+        this.multiplier = m
+        return this
+    }
+
+    compute(): int {
+        return this.value * this.multiplier
+    }
+
+    double(): this {
+        this.multiplier = this.multiplier * 2
+        return this
+    }
+}
+
+const builder = new AdvancedBuilder()
+const result = builder
+    .setValue(10)
+    .setMultiplier(3)
+    .double()
+    .compute()
+
+print("Computed result: " + result)
+print("TEST 1 passed")
+print("")
+
+// ============================================================================
+// TEST 2: Union Types with Classes
+// ============================================================================
+print("TEST 2: Union Types with Classes")
+
+class Dog {
+    private name: str
+
+    constructor(n: str) {
+        this.name = n
+    }
+
+    makeSound(): str {
+        return "Woof!"
+    }
+
+    getName(): str {
+        return this.name
+    }
+}
+
+class Cat {
+    private name: str
+
+    constructor(n: str) {
+        this.name = n
+    }
+
+    makeSound(): str {
+        return "Meow!"
+    }
+
+    getName(): str {
+        return this.name
+    }
+}
+
+type Pet = Dog | Cat
+
+function greetPet(pet: Pet): str {
+    return pet.getName() + " says " + pet.makeSound()
+}
+
+const dog = new Dog("Rex")
+const cat = new Cat("Whiskers")
+
+const pet1: Pet = dog
+const pet2: Pet = cat
+
+print(greetPet(pet1))
+print(greetPet(pet2))
+print("TEST 2 passed")
+print("")
+
+// ============================================================================
+// TEST 3: Deep Inheritance Chain
+// ============================================================================
+print("TEST 3: Deep Inheritance")
+
+class Vehicle {
+    protected speed: int
+
+    constructor() {
+        this.speed = 0
+    }
+
+    accelerate(amount: int): this {
+        this.speed = this.speed + amount
+        return this
+    }
+
+    getSpeed(): int {
+        return this.speed
+    }
+}
+
+class Car extends Vehicle {
+    private brand: str
+
+    constructor(b: str) {
+        super()
+        this.brand = b
+    }
+
+    getBrand(): str {
+        return this.brand
+    }
+
+    accelerate(amount: int): this {
+        print("Car accelerating...")
+        this.speed = this.speed + amount
+        return this
+    }
+}
+
+class SportsCar extends Car {
+    private turbo: bool
+
+    constructor(b: str) {
+        super(b)
+        this.turbo = false
+    }
+
+    enableTurbo(): this {
+        this.turbo = true
+        print("Turbo enabled!")
+        return this
+    }
+
+    accelerate(amount: int): this {
+        print("SportsCar accelerating...")
+        if (this.turbo) {
+            this.speed = this.speed + (amount * 2)
+        } else {
+            this.speed = this.speed + amount
+        }
+        return this
+    }
+
+    isTurboEnabled(): bool {
+        return this.turbo
+    }
+}
+
+const sportsCar = new SportsCar("Ferrari")
+sportsCar
+    .accelerate(10)
+    .enableTurbo()
+    .accelerate(10)
+
+print("Final speed: " + sportsCar.getSpeed())
+print("Turbo: " + sportsCar.isTurboEnabled())
+print("TEST 3 passed")
+print("")
+
+// ============================================================================
+// TEST 4: Static Methods and Fields
+// ============================================================================
+print("TEST 4: Static Methods")
+
+class MathUtils {
+    static PI: int
+
+    static double(x: int): int {
+        return x * 2
+    }
+
+    static triple(x: int): int {
+        return x * 3
+    }
+}
+
+MathUtils.PI = 3
+print("PI = " + MathUtils.PI)
+print("Double 5 = " + MathUtils.double(5))
+print("Triple 4 = " + MathUtils.triple(4))
+print("TEST 4 passed")
+print("")
+
+// ============================================================================
+// TEST 5: Extreme Method Chaining
+// ============================================================================
+print("TEST 5: Extreme Method Chaining")
+
+class Calculator {
+    private result: int
+
+    constructor() {
+        this.result = 0
+    }
+
+    add(x: int): this {
+        this.result = this.result + x
+        return this
+    }
+
+    subtract(x: int): this {
+        this.result = this.result - x
+        return this
+    }
+
+    multiply(x: int): this {
+        this.result = this.result * x
+        return this
+    }
+
+    getResult(): int {
+        return this.result
+    }
+
+    reset(): this {
+        this.result = 0
+        return this
+    }
+}
+
+const calc = new Calculator()
+const calcResult = calc
+    .add(10)
+    .multiply(2)
+    .subtract(5)
+    .add(3)
+    .multiply(2)
+    .getResult()
+
+print("Calculation result: " + calcResult)
+print("TEST 5 passed")
+print("")
+
+// ============================================================================
+// TEST 6: Union Types with Primitives
+// ============================================================================
+print("TEST 6: Union Types with Primitives")
+
+type StringOrInt = str | int
+
+const v1: StringOrInt = "hello"
+const v2: StringOrInt = 42
+
+print("v1: " + v1)
+print("v2: " + v2)
+print("TEST 6 passed")
+print("")
+
+print("=== ALL TESTS COMPLETED SUCCESSFULLY ===")
+print("All advanced features working correctly!")

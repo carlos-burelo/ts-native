@@ -1,0 +1,11 @@
+function testForOfSync() {
+    print("--- testForOfSync ---");
+    let arr = [1, 2, 3, 4, 5];
+    for (const x of arr) {
+        print("X IS:");
+        print(x);
+    }
+    print("Done Sync!");
+}
+
+testForOfSync();

@@ -1,0 +1,8 @@
+[package]
+name = "tsn-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tsn-core = { path = "../tsn-core" }
+tsn-lexer = { path = "../tsn-lexer" }

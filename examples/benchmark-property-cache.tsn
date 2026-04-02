@@ -1,0 +1,91 @@
+/**
+ * Property Access Benchmark
+ * Tests the effectiveness of Phase 2 inline caches
+ */
+
+class Point {
+    x: int
+    y: int
+    
+    constructor(x: int, y: int) {
+        this.x = x
+        this.y = y
+    }
+    
+    distance(): int {
+        return this.x * this.x + this.y * this.y
+    }
+}
+
+// Test 1: Heavy property access
+function testPropertyAccess(iterations: int): int {
+    const p: Point = new Point(10, 20)
+    let sum: int = 0
+    let i: int = 0
+    
+    while (i < iterations) {
+        // Multiple property accesses - should hit cache
+        sum = sum + p.x + p.y
+        sum = sum + p.x * p.y
+        sum = sum - p.x
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// Test 2: Property access with method calls
+function testPropertyWithMethods(iterations: int): int {
+    const p: Point = new Point(5, 10)
+    let sum: int = 0
+    let i: int = 0
+    
+    while (i < iterations) {
+        sum = sum + p.distance()
+        sum = sum + p.x
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// Test 3: Multiple instances (polymorphic)
+class Rectangle {
+    width: int
+    height: int
+    
+    constructor(w: int, h: int) {
+        this.width = w
+        this.height = h
+    }
+    
+    area(): int {
+        return this.width * this.height
+    }
+}
+
+function testMultipleTypes(iterations: int): int {
+    const p: Point = new Point(3, 4)
+    const r: Rectangle = new Rectangle(5, 6)
+    let sum: int = 0
+    let i: int = 0
+    
+    while (i < iterations) {
+        // Alternating types - tests polymorphic cache
+        if (i % 2 == 0) {
+            sum = sum + p.x + p.y
+        } else {
+            sum = sum + r.width + r.height
+        }
+        i = i + 1
+    }
+    
+    return sum
+}
+
+// Run benchmarks
+const r1: int = testPropertyAccess(10000)
+const r2: int = testPropertyWithMethods(5000)
+const r3: int = testMultipleTypes(10000)
+
+const total: int = r1 + r2 + r3

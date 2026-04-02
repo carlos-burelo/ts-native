@@ -1,0 +1,3 @@
+// Default Export (Expression) to Named
+const b = 42
+export default b

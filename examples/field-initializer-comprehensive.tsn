@@ -1,0 +1,92 @@
+// Comprehensive field initializer tests
+
+// Test 1: Single field with literal
+class Test1 {
+    x: int = 42
+}
+
+const t1 = new Test1()
+print("Test 1 - Single int field:", t1.x)
+assert(t1.x == 42, "Single int field should be 42")
+
+// Test 2: Multiple fields with different types
+class Test2 {
+    x: int = 10
+    y: float = 3.14
+    name: str = "hello"
+    flag: bool = true
+}
+
+const t2 = new Test2()
+print("Test 2 - Multiple fields:")
+print("  x:", t2.x)
+print("  y:", t2.y)
+print("  name:", t2.name)
+print("  flag:", t2.flag)
+assert(t2.x == 10, "x should be 10")
+assert(t2.y == 3.14, "y should be 3.14")
+assert(t2.name == "hello", "name should be 'hello'")
+assert(t2.flag == true, "flag should be true")
+
+// Test 3: Field with expression
+class Test3 {
+    x: int = 5 + 3
+    y: int = 10 * 2
+}
+
+const t3 = new Test3()
+print("Test 3 - Expression initializer:")
+print("  x:", t3.x)
+print("  y:", t3.y)
+assert(t3.x == 8, "x should be 8")
+assert(t3.y == 20, "y should be 20")
+
+// Test 4: Mix initialized and uninitialized fields
+class Test4 {
+    a: int = 100
+    b: int
+    c: str = "test"
+}
+
+const t4 = new Test4()
+t4.b = 200
+print("Test 4 - Mixed fields:")
+print("  a:", t4.a)
+print("  b:", t4.b)
+print("  c:", t4.c)
+assert(t4.a == 100, "a should be 100")
+assert(t4.b == 200, "b should be 200")
+assert(t4.c == "test", "c should be 'test'")
+
+// Test 5: With explicit constructor (field init happens first)
+class Test5 {
+    x: int = 50
+    y: int = 25
+    
+    constructor() {
+        this.y = this.x + 10  // Override y after field init
+    }
+}
+
+const t5 = new Test5()
+print("Test 5 - With explicit constructor:")
+print("  x:", t5.x)
+print("  y:", t5.y)
+assert(t5.x == 50, "x should be 50")
+assert(t5.y == 60, "y should be 60 (50 + 10)")
+
+// Test 6: Field modification
+class Test6 {
+    counter: int = 0
+}
+
+const t6 = new Test6()
+print("Test 6 - Field modification:")
+print("  Initial counter:", t6.counter)
+t6.counter = 1
+print("  After set to 1:", t6.counter)
+t6.counter = 2
+print("  After set to 2:", t6.counter)
+assert(t6.counter == 2, "counter should be 2")
+
+print("\n=== All field initializer tests passed! ===")

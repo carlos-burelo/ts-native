@@ -1,0 +1,15 @@
+// Module A: Basic exports
+export const name: str = "Module A"
+export const version: int = 1
+
+export function greet(who: str): str {
+    return "Hello " + who
+}
+
+export class Counter {
+    count: int = 0
+
+    increment(): void {
+        this.count = this.count + 1
+    }
+}

@@ -1,0 +1,16 @@
+// Minimal async test - only .then()
+
+async function testSimpleThen(): void {
+    print("testSimpleThen: start")
+    const f1 = Future.value(10)
+    print("testSimpleThen: got f1")
+    const f2 = f1.then((x: int) => x + 5)
+    print("testSimpleThen: got f2, awaiting...")
+    const result = await f2
+    print("testSimpleThen: result=" + result.toString())
+    print("testSimpleThen: done")
+}
+
+print("Running minimal async test")
+await testSimpleThen()
+print("Done");

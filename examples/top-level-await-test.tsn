@@ -1,0 +1,13 @@
+// Test top-level await
+print("1. Starting top-level code");
+
+async function delay(ms: int): void {
+    // Simulate async operation
+    return;
+}
+
+print("2. Before await");
+await delay(100);
+print("3. After await");
+
+print("4. Done!");

@@ -1,0 +1,48 @@
+// Comprehensive for...of and for await...of test
+
+print("=== Test 1: Basic for...of ===")
+const numbers = [10, 20, 30]
+for (const num of numbers) {
+    print(num)
+}
+
+print("\n=== Test 2: for...of with break ===")
+const items = [1, 2, 3, 4, 5]
+for (const item of items) {
+    if (item === 3) {
+        break
+    }
+    print(item)
+}
+
+print("\n=== Test 3: for...of with continue ===")
+for (const x of [1, 2, 3, 4, 5]) {
+    if (x === 3) {
+        continue
+    }
+    print(x)
+}
+
+print("\n=== Test 4: Nested for...of ===")
+const matrix = [[1, 2], [3, 4]]
+for (const row of matrix) {
+    for (const val of row) {
+        print(val)
+    }
+}
+
+print("\n=== Test 5: for await...of ===")
+async function asyncTest(): void {
+    const data = [100, 200, 300]
+    for await (const d of data) {
+        print(d)
+    }
+}
+
+asyncTest()
+
+print("\nAll tests completed!")
+
+for (let i = 0; i<= 5; i++) {
+    print(i)
+}

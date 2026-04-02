@@ -1,0 +1,7 @@
+let obj = { a: 1, b: 2, c: 3 };
+var count = 0;
+for (const k in obj) {
+    print(k);
+    count = count + 1;
+}
+print("count: " + count);

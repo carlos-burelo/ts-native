@@ -1,0 +1,8 @@
+// Minimal async test - function that returns immediately
+async function test(): void {
+    print("in async")
+}
+
+print("calling test")
+test()
+print("done")

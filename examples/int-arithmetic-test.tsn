@@ -1,0 +1,22 @@
+class Counter {
+  value: int
+  
+  constructor(start: int) {
+    this.value = start
+  }
+  
+  increment() {
+    this.value = this.value + 1
+  }
+  
+  getValue(): int {
+    return this.value
+  }
+}
+
+const c = new Counter(5)
+print(c.getValue())
+c.increment()
+print(c.getValue())
+c.increment()
+print(c.getValue())

@@ -1,0 +1,24 @@
+// Test 1: Missing semicolon (should recover)
+let x = 5
+let y = 10
+
+// Test 2: Should parse this function correctly
+function validFunction(): void {
+  print("This should work")
+}
+
+// Test 3: Incomplete expression (should recover)
+let broken = 
+
+// Test 4: Should parse this too
+let recovered = "Success!"
+print(recovered)
+
+// Test 5: Missing closing brace (should recover)
+let obj = {
+  x: 1
+
+// Test 6: Should still parse this
+function anotherValid(): void {
+  print("Still working")
+}

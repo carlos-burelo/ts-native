@@ -1,0 +1,10 @@
+const value = 10
+const start = 5
+const end = 10
+
+print("value >= start:")
+print(value >= start)
+print("value < end:")
+print(value < end)
+print("Both:")
+print(value >= start && value < end)

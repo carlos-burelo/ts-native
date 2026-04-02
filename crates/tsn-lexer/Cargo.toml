@@ -1,0 +1,11 @@
+[package]
+name = "tsn-lexer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "tsn_lexer"
+crate-type = ["rlib"]
+
+[dependencies]
+tsn-core = { path = "../tsn-core" }

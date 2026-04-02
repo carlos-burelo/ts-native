@@ -1,0 +1,22 @@
+print("=== Verifying Range Iteration ===")
+print("0..5 (should be 0,1,2,3,4):")
+for (const n of 0..5) {
+  print(n)
+}
+
+print("\n0..=5 (should be 0,1,2,3,4,5):")
+for (const n of 0..=5) {
+  print(n)
+}
+
+print("\n10..13 (should be 10,11,12):")
+for (const n of 10..13) {
+  print(n)
+}
+
+print("\n10..=13 (should be 10,11,12,13):")
+for (const n of 10..=13) {
+  print(n)
+}
+
+print("\nRange iteration works perfectly!")
