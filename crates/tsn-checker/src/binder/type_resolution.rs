@@ -234,15 +234,56 @@ pub fn resolve_type_node(node: &TypeNode, ctx: Option<&dyn TypeContext>) -> Type
                 }
             }
 
-            if resolved.iter().all(|m| matches!(&m.0, TypeKind::Object(_))) {
-                let merged: Vec<ObjectTypeMember> = resolved
-                    .into_iter()
-                    .flat_map(|m| match m.0 {
-                        TypeKind::Object(members) => members,
-                        _ => vec![],
-                    })
-                    .collect();
-                return Type::object(merged);
+            let parts_opt: Option<Vec<Vec<ObjectTypeMember>>> = resolved
+                .iter()
+                .map(|m| match &m.0 {
+                    TypeKind::Object(members) => Some(members.clone()),
+                    TypeKind::Named(name, origin) => {
+                        let ctx = ctx?;
+                        let members = ctx
+                            .get_class_members(name, origin.as_deref())
+                            .or_else(|| ctx.get_interface_members(name, origin.as_deref()))?;
+                        Some(
+                            members
+                                .iter()
+                                .map(|cm| {
+                                    use crate::types::ClassMemberKind;
+                                    match cm.kind {
+                                        ClassMemberKind::Method => {
+                                            if let TypeKind::Fn(ft) = &cm.ty.0 {
+                                                ObjectTypeMember::Method {
+                                                    name: cm.name.clone(),
+                                                    params: ft.params.clone(),
+                                                    return_type: ft.return_type.clone(),
+                                                    optional: cm.is_optional,
+                                                    is_arrow: ft.is_arrow,
+                                                }
+                                            } else {
+                                                ObjectTypeMember::Property {
+                                                    name: cm.name.clone(),
+                                                    ty: cm.ty.clone(),
+                                                    optional: cm.is_optional,
+                                                    readonly: cm.is_readonly,
+                                                }
+                                            }
+                                        }
+                                        _ => ObjectTypeMember::Property {
+                                            name: cm.name.clone(),
+                                            ty: cm.ty.clone(),
+                                            optional: cm.is_optional,
+                                            readonly: cm.is_readonly,
+                                        },
+                                    }
+                                })
+                                .collect(),
+                        )
+                    }
+                    _ => None,
+                })
+                .collect();
+
+            if let Some(parts) = parts_opt {
+                return Type::object(parts.into_iter().flatten().collect());
             }
             Type(TypeKind::Intersection(resolved))
         }
