@@ -265,7 +265,7 @@ impl Checker {
         self.current_scope = saved;
     }
 
-    fn with_narrowings(
+    pub(crate) fn with_narrowings(
         &mut self,
         narrowings: &[(crate::symbol::SymbolId, Type)],
         f: impl FnOnce(&mut Self),

@@ -1,5 +1,6 @@
 use crate::binder::BindResult;
 use crate::checker::Checker;
+use crate::symbol::SymbolId;
 use crate::types::{ObjectTypeMember, Type};
 use tsn_core::ast::operators::BinaryOp;
 use tsn_core::ast::Expr;
@@ -106,15 +107,25 @@ impl Checker {
                                         let mut matched: Vec<Type> = Vec::new();
                                         let mut unmatched: Vec<Type> = Vec::new();
                                         for m in members.iter() {
-                                            let hits =
-                                                if let TypeKind::Object(fields) = &m.0 {
+                                            let hits = match &m.0 {
+                                                TypeKind::Object(fields) => {
                                                     fields.iter().any(|f| matches!(f,
-                                                    ObjectTypeMember::Property { name, ty, .. }
-                                                    if name == prop_name && ty == &disc_ty
-                                                ))
-                                                } else {
-                                                    false
-                                                };
+                                                        ObjectTypeMember::Property { name, ty, .. }
+                                                        if name == prop_name && ty == &disc_ty
+                                                    ))
+                                                }
+                                                TypeKind::Named(cn, _) => {
+                                                    bind.interface_members
+                                                        .get(cn.as_str())
+                                                        .or_else(|| bind.class_members.get(cn.as_str()))
+                                                        .map_or(false, |ms| {
+                                                            ms.iter().any(|cm| {
+                                                                cm.name == *prop_name && cm.ty == disc_ty
+                                                            })
+                                                        })
+                                                }
+                                                _ => false,
+                                            };
                                             if hits {
                                                 matched.push(m.clone());
                                             } else {
@@ -192,5 +203,61 @@ impl Checker {
         }
         self.narrowings_cache.insert(cache_key, narrowings.clone());
         narrowings
+    }
+
+    /// When `subject` is a member access like `r.kind`, returns `(symbol_id_of_r, union_members)`.
+    pub(crate) fn collect_match_disc_narrowings(
+        &self,
+        subject: &Expr,
+        bind: &BindResult,
+    ) -> Option<(SymbolId, Vec<Type>)> {
+        if let Expr::Member { object, computed: false, .. } = subject {
+            if let Expr::Identifier { name: obj_name, .. } = object.as_ref() {
+                let scope = bind.scopes.get(self.current_scope);
+                let id = scope.resolve(obj_name, &bind.scopes)?;
+                let sym = bind.arena.get(id);
+                if let Some(Type(TypeKind::Union(members))) = &sym.ty {
+                    return Some((id, members.clone()));
+                }
+            }
+        }
+        None
+    }
+
+    /// Returns true if `member` has a field (extracted from `subject`) with type equal to `disc_ty`.
+    pub(crate) fn union_member_matches_disc(
+        &self,
+        member: &Type,
+        disc_ty: Option<&Type>,
+        subject: Option<&Expr>,
+        bind: &BindResult,
+    ) -> bool {
+        let disc_ty = match disc_ty {
+            Some(t) => t,
+            None => return false,
+        };
+        let prop_name = match subject {
+            Some(Expr::Member { property, computed: false, .. }) => {
+                if let Expr::Identifier { name, .. } = property.as_ref() {
+                    name.as_str()
+                } else {
+                    return false;
+                }
+            }
+            _ => return false,
+        };
+        match &member.0 {
+            TypeKind::Object(fields) => fields.iter().any(|f| {
+                matches!(f, ObjectTypeMember::Property { name, ty, .. } if name == prop_name && ty == disc_ty)
+            }),
+            TypeKind::Named(cn, _) => bind
+                .interface_members
+                .get(cn.as_str())
+                .or_else(|| bind.class_members.get(cn.as_str()))
+                .map_or(false, |ms| {
+                    ms.iter().any(|cm| cm.name == prop_name && cm.ty == *disc_ty)
+                }),
+            _ => false,
+        }
     }
 }
