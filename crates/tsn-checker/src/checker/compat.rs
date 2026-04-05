@@ -150,7 +150,7 @@ fn types_compatible_impl(
                     in_progress,
                 )
                 && ft1.params.iter().zip(ft2.params.iter()).all(|(t1, t2)| {
-                    types_compatible_impl(&t1.ty, &t2.ty, bind, cache, in_progress)
+                    types_compatible_impl(&t2.ty, &t1.ty, bind, cache, in_progress)
                         && t1.optional == t2.optional
                 })
         }
@@ -541,7 +541,7 @@ fn fn_signature_compatible_type(
             ft2.params.len() <= params.len()
                 && types_compatible_impl(return_type, &ft2.return_type, bind, cache, in_progress)
                 && params.iter().zip(ft2.params.iter()).all(|(t1, t2)| {
-                    types_compatible_impl(&t1.ty, &t2.ty, bind, cache, in_progress)
+                    types_compatible_impl(&t2.ty, &t1.ty, bind, cache, in_progress)
                         && t1.optional == t2.optional
                 })
         }
@@ -571,7 +571,7 @@ fn types_compatible_with_fn_signature(
             params.len() <= ft1.params.len()
                 && types_compatible_impl(&ft1.return_type, return_type, bind, cache, in_progress)
                 && ft1.params.iter().zip(params.iter()).all(|(t1, t2)| {
-                    types_compatible_impl(&t1.ty, &t2.ty, bind, cache, in_progress)
+                    types_compatible_impl(&t2.ty, &t1.ty, bind, cache, in_progress)
                         && t1.optional == t2.optional
                 })
         }
