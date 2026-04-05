@@ -31,6 +31,7 @@ impl Compiler {
                 for s in stmts {
                     self.compile_stmt(s)?;
                 }
+                self.emit_dispose_cleanup()?;
                 let (_count, captured) = self.scope.pop_block();
                 for is_cap in captured {
                     if is_cap {
@@ -512,7 +513,7 @@ impl Compiler {
 
             Stmt::Using {
                 declarations,
-                is_await: _,
+                is_await,
                 ..
             } => {
                 for d in declarations {
@@ -527,11 +528,27 @@ impl Compiler {
                             return Err("using only supports simple identifier patterns".to_owned())
                         }
                     };
-                    self.scope.declare_local(&name);
+                    let slot = self.scope.declare_local(&name);
+                    self.scope
+                        .disposables
+                        .push((slot, *is_await, self.scope.depth));
                 }
             }
 
             Stmt::Debugger { .. } => {}
+        }
+        Ok(())
+    }
+
+    pub(super) fn emit_dispose_cleanup(&mut self) -> Result<(), String> {
+        let disposables = self.scope.disposables_at_current_depth();
+        for (slot, _is_async) in disposables {
+            self.emit1(OpCode::OpGetLocal, slot);
+            let idx = self.add_str("dispose");
+            let cs = self.alloc_cache_slot();
+            self.emit2(OpCode::OpGetProperty, idx, cs);
+            self.emit1(OpCode::OpCall, 0);
+            self.emit(OpCode::OpPop);
         }
         Ok(())
     }

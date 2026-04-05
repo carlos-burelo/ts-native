@@ -16,6 +16,8 @@ pub struct Scope {
     pub locals: Vec<Local>,
     pub upvalues: Vec<Upvalue>,
     pub depth: i32,
+    /// (local_slot, is_async, scope_depth) — tracks `using` declarations for dispose cleanup
+    pub disposables: Vec<(u16, bool, i32)>,
 }
 
 impl Scope {
@@ -41,8 +43,20 @@ impl Scope {
             .collect();
         let len = self.locals.len();
         self.locals.truncate(len - count);
+        let exiting_depth = self.depth;
         self.depth -= 1;
+        self.disposables.retain(|&(_, _, d)| d != exiting_depth);
         (count, captured)
+    }
+
+    /// Returns disposable entries at the current depth in LIFO order (last declared first).
+    pub fn disposables_at_current_depth(&self) -> Vec<(u16, bool)> {
+        self.disposables
+            .iter()
+            .filter(|&&(_, _, d)| d == self.depth)
+            .map(|&(slot, is_async, _)| (slot, is_async))
+            .rev()
+            .collect()
     }
 
     pub fn declare_local(&mut self, name: impl Into<String>) -> u16 {
