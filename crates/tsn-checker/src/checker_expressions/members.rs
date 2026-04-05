@@ -73,7 +73,7 @@ impl Checker {
             return members
                 .iter()
                 .filter(|m| !m.is_nullable())
-                .any(|m| self.member_exists(m, prop_name, bind));
+                .all(|m| self.member_exists(m, prop_name, bind));
         }
 
         // Intersection: property exists if it exists on ANY constituent member
