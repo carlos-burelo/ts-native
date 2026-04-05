@@ -1,13 +1,16 @@
-import { Server } from 'std:server'
-import { HTTP } from 'std:http'
+import { Server, Request, ServerResponse, Method, HTTP } from 'std:http'
 
-print("█ std:server basic test")
+print("█ std:http basic check")
 
 const s = new Server()
-print("Server created")
+print("Server created: " + (s !== null).toString())
+print("HTTP.get exists: " + (HTTP.get !== null).toString())
+print("Method.GET: " + Method.GET)
+print("Method.POST: " + Method.POST)
 
-// In a real test we'd need a way to stop the server or run it in background
-// For now we just verify the API exists and can be called
-print("Server.listen exists: " + (s.listen !== null).toString())
+s.get('/ping', (req: Request, res: ServerResponse) => {
+    res.json({ pong: true })
+})
 
-print("  ✓ Server API basic check passed")
+print("Route registered")
+print("  ✓ std:http API check passed")

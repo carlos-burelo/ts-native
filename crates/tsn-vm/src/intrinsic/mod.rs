@@ -3,6 +3,7 @@ pub mod async_;
 pub mod console;
 pub mod crypto;
 pub mod fs;
+pub mod http;
 pub mod io;
 pub mod json;
 pub mod map;

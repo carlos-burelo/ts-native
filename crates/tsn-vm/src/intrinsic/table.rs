@@ -1,8 +1,8 @@
 use tsn_types::Value;
 
 use super::{
-    array, async_, console, crypto, fs, io, json, map, math, net, path, primitives, reflect, set,
-    sys, time,
+    array, async_, console, crypto, fs, http, io, json, map, math, net, path, primitives, reflect,
+    set, sys, time,
 };
 
 pub type IntrinsicFn = fn(&mut dyn tsn_types::Context, &[Value]) -> Result<Value, String>;
@@ -95,12 +95,12 @@ pub static INTRINSIC_TABLE: [IntrinsicFn; 254] = [
     /* 80  */ net::net_enc_uri_component,
     /* 81  */ net::net_dec_uri_component,
     /* 82  */ net::net_basic_auth,
-    /* 83..89 */ unimpl,
-    unimpl,
-    unimpl,
-    unimpl,
-    unimpl,
-    unimpl,
+    /* 83  */ http::http_fetch,
+    /* 84  */ http::http_server_create,
+    /* 85  */ http::http_server_route,
+    /* 86  */ http::http_server_listen,
+    /* 87  */ http::http_response_send,
+    /* 88..89 */ unimpl,
     unimpl,
     /* 90  */ |_, a| math::math_abs(a),
     /* 91  */ |_, a| math::math_acos(a),

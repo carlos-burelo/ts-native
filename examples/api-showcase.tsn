@@ -1,4 +1,4 @@
-import { Server, Request, Response } from 'std:http';
+import { Server, Request, ServerResponse } from 'std:http';
 import { Crypto } from 'std:crypto';
 import { JSON } from 'std:json';
 import { Time } from 'std:time';
@@ -15,7 +15,7 @@ print(`🚀 API server starting on http://localhost:${port}`);
 // ─── Users ───────────────────────────────────────────────────────────────────
 
 // GET /users — list all users (supports ?role= filter)
-server.get('/users', (req: Request, res: Response) => {
+server.get('/users', (req: Request, res: ServerResponse) => {
     const role = req.query.role;
     if (role !== null) {
         const filtered = users.filter((u: dynamic) => u.role === role);
@@ -25,7 +25,7 @@ server.get('/users', (req: Request, res: Response) => {
 });
 
 // GET /users/:id — get user by id
-server.get('/users/:id', (req: Request, res: Response) => {
+server.get('/users/:id', (req: Request, res: ServerResponse) => {
     const id = req.params.id;
     const user = users.find((u: dynamic) => u.id === id);
     if (user !== null) {
@@ -53,7 +53,7 @@ server.post('/users', (req, res) => {
 });
 
 // PUT /users/:id — update user
-server.put('/users/:id', (req: Request, res: Response) => {
+server.put('/users/:id', (req: Request, res: ServerResponse) => {
     const id = req.params.id;
     const idx = users.findIndex((u: dynamic) => u.id === id);
     if (idx < 0) {
@@ -75,7 +75,7 @@ server.put('/users/:id', (req: Request, res: Response) => {
 });
 
 // DELETE /users/:id — delete user
-server.delete('/users/:id', (req: Request, res: Response) => {
+server.delete('/users/:id', (req: Request, res: ServerResponse) => {
     const id = req.params.id;
     const idx = users.findIndex((u: dynamic) => u.id === id);
     if (idx >= 0) {
@@ -88,7 +88,7 @@ server.delete('/users/:id', (req: Request, res: Response) => {
 // ─── Posts ────────────────────────────────────────────────────────────────────
 
 // GET /posts — list posts (supports ?userId= filter)
-server.get('/posts', (req: Request, res: Response) => {
+server.get('/posts', (req: Request, res: ServerResponse) => {
     const userId = req.query.userId;
     if (userId !== null) {
         const filtered = posts.filter((p: dynamic) => p.userId === userId);
@@ -98,7 +98,7 @@ server.get('/posts', (req: Request, res: Response) => {
 });
 
 // POST /posts — create post (validates userId references existing user)
-server.post('/posts', (req: Request, res: Response) => {
+server.post('/posts', (req: Request, res: ServerResponse) => {
     const body = JSON.parse(req.body);
     if (body.title === null) {
         return res.status(400).json({ error: 'title is required' });
@@ -122,7 +122,7 @@ server.post('/posts', (req: Request, res: Response) => {
 });
 
 // DELETE /posts/:id
-server.delete('/posts/:id', (req: Request, res: Response) => {
+server.delete('/posts/:id', (req: Request, res: ServerResponse) => {
     const id = req.params.id;
     const idx = posts.findIndex((p: dynamic) => p.id === id);
     if (idx >= 0) {
@@ -135,12 +135,12 @@ server.delete('/posts/:id', (req: Request, res: Response) => {
 // ─── Utilities ────────────────────────────────────────────────────────────────
 
 // GET /v1/id — generate a UUID
-server.get('/v1/id', (req: Request, res: Response) => {
+server.get('/v1/id', (req: Request, res: ServerResponse) => {
     return res.json({ id: Crypto.uuid() });
 });
 
 // GET /search?q=... — search users and posts by name/title
-server.get('/search', (req: Request, res: Response) => {
+server.get('/search', (req: Request, res: ServerResponse) => {
     const q = req.query.q;
     if (q === null) {
         return res.status(400).json({ error: 'q param is required' });
@@ -155,7 +155,7 @@ server.get('/search', (req: Request, res: Response) => {
 });
 
 // GET /stats — server-wide statistics
-server.get('/stats', (req: Request, res: Response) => {
+server.get('/stats', (req: Request, res: ServerResponse) => {
     const adminCount = users.filter((u: dynamic) => u.role === 'admin').length;
     return res.json({
         users: users.length,

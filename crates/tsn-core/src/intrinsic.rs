@@ -90,6 +90,12 @@ pub enum IntrinsicId {
     NetDecUriComponent = 81,
     NetBasicAuth = 82,
 
+    HttpFetch = 83,
+    HttpServerCreate = 84,
+    HttpServerRoute = 85,
+    HttpServerListen = 86,
+    HttpResponseSend = 87,
+
     MathAbs = 90,
     MathAcos = 91,
     MathAsin = 92,
@@ -238,7 +244,7 @@ impl IntrinsicId {
             | 20..=29
             | 30..=56
             | 60..=67
-            | 70..=82
+            | 70..=87
             | 90..=117
             | 120..=126
             | 130..=183
@@ -344,6 +350,12 @@ pub fn resolve_intrinsic(name: &str) -> Option<IntrinsicId> {
         "__net_enc_uri_component" => Some(IntrinsicId::NetEncUriComponent),
         "__net_dec_uri_component" => Some(IntrinsicId::NetDecUriComponent),
         "__net_basic_auth" => Some(IntrinsicId::NetBasicAuth),
+
+        "__http_fetch" => Some(IntrinsicId::HttpFetch),
+        "__http_server_create" => Some(IntrinsicId::HttpServerCreate),
+        "__http_server_route" => Some(IntrinsicId::HttpServerRoute),
+        "__http_server_listen" => Some(IntrinsicId::HttpServerListen),
+        "__http_response_send" => Some(IntrinsicId::HttpResponseSend),
 
         "__math_abs" => Some(IntrinsicId::MathAbs),
         "__math_acos" => Some(IntrinsicId::MathAcos),

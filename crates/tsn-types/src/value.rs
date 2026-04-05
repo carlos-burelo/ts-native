@@ -16,6 +16,10 @@ pub fn init_thread_heap() {
         install_allocator(v);
     }
 }
+
+pub fn get_global_vtable() -> Option<&'static AllocVtable> {
+    GLOBAL_VTABLE.get().copied()
+}
 pub type RuntimeString = Arc<str>;
 pub type RuntimeArray = Vec<Value>;
 pub type ObjRef = *mut ObjData;

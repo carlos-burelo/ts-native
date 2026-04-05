@@ -1,63 +1,41 @@
-import { fetch, HTTP } from "std:http";
-
+import { fetch, HTTP, Method } from "std:http";
 
 async function testFetch() {
     print("--- Testing fetch(url) ---");
     try {
-        let resp = await fetch("https://httpbin.org/get");
-        print("Status:" + resp.status);
-        print("OK:" + resp.ok);
-        let text = await resp.text();
-        print("Body length:" + text.length);
-        // print("Body:", text);
+        const resp = await fetch("https://httpbin.org/get");
+        print("Status: " + resp.status.toString());
+        print("OK: " + resp.ok.toString());
+        print("Body length: " + resp.body.length.toString());
     } catch (e) {
-        print("Error in fetch(url):" + e);
+        print("Error in fetch(url): " + e.toString());
     }
 
-    print("\n--- Testing fetch(url, init) with POST ---");
+    print("--- Testing fetch(url, init) with POST ---");
     try {
-        let resp = await fetch("https://httpbin.org/post", {
-            method: 1, // Method.POST
+        const resp = await fetch("https://httpbin.org/post", {
+            method: Method.POST,
             headers: {
                 "Content-Type": "application/json",
                 "X-Custom-Header": "TSN-Native"
             },
             body: '{"test": "data"}'
         });
-        print("Status:" + resp.status);
-        let json = resp.json();
-        print("Response JSON test field:" + json.json.test);
+        print("Status: " + resp.status.toString());
+        print("OK: " + resp.ok.toString());
     } catch (e) {
-        print("Error in fetch(url, init):" + e);
+        print("Error in fetch(url, init): " + e.toString());
     }
 
-    print("\n--- Testing HTTP.fetch(url) ---");
+    print("--- Testing HTTP.get(url) ---");
     try {
-        let resp = await HTTP.fetch("https://httpbin.org/get");
-        print("Status:"+ resp.status);
+        const resp = await HTTP.get("https://httpbin.org/get");
+        print("Status: " + resp.status.toString());
     } catch (e) {
-        print("Error in HTTP.fetch:" + e);
+        print("Error in HTTP.get: " + e.toString());
     }
+
+    print("Done.");
 }
 
 testFetch();
-
-
-class A {
-    static get(): void{
-        print("get");
-    }
-}
-
-A.get();
-
-const a = {
-    b: {
-        c: {
-            d: 1
-        }
-    }
-}
-
-
-a.b.c.d 
