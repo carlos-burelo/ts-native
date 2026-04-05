@@ -7,6 +7,18 @@ use tsn_checker::{BindResult, ClassMemberInfo, ClassMemberKind, SymbolKind};
 use tsn_core::TypeKind;
 
 pub fn map_members(ms: &[ClassMemberInfo], tokens: &[TokenRecord]) -> Vec<MemberRecord> {
+    map_members_inner(ms, tokens, false)
+}
+
+pub fn map_enum_members(ms: &[ClassMemberInfo], tokens: &[TokenRecord]) -> Vec<MemberRecord> {
+    map_members_inner(ms, tokens, true)
+}
+
+fn map_members_inner(
+    ms: &[ClassMemberInfo],
+    tokens: &[TokenRecord],
+    is_enum: bool,
+) -> Vec<MemberRecord> {
     ms.iter()
         .map(|m| {
             let type_str = if let TypeKind::Fn(ft) = &m.ty.0 {
@@ -34,7 +46,11 @@ pub fn map_members(ms: &[ClassMemberInfo], tokens: &[TokenRecord]) -> Vec<Member
                 params_str: m.params_str(),
                 is_static: m.is_static,
                 is_optional: m.is_optional,
-                kind: class_member_kind(&m.kind),
+                kind: if is_enum && m.kind == ClassMemberKind::Property {
+                    MemberKind::EnumMember
+                } else {
+                    class_member_kind(&m.kind)
+                },
                 is_arrow: if let TypeKind::Fn(ft) = &m.ty.0 {
                     ft.is_arrow
                 } else {

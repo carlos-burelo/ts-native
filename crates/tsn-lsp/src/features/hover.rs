@@ -167,6 +167,7 @@ pub fn format_member_sig(parent_name: &str, member: &MemberRecord) -> String {
             | MemberKind::Interface
             | MemberKind::Namespace
             | MemberKind::Enum
+            | MemberKind::EnumMember
             | MemberKind::Struct
     );
     let static_kw = if member.is_static && !is_type_like {
@@ -209,6 +210,7 @@ pub fn format_member_sig(parent_name: &str, member: &MemberRecord) -> String {
         MemberKind::Enum => {
             format!("(enum) {}{}.{}", static_kw, parent_name, member.name)
         }
+        MemberKind::EnumMember => format_enum_member(parent_name, &member.name, &member.init_value),
         MemberKind::Struct => {
             format!("(struct) {}{}.{}", static_kw, parent_name, member.name)
         }
@@ -283,6 +285,7 @@ fn format_inner_member(m: &MemberRecord) -> String {
         | MemberKind::Interface
         | MemberKind::Namespace
         | MemberKind::Enum
+        | MemberKind::EnumMember
         | MemberKind::Struct => {
             format!(
                 "{}{}{} {}({})",
@@ -312,7 +315,7 @@ impl MemberKind {
             MemberKind::Class => "class",
             MemberKind::Interface => "interface",
             MemberKind::Namespace => "namespace",
-            MemberKind::Enum => "enum",
+            MemberKind::Enum | MemberKind::EnumMember => "enum",
             MemberKind::Struct => "struct",
             MemberKind::Property => "prop",
             MemberKind::Method => "method",

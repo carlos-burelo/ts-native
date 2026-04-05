@@ -139,6 +139,7 @@ pub fn map_member_kind_to_tt(kind: &MemberKind) -> u32 {
     match kind {
         MemberKind::Method | MemberKind::Getter | MemberKind::Setter => TT_FUNCTION,
         MemberKind::Property => TT_PROPERTY,
+        MemberKind::EnumMember => super::TT_ENUM_MEMBER,
         MemberKind::Constructor => TT_KEYWORD,
         MemberKind::Class
         | MemberKind::Interface

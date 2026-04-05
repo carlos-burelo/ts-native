@@ -21,6 +21,7 @@ pub static LEGEND: Lazy<SemanticTokensLegend> = Lazy::new(|| SemanticTokensLegen
         SemanticTokenType::PROPERTY,
         SemanticTokenType::NUMBER,
         SemanticTokenType::STRING,
+        SemanticTokenType::ENUM_MEMBER,
     ],
     token_modifiers: vec![
         SemanticTokenModifier::DECLARATION,
@@ -38,6 +39,7 @@ pub const TT_PARAMETER: u32 = 5;
 pub const TT_PROPERTY: u32 = 6;
 pub const TT_NUMBER: u32 = 7;
 pub const TT_STRING: u32 = 8;
+pub const TT_ENUM_MEMBER: u32 = 9;
 
 pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
     use crate::document::MemberKind;
@@ -53,7 +55,7 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
                     continue;
                 }
                 let tt = if sym.kind == SymbolKind::Enum {
-                    TT_PROPERTY
+                    TT_ENUM_MEMBER
                 } else {
                     match member.kind {
                         MemberKind::Property => TT_PROPERTY,
@@ -61,6 +63,7 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
                         MemberKind::Constructor => continue,
                         MemberKind::Class | MemberKind::Namespace | MemberKind::Struct => TT_CLASS,
                         MemberKind::Interface | MemberKind::Enum => TT_TYPE,
+                        MemberKind::EnumMember => TT_ENUM_MEMBER,
                     }
                 };
                 member_overrides.insert((member.line, member.name.clone()), tt);

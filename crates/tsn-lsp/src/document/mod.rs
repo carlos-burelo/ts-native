@@ -25,6 +25,7 @@ pub enum MemberKind {
     Constructor,
     Method,
     Property,
+    EnumMember,
     Getter,
     Setter,
     Class,

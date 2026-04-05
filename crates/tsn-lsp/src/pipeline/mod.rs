@@ -77,13 +77,13 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
                     .bind
                     .enum_members
                     .get(&sym.name)
-                    .map(|ms| symbols::map_members(ms, &tokens))
+                    .map(|ms| symbols::map_enum_members(ms, &tokens))
                     .or_else(|| {
                         sym.origin_module.as_ref().and_then(|origin| {
                             module_resolver::resolve_module_bind(origin).and_then(|rb| {
                                 rb.enum_members
                                     .get(sym.original_name.as_ref().unwrap_or(&sym.name))
-                                    .map(|ms| symbols::map_members(ms, &tokens))
+                                    .map(|ms| symbols::map_enum_members(ms, &tokens))
                             })
                         })
                     })

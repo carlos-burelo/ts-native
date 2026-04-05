@@ -72,6 +72,7 @@ fn member_to_completion_item(m: &MemberRecord, use_snippets: bool) -> Completion
         MemberKind::Interface => (CompletionItemKind::INTERFACE, m.name.clone(), None),
         MemberKind::Namespace => (CompletionItemKind::MODULE, m.name.clone(), None),
         MemberKind::Enum => (CompletionItemKind::ENUM, m.name.clone(), None),
+        MemberKind::EnumMember => (CompletionItemKind::ENUM_MEMBER, m.name.clone(), None),
         MemberKind::Struct => (CompletionItemKind::STRUCT, m.name.clone(), None),
     };
     let detail = match m.kind {
@@ -82,7 +83,7 @@ fn member_to_completion_item(m: &MemberRecord, use_snippets: bool) -> Completion
         MemberKind::Class => Some("class".to_owned()),
         MemberKind::Interface => Some("interface".to_owned()),
         MemberKind::Namespace => Some("namespace".to_owned()),
-        MemberKind::Enum => Some("enum".to_owned()),
+        MemberKind::Enum | MemberKind::EnumMember => Some("enum".to_owned()),
         MemberKind::Struct => Some("struct".to_owned()),
     };
     CompletionItem {
