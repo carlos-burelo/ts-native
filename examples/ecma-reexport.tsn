@@ -1,4 +1,0 @@
-// Re-exports
-export * from './ecma-a.tsn'
-export { default as defaultB } from './ecma-b.tsn'
-export * as nsA from './ecma-a.tsn'

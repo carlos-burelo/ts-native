@@ -1,8 +1,0 @@
-// Minimal top-level await test
-async function test(): void {
-    print("In async function");
-}
-
-print("Before call");
-test();
-print("After call");

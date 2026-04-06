@@ -1,5 +1,0 @@
-// Minimal test - just array length
-const a = [1, 2, 3];
-const len = a.length;
-print("Length is:", len);
-print("Done");

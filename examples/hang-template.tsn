@@ -1,2 +1,0 @@
-let name = "TSN";
-print(`Hello ${name}`);

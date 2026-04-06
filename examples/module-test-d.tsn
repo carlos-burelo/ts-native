@@ -1,2 +1,0 @@
-// Module D: Namespace export
-export * as modA from './module-test-a.tsn'

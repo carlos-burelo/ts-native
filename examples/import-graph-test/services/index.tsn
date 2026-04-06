@@ -1,7 +1,0 @@
-// services/index.tsn — Barrel: re-exports all service modules
-
-export * as auth    from './auth.tsn';
-export * as catalog from './catalog.tsn';
-
-export { AUTH_VERSION }    from './auth.tsn';
-export { CATALOG_VERSION } from './catalog.tsn';

@@ -1,6 +1,0 @@
-interface MyRecord<K, V> {
-    [key: K]: V;
-}
-
-let r: MyRecord<str, int> = { "a": 1 };
-print(r["a"]);

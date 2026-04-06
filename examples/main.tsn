@@ -1,0 +1,55 @@
+import { run as arithmetic   } from "./01-arithmetic"
+import { run as boolean      } from "./02-boolean"
+import { run as strings      } from "./03-strings"
+import { run as templates    } from "./04-templates"
+import { run as arrays       } from "./05-arrays"
+import { run as destructuring} from "./06-destructuring"
+import { run as closures     } from "./07-closures"
+import { run as nullSafety   } from "./08-null-safety"
+import { run as controlFlow  } from "./09-control-flow"
+import { run as matchExpr    } from "./10-match"
+import { run as errors       } from "./11-errors"
+import { run as classes      } from "./12-classes"
+import { run as interfaces   } from "./13-interfaces"
+import { run as generics     } from "./14-generics"
+import { run as unions       } from "./15-unions"
+import { run as enums        } from "./16-enums"
+import { run as mapSet       } from "./17-map-set"
+import { run as ranges       } from "./18-ranges"
+import { run as pipeline     } from "./19-pipeline"
+import { run as generators   } from "./20-generators"
+import { run as async_       } from "./21-async"
+import { run as recursion    } from "./22-recursion"
+import { run as objects      } from "./23-objects"
+import { run as record       } from "./24-record"
+import { run as extensions   } from "./25-extensions"
+import { run as decorators   } from "./27-decorators"
+
+arithmetic()
+boolean()
+strings()
+templates()
+arrays()
+destructuring()
+closures()
+nullSafety()
+controlFlow()
+matchExpr()
+errors()
+classes()
+interfaces()
+generics()
+unions()
+enums()
+mapSet()
+ranges()
+pipeline()
+generators()
+async_()
+recursion()
+objects()
+record()
+extensions()
+decorators()
+
+assertSummary()

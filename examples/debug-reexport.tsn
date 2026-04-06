@@ -1,2 +1,0 @@
-import { name } from './module-test-b.tsn'
-print("Name from B:", name)

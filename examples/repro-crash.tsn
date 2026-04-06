@@ -1,8 +1,0 @@
-
-print("Start Debug");
-const a: int[] = [10];
-print("Array created, len: " + a.length);
-print("Pushing...");
-a.push(20);
-print("Pushed. Len: " + a.length);
-print("Done");

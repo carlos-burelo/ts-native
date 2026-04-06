@@ -1,4 +1,0 @@
-export const message = "Hello from lib!"
-export function getMessage(): str {
-  return message
-}

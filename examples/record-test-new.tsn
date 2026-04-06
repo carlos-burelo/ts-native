@@ -1,3 +1,0 @@
-let r: Record<str, int> = { "a": 1, "b": 2 };
-let x: int = r["a"];
-print(x);

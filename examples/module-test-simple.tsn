@@ -1,7 +1,0 @@
-// Simplified test: just namespace import
-import * as modA from './module-test-a.tsn'
-
-print("Testing namespace import...")
-print("modA.name:", modA.name)
-print("modA.version:", modA.version)
-print("Success!")

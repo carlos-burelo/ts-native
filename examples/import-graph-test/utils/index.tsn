@@ -1,4 +1,0 @@
-// utils/index.tsn — Barrel: re-exports all utility modules
-
-export * from './math.tsn';
-export * from './strings.tsn';

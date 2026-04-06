@@ -1,4 +1,0 @@
-// Test what the range literal creates
-const r = 0..5
-print("Range object:")
-print(r)

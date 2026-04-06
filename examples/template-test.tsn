@@ -1,6 +1,0 @@
-let x = 42;
-print(`The answer is ${x - 2}`);
-let s = "Count: " + str.from(10);
-print(s);
-let combined = `Interpolation: ${x}, Concatenation: ` + str.from(s);
-print(combined);

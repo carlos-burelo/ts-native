@@ -1,7 +1,0 @@
-// Simple test file
-function add(a: int, b: int): int {
-    return a + b;
-}
-
-let result = add(5, 3);
-print("Result: " + result);

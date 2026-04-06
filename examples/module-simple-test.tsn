@@ -1,7 +1,0 @@
-// Test simple de export
-export const x = 42
-export function greet(name: str): str {
-  return "Hello, " + name
-}
-
-print("Module loaded")

@@ -1,3 +1,0 @@
-// Module B: Re-exports from A
-export { name, greet } from './module-test-a.tsn'
-export { version as v } from './module-test-a.tsn'

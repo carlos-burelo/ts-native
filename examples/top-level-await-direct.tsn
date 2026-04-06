@@ -1,6 +1,0 @@
-// Test just the await expression without function call
-print("Test 1");
-const future = Future.value(42);
-print("Test 2");
-const result = await future;
-print("Test 3: " + result);

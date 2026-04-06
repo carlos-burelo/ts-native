@@ -1,7 +1,0 @@
-// Simple top-level test without await
-print("Line 1");
-print("Line 2");
-print("Line 3");
-
-const x = 42;
-print("x = " + x);

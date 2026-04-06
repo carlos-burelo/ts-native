@@ -1,9 +1,0 @@
-class Simple {
-  constructor() {
-    print("Constructor!")
-  }
-}
-
-print("Before")
-let obj = new Simple()
-print("After")

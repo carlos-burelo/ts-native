@@ -1,2 +1,0 @@
-// Module C: Wildcard re-export
-export * from './module-test-a.tsn'
