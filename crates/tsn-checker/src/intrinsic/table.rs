@@ -36,7 +36,7 @@ pub fn intrinsic_return_type(id: IntrinsicId) -> Type {
         ConsoleLog | IoWrite | IoWriteln | IoFlush | MapSet | MapDelete | MapClear | SetAdd
         | SetDelete | SetClear | FsWrite | FsWriteBytes | FsWriteText | FsAppendText | FsMkdir
         | FsMkdirAll | FsRemove | FsRemoveAll | FsRename | FsCopy | FsSymlink | FsWatch
-        | SysExit | SysEnvSet | TimerClear => Type(TypeKind::Void),
+        | SysExit | SysEnvSet | TimerClear | AssertTest | AssertSummary => Type(TypeKind::Void),
 
         _ => Type(TypeKind::Dynamic),
     }

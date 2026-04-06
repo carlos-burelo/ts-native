@@ -13,5 +13,7 @@
 	"search.exclude": {
 		"**/.archive": true
 	},
-	"tsn.server.path": "C:\\Users\\x\\dev\\ts-native\\target\\debug\\tsn-lsp.exe"
+	"tsn.server.path": "C:\\Users\\x\\dev\\ts-native\\target\\debug\\tsn-lsp.exe",
+	"tsn.cli.path": "C:\\Users\\x\\dev\\ts-native\\target\\debug\\tsn-cli.exe",
+	"tsn.inlayHints.enabled": false,
 }

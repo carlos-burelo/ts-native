@@ -2,7 +2,7 @@ use tsn_types::Value;
 
 use super::{
     array, async_, console, crypto, fs, http, io, json, map, math, net, path, primitives, reflect,
-    set, sys, time,
+    set, sys, testing, time,
 };
 
 pub type IntrinsicFn = fn(&mut dyn tsn_types::Context, &[Value]) -> Result<Value, String>;
@@ -196,9 +196,9 @@ pub static INTRINSIC_TABLE: [IntrinsicFn; 254] = [
     /* 181 */ primitives::str_to_int,
     /* 182 */ primitives::str_to_float,
     /* 183 */ primitives::str_from_value,
-    /* 184..189 */ unimpl,
-    unimpl,
-    unimpl,
+    /* 184 */ |_, a| testing::assert_test(a),
+    /* 185 */ |_, a| testing::assert_summary(a),
+    /* 186..189 */ unimpl,
     unimpl,
     unimpl,
     unimpl,

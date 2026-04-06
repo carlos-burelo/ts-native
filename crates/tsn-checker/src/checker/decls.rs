@@ -1,7 +1,8 @@
 use super::Checker;
 use crate::binder::widen_literal;
 use crate::binder::BindResult;
-use tsn_core::ast::{Decl, ExportDecl, ExportDefaultDecl, ImportSpecifier, VarKind};
+use tsn_core::TypeKind;
+use tsn_core::ast::{Decl, Decorator, ExportDecl, ExportDefaultDecl, ImportSpecifier, VarKind};
 use tsn_core::Diagnostic;
 
 impl Checker {
@@ -85,6 +86,8 @@ impl Checker {
 
                 self.current_scope = saved_scope;
                 self.expected_return_type = saved_expected;
+
+                self.check_decorators(&f.decorators, bind);
             }
 
             Decl::Class(c) => {
@@ -176,6 +179,14 @@ impl Checker {
                 }
 
                 self.current_class = saved_class;
+                self.check_decorators(&c.decorators, bind);
+
+                for member in &c.body {
+                    use tsn_core::ast::ClassMember;
+                    if let ClassMember::Method { decorators, .. } = member {
+                        self.check_decorators(decorators, bind);
+                    }
+                }
             }
 
             Decl::Namespace(n) => {
@@ -271,6 +282,35 @@ impl Checker {
             }
 
             _ => {}
+        }
+    }
+
+    /// Validate that each decorator expression is not an obviously non-callable value.
+    /// Decorators may be direct functions or factory calls (return a function).
+    /// Type inference for factory return types is not always available before enrichment,
+    /// so we only reject clearly wrong types: primitives, null, never.
+    pub(crate) fn check_decorators(&mut self, decorators: &[Decorator], bind: &BindResult) {
+        for deco in decorators {
+            self.check_expr(&deco.expression, bind);
+            let ty = self.infer_type(&deco.expression, bind);
+            let is_obviously_invalid = matches!(
+                &ty.0,
+                TypeKind::Int
+                    | TypeKind::Float
+                    | TypeKind::Str
+                    | TypeKind::Bool
+                    | TypeKind::Null
+                    | TypeKind::Never
+                    | TypeKind::BigInt
+                    | TypeKind::Decimal
+                    | TypeKind::Char
+            );
+            if is_obviously_invalid {
+                self.diagnostics.push(Diagnostic::error(
+                    format!("decorator must be callable, got '{}'", ty),
+                    deco.range.clone(),
+                ));
+            }
         }
     }
 }

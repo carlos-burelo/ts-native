@@ -382,6 +382,10 @@ impl super::Vm {
             }
 
             Value::Class(cls) => {
+                // Expose built-in class metadata properties before checking statics.
+                if key == "name" {
+                    return Ok(Value::Str(Arc::from(cls.name.as_str())));
+                }
                 let v = cls
                     .statics
                     .get(key)

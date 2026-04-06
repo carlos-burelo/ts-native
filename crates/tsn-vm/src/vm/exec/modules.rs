@@ -23,9 +23,14 @@ impl super::super::Vm {
             .map_err(|errs| format!("parse error in '{}': {}", abs_path, errs[0].message))?;
 
         let check_result = tsn_checker::Checker::check(&program);
-        let proto =
-            tsn_compiler::compile_with_annotations(&program, &check_result.type_annotations)
-                .map_err(|e| format!("compile error in '{}': {}", abs_path, e))?;
+        let proto = tsn_compiler::compile_with_check_result(
+            &program,
+            &check_result.type_annotations,
+            &check_result.extension_calls,
+            &check_result.extension_members,
+            &check_result.extension_set_members,
+        )
+        .map_err(|e| format!("compile error in '{}': {}", abs_path, e))?;
 
         let saved_exports =
             std::mem::replace(&mut self.module_exports, tsn_types::RuntimeObject::new());
@@ -143,6 +148,8 @@ pub(super) fn resolve_import_path(
 
         if path.is_dir() {
             path = path.join("index.tsn");
+        } else if path.extension().is_none() {
+            path.set_extension("tsn");
         }
 
         let canonical = std::fs::canonicalize(&path).ok()?;

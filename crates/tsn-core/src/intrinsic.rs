@@ -190,6 +190,9 @@ pub enum IntrinsicId {
     StrToFloat = 182,
     StrFromValue = 183,
 
+    AssertTest = 184,
+    AssertSummary = 185,
+
     IntSign = 190,
     IntNegate = 191,
     IntBitwiseNot = 192,
@@ -247,7 +250,7 @@ impl IntrinsicId {
             | 70..=87
             | 90..=117
             | 120..=126
-            | 130..=183
+            | 130..=185
             | 190..=200
             | 210..=214
             | 220..=236
@@ -446,6 +449,9 @@ pub fn resolve_intrinsic(name: &str) -> Option<IntrinsicId> {
         "__str_to_int" => Some(IntrinsicId::StrToInt),
         "__str_to_float" => Some(IntrinsicId::StrToFloat),
         "__str_from_value" => Some(IntrinsicId::StrFromValue),
+
+        "__assert_test" => Some(IntrinsicId::AssertTest),
+        "__assert_summary" => Some(IntrinsicId::AssertSummary),
 
         "__int_sign" => Some(IntrinsicId::IntSign),
         "__int_negate" => Some(IntrinsicId::IntNegate),

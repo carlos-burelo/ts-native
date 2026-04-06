@@ -1,5 +1,14 @@
 // global.tsn — Builtin: global functions always in scope
 
+export interface ClassRef {
+    readonly name: str
+}
+
+export interface FunctionRef {
+    readonly name: str
+    readonly length: int
+}
+
 export function print(...args: dynamic[]): void {
     __console_log(...args);
 }
@@ -8,10 +17,12 @@ export function debug(...args: dynamic[]): void {
     __console_debug(...args);
 }
 
-export function assert(condition: bool, message?: str): void {
-    if (!condition) {
-        throw message ?? "Assertion failed";
-    }
+export function assert(label: str, cond: bool): void {
+    __assert_test(label, cond)
+}
+
+export function assertSummary(): void {
+    __assert_summary()
 }
 
 export function input(prompt?: str): str {

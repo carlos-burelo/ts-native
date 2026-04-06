@@ -15,7 +15,6 @@ pub const VOID: &str = "void";
 pub const NULL: &str = "null";
 pub const NEVER: &str = "never";
 pub const DYNAMIC: &str = "dynamic";
-
 // Generic builtins
 pub const ARRAY: &str = "Array";
 pub const FUTURE: &str = "Future";

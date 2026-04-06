@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use super::Compiler;
 use tsn_core::ast::{
-    ArrayPatternEl, ClassDecl, ClassMember, Decl, ExportDecl, ExportDefaultDecl, ExtensionDecl,
-    FunctionDecl, ImportDecl, ImportSpecifier, ObjPatternProp, Pattern, Stmt,
+    ArrayPatternEl, ClassDecl, ClassMember, Decl, Decorator, ExportDecl, ExportDefaultDecl,
+    ExtensionDecl, FunctionDecl, ImportDecl, ImportSpecifier, ObjPatternProp, Pattern, Stmt,
 };
 use tsn_core::{OpCode, SourceRange};
 
@@ -21,7 +21,13 @@ impl Compiler {
                 self,
             )?;
             self.emit_closure(proto, upvalues);
-            self.emit_define_global(&decl.id);
+            if decl.decorators.is_empty() {
+                self.emit_define_global(&decl.id);
+            } else {
+                // Apply decorators to the function on the stack, then define
+                self.emit_apply_entity_decorators(&decl.decorators)?;
+                self.emit_define_global(&decl.id);
+            }
         } else {
             // Local function: pre-declare slot with null so body can capture for self-recursion
             self.emit(OpCode::OpPushNull);
@@ -36,6 +42,9 @@ impl Compiler {
                 self,
             )?;
             self.emit_closure(proto, upvalues);
+            if !decl.decorators.is_empty() {
+                self.emit_apply_entity_decorators(&decl.decorators)?;
+            }
             // OpSetLocal peeks, so pop the extra closure copy
             self.emit1(OpCode::OpSetLocal, fn_slot);
             self.emit(OpCode::OpPop);
@@ -119,6 +128,7 @@ impl Compiler {
                     params,
                     body: Some(body),
                     modifiers,
+                    decorators,
                     ..
                 } => {
                     let (fn_proto, upvalues) = super::compile_function_with_parent(
@@ -142,6 +152,20 @@ impl Compiler {
                     }
 
                     self.emit_closure(fn_proto, upvalues);
+                    if !decorators.is_empty() {
+                        use tsn_core::ast::operators::Visibility;
+                        let is_private = matches!(
+                            modifiers.visibility,
+                            Some(Visibility::Private)
+                        );
+                        self.emit_apply_method_decorators(
+                            decorators,
+                            key,
+                            "method",
+                            modifiers.is_static,
+                            is_private,
+                        )?;
+                    }
                     if modifiers.is_static {
                         self.emit1(OpCode::OpDefineStatic, key_idx);
                     } else {
@@ -314,6 +338,10 @@ impl Compiler {
     pub(super) fn compile_class_decl(&mut self, decl: &ClassDecl) -> Result<(), String> {
         self.compile_class_as_expr(decl)?;
 
+        if !decl.decorators.is_empty() {
+            self.emit_apply_entity_decorators(&decl.decorators)?;
+        }
+
         if let Some(id) = &decl.id {
             if self.scope.depth == 0 {
                 self.emit_define_global(id);
@@ -322,6 +350,116 @@ impl Compiler {
             }
         }
 
+        Ok(())
+    }
+
+    /// Emit a null check on the top-of-stack value, leaving a bool on top.
+    /// Stack before: [..., val]
+    /// Stack after:  [..., val, bool(val === null)]
+    fn emit_is_null_check(&mut self) {
+        self.emit(OpCode::OpDup);
+        self.emit(OpCode::OpPushNull);
+        self.emit(OpCode::OpEq);
+    }
+
+    /// Apply decorators to an entity already on the stack (class or function).
+    /// Decorators are applied bottom-to-top (last in source = applied first).
+    /// Calling convention: `decorator(entity)` — single arg.
+    /// If decorator returns non-null, that replaces the entity on the stack.
+    fn emit_apply_entity_decorators(
+        &mut self,
+        decorators: &[Decorator],
+    ) -> Result<(), String> {
+        for deco in decorators.iter().rev() {
+            // Stack: [..., entity]
+            self.emit(OpCode::OpDup);
+            // Stack: [..., entity, entity_copy]
+            self.compile_expr(&deco.expression)?;
+            // Stack: [..., entity, entity_copy, deco]
+            self.emit(OpCode::OpSwap);
+            // Stack: [..., entity, deco, entity_copy]
+            self.emit1(OpCode::OpCall, 1);
+            // Stack: [..., entity, result]
+            // If result is null/void, keep original entity; else use result
+            self.emit_is_null_check();
+            // Stack: [..., entity, result, bool(result===null)]
+            let use_original = self.emit_jump(OpCode::OpJumpIfFalse);
+            // result IS null — pop bool (peeked), pop null result, keep entity
+            self.emit(OpCode::OpPop); // pop peeked bool
+            self.emit(OpCode::OpPop); // pop null result
+            let end_jump = self.emit_jump(OpCode::OpJump);
+            self.patch_jump(use_original);
+            // result is NOT null — pop bool (peeked), pop original entity, keep result
+            self.emit(OpCode::OpPop);  // pop peeked bool
+            self.emit(OpCode::OpSwap); // [..., result, entity]
+            self.emit(OpCode::OpPop);  // [..., result]
+            self.patch_jump(end_jump);
+            // Stack: [..., entity_or_replacement]
+        }
+        Ok(())
+    }
+
+    /// Apply decorators to a method closure already on the stack.
+    /// Calling convention: `decorator(originalFn, ctx)` — two args.
+    /// ctx = `{ name, kind, isStatic, isPrivate }`.
+    /// If decorator returns non-null, that replaces the function on the stack.
+    fn emit_apply_method_decorators(
+        &mut self,
+        decorators: &[Decorator],
+        method_name: &str,
+        kind: &str,
+        is_static: bool,
+        is_private: bool,
+    ) -> Result<(), String> {
+        for deco in decorators.iter().rev() {
+            // Stack: [..., fn_orig]
+            self.emit(OpCode::OpDup);
+            // Stack: [..., fn_orig, fn_copy]
+            self.compile_expr(&deco.expression)?;
+            // Stack: [..., fn_orig, fn_copy, deco]
+            self.emit(OpCode::OpSwap);
+            // Stack: [..., fn_orig, deco, fn_copy]
+
+            // Build context object: { name, kind, isStatic, isPrivate }
+            let k_name = self.add_str("name");
+            let v_name = self.add_str(method_name);
+            let k_kind = self.add_str("kind");
+            let v_kind = self.add_str(kind);
+            let k_static = self.add_str("isStatic");
+            let k_private = self.add_str("isPrivate");
+            self.emit1(OpCode::OpPushConst, k_name);
+            self.emit1(OpCode::OpPushConst, v_name);
+            self.emit1(OpCode::OpPushConst, k_kind);
+            self.emit1(OpCode::OpPushConst, v_kind);
+            self.emit1(OpCode::OpPushConst, k_static);
+            if is_static {
+                self.emit(OpCode::OpPushTrue);
+            } else {
+                self.emit(OpCode::OpPushFalse);
+            }
+            self.emit1(OpCode::OpPushConst, k_private);
+            if is_private {
+                self.emit(OpCode::OpPushTrue);
+            } else {
+                self.emit(OpCode::OpPushFalse);
+            }
+            self.emit1(OpCode::OpBuildObject, 4);
+            // Stack: [..., fn_orig, deco, fn_copy, ctx]
+            self.emit1(OpCode::OpCall, 2);
+            // Stack: [..., fn_orig, result]
+            self.emit_is_null_check();
+            // Stack: [..., fn_orig, result, bool(result===null)]
+            let use_original = self.emit_jump(OpCode::OpJumpIfFalse);
+            self.emit(OpCode::OpPop);  // pop peeked bool
+            self.emit(OpCode::OpPop);  // pop null result, keep fn_orig
+            let end_jump = self.emit_jump(OpCode::OpJump);
+            self.patch_jump(use_original);
+            self.emit(OpCode::OpPop);  // pop peeked bool
+            self.emit(OpCode::OpSwap); // [..., result, fn_orig]
+            self.emit(OpCode::OpPop);  // [..., result]
+            self.patch_jump(end_jump);
+            // Stack: [..., fn_or_replacement]
+        }
         Ok(())
     }
 
