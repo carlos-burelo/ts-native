@@ -1,7 +1,7 @@
 use tower_lsp::lsp_types::{
     ParameterInformation, ParameterLabel, SignatureHelp, SignatureInformation,
 };
-use tsn_core::TokenKind;
+use tsn_core::{TokenKind, TypeKind};
 
 use crate::document::DocumentState;
 
@@ -12,6 +12,9 @@ pub fn build_signature_help(state: &DocumentState, line: u32, col: u32) -> Optio
         .filter(|t| t.line < line || (t.line == line && t.col < col))
         .collect();
 
+    // Walk backwards counting paren depth to find the opening `(` of the call.
+    // Use a counter: RParen/RBracket increments, LBracket decrements,
+    // LParen decrements; when counter hits 0 we found the call paren.
     let mut depth: i32 = 0;
     let mut active_param: u32 = 0;
     let mut call_paren_idx: Option<usize> = None;
@@ -45,19 +48,66 @@ pub fn build_signature_help(state: &DocumentState, line: u32, col: u32) -> Optio
     let call_idx = call_paren_idx?;
 
     let fn_tok = call_idx.checked_sub(1).and_then(|i| before.get(i))?;
+
+    // Attempt to resolve the callee type via chain resolution.
+    if let Some(resolved) =
+        resolve_callee_signature(state, fn_tok.line, fn_tok.col, &fn_tok.lexeme, active_param)
+    {
+        return Some(resolved);
+    }
+
+    // Fallback: look up symbol by name.
     if fn_tok.kind != TokenKind::Identifier {
         return None;
     }
     let fn_name = fn_tok.lexeme.as_str();
-
     let sym = state.symbols.iter().find(|s| s.name == fn_name)?;
     if sym.type_str.is_empty() {
         return None;
     }
 
     let (params_str, ret_str) = split_arrow_type(&sym.type_str)?;
-    let param_strs = split_params(&params_str);
+    build_signature_response(fn_name, &params_str, &ret_str, active_param)
+}
 
+fn resolve_callee_signature(
+    state: &DocumentState,
+    line: u32,
+    col: u32,
+    name: &str,
+    active_param: u32,
+) -> Option<SignatureHelp> {
+    // Try expr_types at the token offset.
+    let tok = state.tokens.iter().find(|t| {
+        t.line == line && t.col <= col && col < t.col + t.length
+    })?;
+
+    let info = state.expr_types.get(&tok.offset)?;
+    if let TypeKind::Fn(ft) = &info.ty.0 {
+        let params_str = ft
+            .params
+            .iter()
+            .map(|p| {
+                let n = p.name.as_deref().unwrap_or("arg");
+                let opt = if p.optional { "?" } else { "" };
+                format!("{}{}: {}", n, opt, p.ty)
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        let ret_str = ft.return_type.to_string();
+        return build_signature_response(name, &params_str, &ret_str, active_param);
+    }
+
+    None
+}
+
+fn build_signature_response(
+    fn_name: &str,
+    params_str: &str,
+    ret_str: &str,
+    active_param: u32,
+) -> Option<SignatureHelp> {
+    let param_strs = split_params(params_str);
     let label = format!("{}({}): {}", fn_name, param_strs.join(", "), ret_str);
 
     let parameters: Vec<ParameterInformation> = param_strs

@@ -17,11 +17,12 @@ pub fn build_document_highlights(
 
     let name = tok.lexeme.as_str();
 
-    let decl_lines: HashSet<u32> = state
+    // Collect declaration positions (line + col) from symbols.
+    let decl_positions: HashSet<(u32, u32)> = state
         .symbols
         .iter()
         .filter(|s| s.name == name && s.line != u32::MAX)
-        .map(|s| s.line)
+        .map(|s| (s.line, s.col))
         .collect();
 
     state
@@ -29,7 +30,10 @@ pub fn build_document_highlights(
         .iter()
         .filter(|t| t.kind == TokenKind::Identifier && t.lexeme == name)
         .map(|t| {
-            let kind = if decl_lines.contains(&t.line) {
+            let kind = if decl_positions.contains(&(t.line, t.col)) {
+                // Exact declaration position → WRITE.
+                DocumentHighlightKind::WRITE
+            } else if is_assignment_lhs(state, t) {
                 DocumentHighlightKind::WRITE
             } else {
                 DocumentHighlightKind::READ
@@ -40,4 +44,29 @@ pub fn build_document_highlights(
             }
         })
         .collect()
+}
+
+/// Returns true if `tok` is on the left-hand side of an assignment.
+/// An assignment is `ident =` where the `=` is not part of `==`, `!=`, `<=`, `>=`, `=>`.
+fn is_assignment_lhs(state: &DocumentState, tok: &crate::document::TokenRecord) -> bool {
+    // Find the index of tok in the token list.
+    let idx = state
+        .tokens
+        .iter()
+        .position(|t| std::ptr::eq(t, tok))
+        .unwrap_or(usize::MAX);
+
+    if idx == usize::MAX {
+        return false;
+    }
+
+    // Look at token after `tok` (skip any `[expr]` subscript access for now — simple case).
+    let next = state.tokens.get(idx + 1);
+    match next.map(|t| t.kind) {
+        Some(TokenKind::Eq) => {
+            // EqEq/EqEqEq are different token kinds — TokenKind::Eq is a single `=`.
+            true
+        }
+        _ => false,
+    }
 }

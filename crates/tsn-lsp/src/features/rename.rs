@@ -1,8 +1,13 @@
-use crate::document::DocumentState;
+use crate::document::{DocumentState, TokenRecord};
+use crate::index::ProjectIndex;
 use crate::util::converters::range_on_line;
-use tower_lsp::lsp_types::{PrepareRenameResponse, TextEdit, Url, WorkspaceEdit};
+use crate::workspace::Workspace;
+use tower_lsp::lsp_types::{
+    PrepareRenameResponse, TextEdit, Url, WorkspaceEdit,
+};
 use tsn_checker::symbol::SymbolId;
 use tsn_core::TokenKind;
+use std::collections::HashMap;
 
 pub fn build_prepare_rename(
     state: &DocumentState,
@@ -10,64 +15,138 @@ pub fn build_prepare_rename(
     col: u32,
 ) -> Option<PrepareRenameResponse> {
     let token = find_ident_at(state, line, col)?;
-
-    // Only allow rename when we have a precise symbol_id — prevents silently
-    // renaming unrelated symbols with the same lexeme across different scopes.
     let sid = resolve_symbol_id(state, token.offset)?;
     state.symbols.iter().find(|s| s.symbol_id == Some(sid))?;
-
     let range = range_on_line(line, token.col, token.col + token.length);
     Some(PrepareRenameResponse::Range(range))
 }
 
 pub fn build_rename(
     state: &DocumentState,
+    workspace: &Workspace,
+    index: Option<&ProjectIndex>,
     line: u32,
     col: u32,
     new_name: String,
 ) -> Option<WorkspaceEdit> {
     let token = find_ident_at(state, line, col)?;
     let target_id: Option<SymbolId> = resolve_symbol_id(state, token.offset);
+    let old_name = token.lexeme.clone();
 
-    let edits: Vec<TextEdit> = state
-        .tokens
-        .iter()
-        .filter(|t| {
-            if !matches!(t.kind, TokenKind::Identifier) && !t.kind.can_be_identifier() {
-                return false;
-            }
-            if let Some(id) = target_id {
-                // Precise: only tokens whose symbol_id matches the target.
-                resolve_symbol_id(state, t.offset) == Some(id)
-            } else {
-                // No symbol_id: cannot rename safely, skip.
-                false
-            }
-        })
-        .map(|t| TextEdit {
-            range: range_on_line(t.line, t.col, t.col + t.length),
-            new_text: new_name.clone(),
-        })
-        .collect();
+    let mut changes: HashMap<Url, Vec<TextEdit>> = HashMap::new();
 
-    if edits.is_empty() {
+    // Search all open files.
+    for entry in workspace.iter() {
+        let file_uri = entry.key().clone();
+        let file_state = entry.value();
+        let url = match Url::parse(&file_uri) {
+            Ok(u) => u,
+            Err(_) => continue,
+        };
+
+        let mut edits: Vec<TextEdit> = file_state
+            .tokens
+            .iter()
+            .filter(|t| {
+                if !matches!(t.kind, TokenKind::Identifier) && !t.kind.can_be_identifier() {
+                    return false;
+                }
+                if let Some(id) = target_id {
+                    resolve_symbol_id(file_state, t.offset) == Some(id)
+                } else {
+                    t.lexeme == old_name
+                }
+            })
+            .map(|t| TextEdit {
+                range: range_on_line(t.line, t.col, t.col + t.length),
+                new_text: new_name.clone(),
+            })
+            .collect();
+
+        // Also rename import { OldName } usages if the symbol is exported.
+        if let Some(idx) = index {
+            if idx.definitions_of(&old_name).iter().any(|(u, _)| u == &file_uri) {
+                // This file exports the symbol; rename import specifiers in dependents.
+                for dep_uri in idx.dependents_of(&file_uri) {
+                    if let Some(dep_state) = workspace.get(dep_uri) {
+                        let dep_url = match Url::parse(dep_uri) {
+                            Ok(u) => u,
+                            Err(_) => continue,
+                        };
+                        let dep_edits = import_name_edits(&dep_state, &old_name, &new_name);
+                        if !dep_edits.is_empty() {
+                            changes.entry(dep_url).or_default().extend(dep_edits);
+                        }
+                    }
+                }
+            }
+        }
+
+        if !edits.is_empty() {
+            edits.dedup_by(|a, b| a.range == b.range);
+            changes.entry(url).or_default().extend(edits);
+        }
+    }
+
+    if changes.is_empty() {
         return None;
     }
 
-    let url = Url::parse(&state.uri).ok()?;
-    let mut changes = std::collections::HashMap::new();
-    changes.insert(url, edits);
     Some(WorkspaceEdit {
         changes: Some(changes),
         ..Default::default()
     })
 }
 
+/// Collect edits to rename `old_name` inside `import { ... }` statements.
+fn import_name_edits(
+    state: &DocumentState,
+    old_name: &str,
+    new_name: &str,
+) -> Vec<TextEdit> {
+    // Find import-related tokens: identifier tokens inside `import { … }` blocks.
+    let mut edits = Vec::new();
+    let mut in_import = false;
+    let mut brace_depth = 0i32;
+
+    for tok in &state.tokens {
+        match tok.kind {
+            TokenKind::Import => {
+                in_import = true;
+                brace_depth = 0;
+            }
+            TokenKind::LBrace if in_import => brace_depth += 1,
+            TokenKind::RBrace if in_import => {
+                brace_depth -= 1;
+                if brace_depth <= 0 {
+                    in_import = false;
+                }
+            }
+            TokenKind::Semicolon | TokenKind::Newline => {
+                if brace_depth == 0 {
+                    in_import = false;
+                }
+            }
+            TokenKind::Identifier if in_import && brace_depth > 0 => {
+                if tok.lexeme == old_name {
+                    edits.push(TextEdit {
+                        range: range_on_line(tok.line, tok.col, tok.col + tok.length),
+                        new_text: new_name.to_owned(),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+
+    edits
+}
+
 fn find_ident_at<'a>(
     state: &'a DocumentState,
     line: u32,
     col: u32,
-) -> Option<&'a crate::document::TokenRecord> {
+) -> Option<&'a TokenRecord> {
     state.tokens.iter().find(|t| {
         t.line == line
             && t.col <= col

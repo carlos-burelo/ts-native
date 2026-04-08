@@ -252,7 +252,7 @@ impl LanguageServer for Backend {
         let result = self
             .workspace
             .get(&uri)
-            .and_then(|a| build_references(&a, pos.line, pos.character));
+            .and_then(|a| build_references(&a, &self.workspace, pos.line, pos.character));
         Ok(result)
     }
 
@@ -270,10 +270,17 @@ impl LanguageServer for Backend {
     async fn rename(&self, params: RenameParams) -> LspResult<Option<WorkspaceEdit>> {
         let uri = params.text_document_position.text_document.uri.to_string();
         let pos = params.text_document_position.position;
-        let result = self
-            .workspace
-            .get(&uri)
-            .and_then(|a| build_rename(&a, pos.line, pos.character, params.new_name));
+        let index = self.workspace.index.read().ok();
+        let result = self.workspace.get(&uri).and_then(|a| {
+            build_rename(
+                &a,
+                &self.workspace,
+                index.as_deref(),
+                pos.line,
+                pos.character,
+                params.new_name,
+            )
+        });
         Ok(result)
     }
 
@@ -285,7 +292,7 @@ impl LanguageServer for Backend {
         let result = self
             .workspace
             .get(&uri)
-            .map(|a| DocumentSymbolResponse::Nested(build_document_symbols(&a)));
+            .map(|a| build_document_symbols(&a));
         Ok(result)
     }
 

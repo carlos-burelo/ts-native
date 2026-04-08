@@ -4,8 +4,8 @@ use tsn_checker::SymbolKind;
 use tsn_core::{well_known, TokenKind};
 
 use super::{
-    TT_CLASS, TT_FUNCTION, TT_KEYWORD, TT_NUMBER, TT_PARAMETER, TT_PROPERTY, TT_STRING, TT_TYPE,
-    TT_VARIABLE,
+    TT_CLASS, TT_ENUM_MEMBER, TT_FUNCTION, TT_INTERFACE, TT_KEYWORD, TT_NAMESPACE, TT_NUMBER,
+    TT_PARAMETER, TT_PROPERTY, TT_STRING, TT_TYPE, TT_VARIABLE,
 };
 use crate::document::{MemberKind, ParamScope, TokenRecord};
 
@@ -100,12 +100,14 @@ pub fn classify_identifier(
 
     match symbol_map.get(name) {
         Some(SymbolKind::Function) | Some(SymbolKind::Method) => TT_FUNCTION,
-        Some(SymbolKind::Class) | Some(SymbolKind::Struct) => TT_CLASS,
-        Some(SymbolKind::Interface)
-        | Some(SymbolKind::TypeAlias)
+        Some(SymbolKind::Class) | Some(SymbolKind::Struct) | Some(SymbolKind::Extension) => {
+            TT_CLASS
+        }
+        Some(SymbolKind::Interface) => TT_INTERFACE,
+        Some(SymbolKind::Namespace) => TT_NAMESPACE,
+        Some(SymbolKind::TypeAlias)
         | Some(SymbolKind::Enum)
         | Some(SymbolKind::TypeParameter) => TT_TYPE,
-        Some(SymbolKind::Namespace) | Some(SymbolKind::Extension) => TT_CLASS,
         Some(SymbolKind::Property) => TT_PROPERTY,
         Some(SymbolKind::Parameter) => TT_PARAMETER,
         Some(SymbolKind::Const) => TT_VARIABLE,
@@ -139,12 +141,11 @@ pub fn map_member_kind_to_tt(kind: &MemberKind) -> u32 {
     match kind {
         MemberKind::Method | MemberKind::Getter | MemberKind::Setter => TT_FUNCTION,
         MemberKind::Property => TT_PROPERTY,
-        MemberKind::EnumMember => super::TT_ENUM_MEMBER,
+        MemberKind::EnumMember => TT_ENUM_MEMBER,
         MemberKind::Constructor => TT_KEYWORD,
-        MemberKind::Class
-        | MemberKind::Interface
-        | MemberKind::Namespace
-        | MemberKind::Enum
-        | MemberKind::Struct => TT_TYPE,
+        MemberKind::Class | MemberKind::Struct => TT_CLASS,
+        MemberKind::Interface => TT_INTERFACE,
+        MemberKind::Namespace => TT_NAMESPACE,
+        MemberKind::Enum => TT_ENUM_MEMBER,
     }
 }

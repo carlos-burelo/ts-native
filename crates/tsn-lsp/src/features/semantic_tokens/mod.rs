@@ -12,21 +12,25 @@ use crate::query;
 
 pub static LEGEND: Lazy<SemanticTokensLegend> = Lazy::new(|| SemanticTokensLegend {
     token_types: vec![
-        SemanticTokenType::KEYWORD,
-        SemanticTokenType::TYPE,
-        SemanticTokenType::VARIABLE,
-        SemanticTokenType::FUNCTION,
-        SemanticTokenType::CLASS,
-        SemanticTokenType::PARAMETER,
-        SemanticTokenType::PROPERTY,
-        SemanticTokenType::NUMBER,
-        SemanticTokenType::STRING,
-        SemanticTokenType::ENUM_MEMBER,
+        SemanticTokenType::KEYWORD,     // 0
+        SemanticTokenType::TYPE,        // 1
+        SemanticTokenType::VARIABLE,    // 2
+        SemanticTokenType::FUNCTION,    // 3
+        SemanticTokenType::CLASS,       // 4
+        SemanticTokenType::PARAMETER,   // 5
+        SemanticTokenType::PROPERTY,    // 6
+        SemanticTokenType::NUMBER,      // 7
+        SemanticTokenType::STRING,      // 8
+        SemanticTokenType::ENUM_MEMBER, // 9
+        SemanticTokenType::NAMESPACE,   // 10
+        SemanticTokenType::INTERFACE,   // 11
     ],
     token_modifiers: vec![
-        SemanticTokenModifier::DECLARATION,
-        SemanticTokenModifier::READONLY,
-        SemanticTokenModifier::ASYNC,
+        SemanticTokenModifier::DECLARATION, // bit 0
+        SemanticTokenModifier::READONLY,    // bit 1
+        SemanticTokenModifier::ASYNC,       // bit 2
+        SemanticTokenModifier::STATIC,      // bit 3
+        SemanticTokenModifier::ABSTRACT,    // bit 4
     ],
 });
 
@@ -40,11 +44,19 @@ pub const TT_PROPERTY: u32 = 6;
 pub const TT_NUMBER: u32 = 7;
 pub const TT_STRING: u32 = 8;
 pub const TT_ENUM_MEMBER: u32 = 9;
+pub const TT_NAMESPACE: u32 = 10;
+pub const TT_INTERFACE: u32 = 11;
+
+pub const MOD_DECLARATION: u32 = 1 << 0;
+pub const MOD_READONLY: u32 = 1 << 1;
+pub const MOD_ASYNC: u32 = 1 << 2;
+pub const MOD_STATIC: u32 = 1 << 3;
+pub const MOD_ABSTRACT: u32 = 1 << 4;
 
 pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
     use crate::document::MemberKind;
 
-    let mut member_overrides: HashMap<(u32, String), u32> = HashMap::new();
+    let mut member_overrides: HashMap<(u32, String), (u32, u32)> = HashMap::new();
     for sym in &state.symbols {
         if matches!(
             sym.kind,
@@ -62,11 +74,13 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
                         MemberKind::Method | MemberKind::Getter | MemberKind::Setter => TT_FUNCTION,
                         MemberKind::Constructor => continue,
                         MemberKind::Class | MemberKind::Namespace | MemberKind::Struct => TT_CLASS,
-                        MemberKind::Interface | MemberKind::Enum => TT_TYPE,
+                        MemberKind::Interface => TT_INTERFACE,
+                        MemberKind::Enum => TT_ENUM_MEMBER,
                         MemberKind::EnumMember => TT_ENUM_MEMBER,
                     }
                 };
-                member_overrides.insert((member.line, member.name.clone()), tt);
+                let mods = if member.is_static { MOD_STATIC } else { 0 };
+                member_overrides.insert((member.line, member.name.clone()), (tt, mods));
             }
         }
     }
@@ -92,12 +106,14 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
             .map(|t| t.kind == TokenKind::Colon)
             .unwrap_or(false);
 
-        let mut token_type = None;
+        let mut token_type: Option<u32> = None;
+        let mut modifier: u32 = 0;
 
         if token_type.is_none() {
-            token_type = member_overrides
-                .get(&(tok.line, tok.lexeme.clone()))
-                .copied();
+            if let Some(&(tt, mods)) = member_overrides.get(&(tok.line, tok.lexeme.clone())) {
+                token_type = Some(tt);
+                modifier = mods;
+            }
         }
 
         if token_type.is_none() {
@@ -105,12 +121,10 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
                 token_type = Some(match res {
                     crate::document::ChainResult::Symbol(s) => match s.kind {
                         SymbolKind::Function | SymbolKind::Method => TT_FUNCTION,
-                        SymbolKind::Class
-                        | SymbolKind::Struct
-                        | SymbolKind::Namespace
-                        | SymbolKind::Extension => TT_CLASS,
-                        SymbolKind::Interface
-                        | SymbolKind::TypeAlias
+                        SymbolKind::Class | SymbolKind::Struct | SymbolKind::Extension => TT_CLASS,
+                        SymbolKind::Namespace => TT_NAMESPACE,
+                        SymbolKind::Interface => TT_INTERFACE,
+                        SymbolKind::TypeAlias
                         | SymbolKind::Enum
                         | SymbolKind::TypeParameter => TT_TYPE,
                         SymbolKind::Parameter => TT_PARAMETER,
@@ -196,9 +210,6 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
 
         // For template head/middle/tail, trim the `${` and `}` delimiters from the
         // emitted range so only the literal string content gets the string color.
-        // TemplateHead   `literal${  → emit from col,    length-2  (drop `${`)
-        // TemplateMiddle }literal${  → emit from col+1,  length-3  (drop `}` and `${`)
-        // TemplateTail   }literal`   → emit from col+1,  length-1  (drop `}`)
         let (emit_col, emit_len) = match tok.kind {
             TokenKind::TemplateHead => (tok.col, tok.length.saturating_sub(2)),
             TokenKind::TemplateMiddle => (tok.col + 1, tok.length.saturating_sub(3)),
@@ -210,14 +221,16 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
             continue;
         }
 
-        let modifier: u32 = match tok.kind {
-            TokenKind::This => 2,
+        // Merge base modifier with per-token modifiers.
+        let base_modifier: u32 = match tok.kind {
+            TokenKind::This => MOD_ASYNC,
             TokenKind::Identifier => match state.symbol_map.get(tok.lexeme.as_str()) {
-                Some(SymbolKind::Const) => 2,
+                Some(SymbolKind::Const) => MOD_READONLY,
                 _ => 0,
             },
             _ => 0,
         };
+        let combined_modifier = modifier | base_modifier;
 
         let delta_line = tok.line - prev_line;
         let delta_start = if delta_line == 0 {
@@ -230,7 +243,7 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
         result.push(delta_start);
         result.push(emit_len);
         result.push(token_type);
-        result.push(modifier);
+        result.push(combined_modifier);
 
         prev_line = tok.line;
         prev_col = emit_col;
