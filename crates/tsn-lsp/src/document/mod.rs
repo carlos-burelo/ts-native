@@ -10,6 +10,15 @@ use tsn_core::TokenKind;
 
 pub use import::{import_path_at, named_import_module_at, named_imported_names_at, uri_to_path};
 
+/// A single related location for a diagnostic (message, line, col).
+#[derive(Clone, Debug)]
+pub struct RelatedLocation {
+    pub message: String,
+    pub uri: String,
+    pub line: u32,
+    pub col: u32,
+}
+
 #[derive(Clone, Debug)]
 pub struct LspDiag {
     pub message: String,
@@ -18,6 +27,7 @@ pub struct LspDiag {
     pub end_line: u32,
     pub end_col: u32,
     pub severity: u8,
+    pub related: Vec<RelatedLocation>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -59,6 +69,8 @@ pub struct SymbolRecord {
     pub params_str: String,
     pub line: u32,
     pub col: u32,
+    pub end_line: u32,
+    pub end_col: u32,
     pub has_explicit_type: bool,
     pub is_async: bool,
     pub is_arrow: bool,
@@ -142,6 +154,8 @@ pub struct DocumentState {
     pub flattened_members: HashMap<String, Vec<tsn_checker::types::ClassMemberInfo>>,
     pub extension_members: HashMap<String, Vec<MemberRecord>>,
     pub expr_types: FxHashMap<u32, tsn_checker::ExprInfo>,
+    /// Raw import specifier strings found in the source (e.g. "./utils", "std:math")
+    pub import_paths: Vec<String>,
 }
 
 /// Type alias kept for backwards compatibility across the codebase.

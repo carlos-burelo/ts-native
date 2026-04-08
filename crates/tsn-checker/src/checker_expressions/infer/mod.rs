@@ -307,6 +307,24 @@ impl Checker {
                 }
             }
 
+            Expr::Update { operand, .. } => {
+                let inner = self.infer_type(operand, bind);
+                match &inner.0 {
+                    TypeKind::Int | TypeKind::Float => inner,
+                    _ => Type::Int,
+                }
+            }
+
+            Expr::Yield { argument, .. } => {
+                if let Some(arg) = argument {
+                    self.infer_type(arg, bind)
+                } else {
+                    Type::Void
+                }
+            }
+
+            Expr::Template { .. } => Type::Str,
+
             Expr::Logical {
                 op, left, right, ..
             } => {

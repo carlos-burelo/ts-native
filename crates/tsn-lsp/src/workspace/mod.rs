@@ -27,10 +27,34 @@ impl Workspace {
 
     pub fn update_file(&self, uri: String, source: String) {
         let state = run_pipeline(source, uri.clone());
+
+        let dependents: Vec<(String, String)> = {
+            if let Ok(idx) = self.index.read() {
+                idx.dependents_of(&uri)
+                    .filter_map(|dep_uri| {
+                        self.files
+                            .get(dep_uri)
+                            .map(|s| (dep_uri.to_owned(), s.source.clone()))
+                    })
+                    .collect()
+            } else {
+                Vec::new()
+            }
+        };
+
         if let Ok(mut idx) = self.index.write() {
             idx.update_file(&uri, &state);
         }
         self.files.insert(uri, state);
+
+        for (dep_uri, dep_source) in dependents {
+            let dep_state = run_pipeline(dep_source, dep_uri.clone());
+            if let Ok(mut idx) = self.index.write() {
+                idx.update_file(&dep_uri, &dep_state);
+            }
+            self.files.insert(dep_uri, dep_state);
+        }
+
         if let Ok(mut rev) = self.revision.lock() {
             rev.bump();
         }

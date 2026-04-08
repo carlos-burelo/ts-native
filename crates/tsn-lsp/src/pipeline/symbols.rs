@@ -116,6 +116,16 @@ pub fn inject_stdlib_symbols(
             params_str: super::format::format_type_params(&inferred_ty),
             line: sym.line.saturating_sub(1),
             col: sym.col,
+            end_line: if sym.full_range.end.line > 0 {
+                sym.full_range.end.line.saturating_sub(1)
+            } else {
+                sym.line.saturating_sub(1)
+            },
+            end_col: if sym.full_range.end.line > 0 {
+                sym.full_range.end.column
+            } else {
+                sym.col + sym.name.len() as u32
+            },
             has_explicit_type: sym.has_explicit_type,
             is_async: sym.is_async,
             is_arrow: matches!(

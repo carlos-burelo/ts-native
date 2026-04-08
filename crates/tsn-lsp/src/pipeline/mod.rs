@@ -1,3 +1,4 @@
+mod extensions;
 mod format;
 mod params;
 mod symbols;
@@ -6,10 +7,11 @@ use std::collections::HashMap;
 
 use crate::constants::{SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_HINT};
 use crate::document::{
-    uri_to_path, DocumentAnalysis, LspDiag, MemberKind, MemberRecord, SymbolRecord, TokenRecord,
+    uri_to_path, DocumentAnalysis, LspDiag, RelatedLocation, SymbolRecord, TokenRecord,
 };
 use tsn_checker::types::FunctionType;
 use tsn_checker::{module_resolver, SymbolKind};
+use tsn_core::ast::{Decl, Stmt};
 use tsn_core::{DiagnosticKind, TokenKind, TypeKind};
 
 pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
@@ -45,6 +47,7 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
             end_line: e.range.end.line.saturating_sub(1),
             end_col: e.range.end.column,
             severity: SEVERITY_ERROR,
+            related: Vec::new(),
         });
     }
 
@@ -56,6 +59,10 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
             DiagnosticKind::Warning => SEVERITY_WARNING,
             DiagnosticKind::Hint => SEVERITY_HINT,
         };
+        // Propagate related locations from checker metadata if present.
+        // Format: metadata["related_line"] = "42", metadata["related_col"] = "5",
+        //         metadata["related_msg"] = "declared here"
+        let related = build_related_locations(d, &uri);
         diagnostics.push(LspDiag {
             message: d.message.clone(),
             line: d.range.start.line.saturating_sub(1),
@@ -63,6 +70,7 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
             end_line: d.range.end.line.saturating_sub(1),
             end_col: d.range.end.column,
             severity,
+            related,
         });
     }
 
@@ -168,6 +176,16 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
                     .unwrap_or_default(),
                 line: sym.line.saturating_sub(1),
                 col: sym.col,
+                end_line: if sym.full_range.end.line > 0 {
+                    sym.full_range.end.line.saturating_sub(1)
+                } else {
+                    sym.line.saturating_sub(1)
+                },
+                end_col: if sym.full_range.end.line > 0 {
+                    sym.full_range.end.column
+                } else {
+                    sym.col + sym.name.len() as u32
+                },
                 has_explicit_type: sym.has_explicit_type,
                 is_async: sym.is_async,
                 is_arrow: if let Some(TypeKind::Fn(FunctionType { is_arrow, .. })) =
@@ -196,7 +214,7 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
 
     let mut all_symbols = sym_records;
     symbols::inject_stdlib_symbols(&mut all_symbols, &mut symbol_map, &result.bind);
-    let extension_members = build_extension_members(&result.bind);
+    let extension_members = extensions::build_extension_members(&result.bind);
 
     let param_scopes = params::collect_param_scopes(&tokens);
     let (type_param_map, type_param_names) = params::collect_type_params(&tokens);
@@ -207,6 +225,8 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
             }
         }
     }
+
+    let import_paths = collect_import_paths(&program.body);
 
     DocumentAnalysis {
         source,
@@ -220,135 +240,43 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
         flattened_members: result.flattened_members,
         extension_members,
         expr_types: result.expr_types,
+        import_paths,
     }
 }
 
-fn build_extension_members(bind: &tsn_checker::BindResult) -> HashMap<String, Vec<MemberRecord>> {
-    let mut out: HashMap<String, Vec<MemberRecord>> = HashMap::new();
-    let scope = bind.scopes.get(bind.global_scope);
-
-    build_extension_method_members(bind, scope, &mut out);
-    build_extension_accessor_members(bind, scope, &mut out);
-
-    out
-}
-
-fn build_extension_method_members(
-    bind: &tsn_checker::BindResult,
-    scope: &tsn_checker::Scope,
-    out: &mut HashMap<String, Vec<MemberRecord>>,
-) {
-    for (type_name, methods) in &bind.extension_methods {
-        let records = out.entry(type_name.clone()).or_default();
-        for (method_name, mangled) in methods {
-            let Some(sid) = scope.resolve(mangled, &bind.scopes) else {
-                continue;
-            };
-            let sym = bind.arena.get(sid);
-            let Some(tsn_checker::Type(TypeKind::Fn(ft))) = &sym.ty else {
-                continue;
-            };
-
-            let mut params = ft.params.clone();
-            if params.first().and_then(|p| p.name.as_deref()) == Some("this") {
-                params.remove(0);
+fn build_related_locations(d: &tsn_core::Diagnostic, current_uri: &str) -> Vec<RelatedLocation> {
+    // Checker can embed related location in metadata with keys:
+    // "related_line", "related_col", "related_msg"
+    let line_str = d.metadata.get("related_line");
+    let col_str = d.metadata.get("related_col");
+    let msg = d.metadata.get("related_msg");
+    match (line_str, col_str, msg) {
+        (Some(ln), Some(col), Some(msg)) => {
+            let line = ln.parse::<u32>().ok().map(|l| l.saturating_sub(1));
+            let col = col.parse::<u32>().ok();
+            match (line, col) {
+                (Some(line), Some(col)) => vec![RelatedLocation {
+                    message: msg.clone(),
+                    uri: current_uri.to_owned(),
+                    line,
+                    col,
+                }],
+                _ => Vec::new(),
             }
-
-            let params_str = params
-                .iter()
-                .map(|p| format!("{}: {}", p.name.as_deref().unwrap_or("arg"), p.ty))
-                .collect::<Vec<_>>()
-                .join(", ");
-
-            records.push(MemberRecord {
-                name: method_name.clone(),
-                type_str: ft.return_type.to_string(),
-                params_str,
-                is_static: false,
-                is_optional: false,
-                kind: MemberKind::Method,
-                is_arrow: ft.is_arrow,
-                line: sym.line.saturating_sub(1),
-                col: sym.col,
-                init_value: String::new(),
-                ty: tsn_checker::Type(TypeKind::Fn(FunctionType {
-                    params,
-                    return_type: ft.return_type.clone(),
-                    is_arrow: ft.is_arrow,
-                    type_params: ft.type_params.clone(),
-                })),
-                members: Vec::new(),
-            });
         }
+        _ => Vec::new(),
     }
 }
 
-fn build_extension_accessor_members(
-    bind: &tsn_checker::BindResult,
-    scope: &tsn_checker::Scope,
-    out: &mut HashMap<String, Vec<MemberRecord>>,
-) {
-    for (type_name, getters) in &bind.extension_getters {
-        let records = out.entry(type_name.clone()).or_default();
-        for (getter_name, mangled) in getters {
-            let Some(sid) = scope.resolve(mangled, &bind.scopes) else {
-                continue;
-            };
-            let sym = bind.arena.get(sid);
-            let Some(tsn_checker::Type(TypeKind::Fn(ft))) = &sym.ty else {
-                continue;
-            };
-
-            records.push(MemberRecord {
-                name: getter_name.clone(),
-                type_str: ft.return_type.to_string(),
-                params_str: String::new(),
-                is_static: false,
-                is_optional: false,
-                kind: MemberKind::Getter,
-                is_arrow: false,
-                line: sym.line.saturating_sub(1),
-                col: sym.col,
-                init_value: String::new(),
-                ty: ft.return_type.as_ref().clone(),
-                members: Vec::new(),
-            });
+fn collect_import_paths(stmts: &[Stmt]) -> Vec<String> {
+    let mut paths = Vec::new();
+    for stmt in stmts {
+        if let Stmt::Decl(decl) = stmt {
+            if let Decl::Import(i) = decl.as_ref() {
+                paths.push(i.source.clone());
+            }
         }
     }
-
-    for (type_name, setters) in &bind.extension_setters {
-        let records = out.entry(type_name.clone()).or_default();
-        for (setter_name, mangled) in setters {
-            let Some(sid) = scope.resolve(mangled, &bind.scopes) else {
-                continue;
-            };
-            let sym = bind.arena.get(sid);
-            let Some(tsn_checker::Type(TypeKind::Fn(ft))) = &sym.ty else {
-                continue;
-            };
-
-            let params = ft
-                .params
-                .iter()
-                .skip_while(|p| p.name.as_deref() == Some("this"))
-                .map(|p| format!("{}: {}", p.name.as_deref().unwrap_or("arg"), p.ty))
-                .collect::<Vec<_>>()
-                .join(", ");
-
-            records.push(MemberRecord {
-                name: setter_name.clone(),
-                type_str: ft.return_type.to_string(),
-                params_str: params,
-                is_static: false,
-                is_optional: false,
-                kind: MemberKind::Setter,
-                is_arrow: false,
-                line: sym.line.saturating_sub(1),
-                col: sym.col,
-                init_value: String::new(),
-                ty: ft.return_type.as_ref().clone(),
-                members: Vec::new(),
-            });
-        }
-    }
+    paths
 }
+
