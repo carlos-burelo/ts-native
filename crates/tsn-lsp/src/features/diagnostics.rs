@@ -1,3 +1,4 @@
+use crate::constants::{SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_HINT};
 use crate::document::DocumentState;
 use crate::util::converters::range_on_line;
 use tower_lsp::lsp_types::{Diagnostic as LspDiagnostic, DiagnosticSeverity};
@@ -8,9 +9,9 @@ pub fn convert_diagnostics(state: &DocumentState) -> Vec<LspDiagnostic> {
         .iter()
         .map(|d| {
             let severity = match d.severity {
-                1 => DiagnosticSeverity::ERROR,
-                2 => DiagnosticSeverity::WARNING,
-                3 => DiagnosticSeverity::HINT,
+                s if s == SEVERITY_ERROR => DiagnosticSeverity::ERROR,
+                s if s == SEVERITY_WARNING => DiagnosticSeverity::WARNING,
+                s if s == SEVERITY_HINT => DiagnosticSeverity::HINT,
                 _ => DiagnosticSeverity::INFORMATION,
             };
             LspDiagnostic {

@@ -10,11 +10,13 @@ use tower_lsp::lsp_types::{
 };
 use tsn_checker::SymbolKind;
 
+use crate::constants::STDLIB_LINE_MARKER;
 use crate::document::{
     import_path_at, named_import_module_at, named_imported_names_at, DocumentState,
 };
 use crate::index::ProjectIndex;
 use crate::util::converters::to_completion_kind;
+use crate::util::ranking::symbol_priority;
 
 pub use imports::{
     build_import_completions, build_module_export_completions, resolve_relative_module_debug,
@@ -63,34 +65,18 @@ pub fn build_completion_response(
     if let Some(module_path) = named_import_module_at(&state.source, line, col) {
         let already_imported = named_imported_names_at(&state.source, line, col);
         let doc_uri = state.uri.clone();
-        let result =
-            std::panic::catch_unwind(|| build_module_export_completions(&module_path, &doc_uri));
-        return match result {
-            Ok(items) => {
-                let items: Vec<_> = items
-                    .into_iter()
-                    .filter(|item| !already_imported.contains(&item.label))
-                    .collect();
-                let log = format!(
-                    "completion({}:{})  named-import module_path={:?} items={}",
-                    line + 1,
-                    col + 1,
-                    module_path,
-                    items.len()
-                );
-                (Some(CompletionResponse::Array(items)), Some(log))
-            }
-            Err(payload) => {
-                let log = format!(
-                    "completion({}:{})  named-import(panic) module_path={:?} panic={}",
-                    line + 1,
-                    col + 1,
-                    module_path,
-                    panic_payload_to_string(payload),
-                );
-                (Some(CompletionResponse::Array(Vec::new())), Some(log))
-            }
-        };
+        let items: Vec<_> = build_module_export_completions(&module_path, &doc_uri)
+            .into_iter()
+            .filter(|item| !already_imported.contains(&item.label))
+            .collect();
+        let log = format!(
+            "completion({}:{})  named-import module_path={:?} items={}",
+            line + 1,
+            col + 1,
+            module_path,
+            items.len()
+        );
+        return (Some(CompletionResponse::Array(items)), Some(log));
     }
 
     if cursor_in_string(&state.source, line, col) {
@@ -188,7 +174,7 @@ pub fn build_completions(state: &DocumentState, line: u32) -> Vec<CompletionItem
         }
         seen.entry(&sym.name)
             .and_modify(|prev| {
-                if kind_priority(sym.kind) > kind_priority(prev.kind) {
+                if symbol_priority(sym.kind) < symbol_priority(prev.kind) {
                     *prev = sym;
                 }
             })
@@ -202,7 +188,7 @@ pub fn build_completions(state: &DocumentState, line: u32) -> Vec<CompletionItem
             Some(sym.type_str.clone())
         };
         let (insert_text, insert_text_format) =
-            if sym.kind == SymbolKind::Function && sym.line == u32::MAX {
+            if sym.kind == SymbolKind::Function && sym.line == STDLIB_LINE_MARKER {
                 (
                     Some(format!("{}($0)", sym.name)),
                     Some(InsertTextFormat::SNIPPET),
@@ -221,31 +207,6 @@ pub fn build_completions(state: &DocumentState, line: u32) -> Vec<CompletionItem
     }
 
     items
-}
-
-fn kind_priority(k: SymbolKind) -> u8 {
-    match k {
-        SymbolKind::Class | SymbolKind::Struct => 9,
-        SymbolKind::Interface | SymbolKind::Enum => 8,
-        SymbolKind::Function => 7,
-        SymbolKind::Method => 6,
-        SymbolKind::Const => 5,
-        SymbolKind::Let | SymbolKind::Var => 4,
-        SymbolKind::Property | SymbolKind::TypeAlias => 3,
-        SymbolKind::Namespace | SymbolKind::Extension => 2,
-        SymbolKind::TypeParameter => 1,
-        SymbolKind::Parameter => 0,
-    }
-}
-
-fn panic_payload_to_string(payload: Box<dyn std::any::Any + Send>) -> String {
-    if let Some(msg) = payload.downcast_ref::<&'static str>() {
-        (*msg).to_owned()
-    } else if let Some(msg) = payload.downcast_ref::<String>() {
-        msg.clone()
-    } else {
-        "non-string panic payload".to_owned()
-    }
 }
 
 fn cursor_in_string(source: &str, line: u32, col: u32) -> bool {

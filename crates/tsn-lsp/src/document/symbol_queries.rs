@@ -1,6 +1,8 @@
 use tsn_checker::SymbolKind;
 use tsn_core::TokenKind;
 
+use crate::util::ranking::symbol_priority;
+
 use super::{DocumentState, MethodHoverInfo, SymbolRecord};
 
 impl DocumentState {
@@ -34,7 +36,7 @@ impl DocumentState {
             best = Some(match best {
                 None => sym,
                 Some(prev) => {
-                    if symbol_rank(sym.kind) < symbol_rank(prev.kind) {
+                    if symbol_priority(sym.kind) < symbol_priority(prev.kind) {
                         sym
                     } else {
                         prev
@@ -221,23 +223,6 @@ impl DocumentState {
             parent_kind: class_sym.kind,
             init_value: member.init_value.clone(),
         })
-    }
-}
-
-/// Lower rank = higher priority symbol type.
-fn symbol_rank(k: SymbolKind) -> u8 {
-    use SymbolKind::*;
-    match k {
-        Class | Struct => 0,
-        Interface | Enum => 1,
-        Function => 2,
-        Method => 3,
-        Const => 4,
-        Var | Let => 5,
-        Property | TypeAlias => 6,
-        Namespace | Extension => 7,
-        TypeParameter => 8,
-        Parameter => 9,
     }
 }
 

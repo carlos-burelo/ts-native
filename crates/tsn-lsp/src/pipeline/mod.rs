@@ -4,6 +4,7 @@ mod symbols;
 
 use std::collections::HashMap;
 
+use crate::constants::{SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_HINT};
 use crate::document::{
     uri_to_path, DocumentAnalysis, LspDiag, MemberKind, MemberRecord, SymbolRecord, TokenRecord,
 };
@@ -43,7 +44,7 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
             col: e.range.start.column,
             end_line: e.range.end.line.saturating_sub(1),
             end_col: e.range.end.column,
-            severity: 1,
+            severity: SEVERITY_ERROR,
         });
     }
 
@@ -51,9 +52,9 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
 
     for d in &result.diagnostics {
         let severity = match d.kind {
-            DiagnosticKind::Error => 1,
-            DiagnosticKind::Warning => 2,
-            DiagnosticKind::Hint => 3,
+            DiagnosticKind::Error => SEVERITY_ERROR,
+            DiagnosticKind::Warning => SEVERITY_WARNING,
+            DiagnosticKind::Hint => SEVERITY_HINT,
         };
         diagnostics.push(LspDiag {
             message: d.message.clone(),
@@ -200,7 +201,7 @@ pub fn run_pipeline(source: String, uri: String) -> DocumentAnalysis {
     let param_scopes = params::collect_param_scopes(&tokens);
     let (type_param_map, type_param_names) = params::collect_type_params(&tokens);
     for sym in &mut all_symbols {
-        if sym.line != u32::MAX {
+        if sym.line != crate::constants::STDLIB_LINE_MARKER {
             if let Some(tps) = type_param_map.get(&sym.name) {
                 sym.type_params = tps.clone();
             }

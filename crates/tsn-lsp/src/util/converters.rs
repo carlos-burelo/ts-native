@@ -1,4 +1,5 @@
-use tower_lsp::lsp_types::{Position, Range};
+use tower_lsp::lsp_types::{DiagnosticSeverity, Position, Range};
+use tsn_core::DiagnosticKind;
 
 #[inline]
 pub fn ast_line_to_lsp(ast_line: u32) -> u32 {
@@ -71,5 +72,13 @@ pub fn to_completion_kind(kind: SymbolKind) -> CompletionItemKind {
         SymbolKind::Namespace => CompletionItemKind::MODULE,
         SymbolKind::Struct => CompletionItemKind::STRUCT,
         SymbolKind::Extension => CompletionItemKind::CLASS,
+    }
+}
+
+pub fn diagnostic_severity(kind: DiagnosticKind) -> DiagnosticSeverity {
+    match kind {
+        DiagnosticKind::Error => DiagnosticSeverity::ERROR,
+        DiagnosticKind::Warning => DiagnosticSeverity::WARNING,
+        DiagnosticKind::Hint => DiagnosticSeverity::HINT,
     }
 }
