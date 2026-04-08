@@ -1,6 +1,7 @@
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
 use tsn_checker::SymbolKind;
 
+use crate::constants::{SORT_LOCAL, SORT_PARAM, SORT_GLOBAL};
 use crate::document::DocumentState;
 
 pub fn build_scope_completions(state: &DocumentState, line: u32) -> Vec<CompletionItem> {
@@ -23,7 +24,7 @@ pub fn build_scope_completions(state: &DocumentState, line: u32) -> Vec<Completi
                 label: name.clone(),
                 kind: Some(CompletionItemKind::VARIABLE),
                 detail,
-                sort_text: Some(format!("0_{name}")),
+                sort_text: Some(format!("{SORT_LOCAL}{name}")),
                 ..Default::default()
             });
         }
@@ -68,7 +69,7 @@ pub fn build_scope_completions(state: &DocumentState, line: u32) -> Vec<Completi
                     label: sym.name.clone(),
                     kind: Some(CompletionItemKind::VARIABLE),
                     detail,
-                    sort_text: Some(format!("1_{}", sym.name)),
+                    sort_text: Some(format!("{SORT_PARAM}{}", sym.name)),
                     ..Default::default()
                 });
             }
@@ -84,7 +85,7 @@ pub fn build_scope_completions(state: &DocumentState, line: u32) -> Vec<Completi
                     detail,
                     insert_text: Some(format!("{}($0)", sym.name)),
                     insert_text_format: Some(InsertTextFormat::SNIPPET),
-                    sort_text: Some(format!("2_{}", sym.name)),
+                    sort_text: Some(format!("{SORT_GLOBAL}{}", sym.name)),
                     ..Default::default()
                 });
             }

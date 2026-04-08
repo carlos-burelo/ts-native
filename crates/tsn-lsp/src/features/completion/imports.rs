@@ -1,16 +1,17 @@
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind};
 use tsn_checker::SymbolKind;
 
+use crate::constants::{STD_PREFIX, TSN_EXTENSION};
 use crate::document::import::uri_to_path;
 
 pub fn build_import_completions(prefix: &str, doc_uri: &str) -> Vec<CompletionItem> {
     let mut items: Vec<CompletionItem> = Vec::new();
 
-    if prefix.is_empty() || prefix.starts_with("std:") {
+    if prefix.is_empty() || prefix.starts_with(STD_PREFIX) {
         items.extend(stdlib_module_completions(prefix));
     }
 
-    if !prefix.starts_with("std:") {
+    if !prefix.starts_with(STD_PREFIX) {
         items.extend(relative_tsn_completions(prefix, doc_uri));
     }
 
@@ -43,7 +44,7 @@ fn stdlib_module_completions(prefix: &str) -> Vec<CompletionItem> {
         if !path.join("mod.tsn").is_file() {
             continue;
         }
-        let label = format!("std:{}", name);
+        let label = format!("{}{}", STD_PREFIX, name);
         if !label.starts_with(prefix) {
             continue;
         }
@@ -105,8 +106,8 @@ fn relative_tsn_completions(prefix: &str, doc_uri: &str) -> Vec<CompletionItem> 
                     ..Default::default()
                 });
             }
-        } else if file_name.ends_with(".tsn") {
-            let stem = &file_name[..file_name.len() - 4];
+        } else if file_name.ends_with(TSN_EXTENSION) {
+            let stem = &file_name[..file_name.len() - TSN_EXTENSION.len()];
             if doc_file.file_stem().and_then(|s| s.to_str()) == Some(stem) {
                 continue;
             }
@@ -126,6 +127,9 @@ fn relative_tsn_completions(prefix: &str, doc_uri: &str) -> Vec<CompletionItem> 
 }
 
 pub fn build_module_export_completions(module_path: &str, doc_uri: &str) -> Vec<CompletionItem> {
+    if module_path.is_empty() {
+        return Vec::new();
+    }
     if module_path.starts_with('.') || module_path.starts_with('/') {
         build_relative_export_completions(module_path, doc_uri)
     } else {

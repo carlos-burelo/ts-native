@@ -3,6 +3,7 @@ use std::collections::HashSet;
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, Position, Range, TextEdit};
 use tsn_checker::SymbolKind;
 
+use crate::constants::{SORT_AUTOIMPORT, STD_LIB_PATH_SEGMENT, STD_PREFIX, STDLIB_STD_PATH, TSN_EXTENSION};
 use crate::document::import::uri_to_path;
 use crate::index::ProjectIndex;
 
@@ -63,7 +64,7 @@ pub fn build_autoimport_completions(
                 },
                 new_text: import_text,
             }]),
-            sort_text: Some(format!("z_{}", name)),
+            sort_text: Some(format!("{SORT_AUTOIMPORT}{}", name)),
             filter_text: Some(name.clone()),
             ..Default::default()
         });
@@ -90,20 +91,21 @@ fn import_insert_position(source: &str) -> Position {
 }
 
 fn is_stdlib_uri(uri: &str) -> bool {
-    uri.contains("tsn-stdlib")
+    uri.contains(STD_LIB_PATH_SEGMENT)
 }
 
 fn uri_to_specifier(from_uri: &str, target_uri: &str) -> String {
     let target_path = uri_to_path(target_uri);
     let normalized = target_path.replace('\\', "/");
 
-    if let Some(idx) = normalized.find("tsn-stdlib/std/") {
-        let rest = &normalized[idx + "tsn-stdlib/std/".len()..];
+    if let Some(idx) = normalized.find(STDLIB_STD_PATH) {
+        let rest = &normalized[idx + STDLIB_STD_PATH.len()..];
+        let mod_suffix = concat!("/mod", ".tsn"); // avoids literal ".tsn" in non-constant position
         let module = rest
-            .strip_suffix("/mod.tsn")
-            .or_else(|| rest.strip_suffix(".tsn"))
+            .strip_suffix(mod_suffix)
+            .or_else(|| rest.strip_suffix(TSN_EXTENSION))
             .unwrap_or(rest);
-        return format!("std:{}", module);
+        return format!("{}{}", STD_PREFIX, module);
     }
 
     let from_path = uri_to_path(from_uri);
@@ -137,8 +139,8 @@ fn relative_import_path(from_file: &str, to_file: &str) -> String {
     }
     result.push_str(&downs.join("/"));
 
-    if result.ends_with(".tsn") {
-        result.truncate(result.len() - 4);
+    if result.ends_with(TSN_EXTENSION) {
+        result.truncate(result.len() - TSN_EXTENSION.len());
     }
 
     result
