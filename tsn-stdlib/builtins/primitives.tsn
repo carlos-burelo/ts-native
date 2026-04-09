@@ -1,144 +1,120 @@
-// Built-in types classes
-// These are automatically loaded and used by the checker to resolve members of primitive types.
-
-export class str {
-    static EMPTY: str = "";
-    static fromCharCode(...codes: int[]): str {
-        let result = ""
-        for (const code of codes) {
-            result = result + __str_from_char_code(code)
-        }
-        return result
-    }
-    static from(val: dynamic): str { return __str_from_value(val); }
-    static join(arr: str[], sep?: str): str { return __array_join(arr, sep); }
-
-    get length(): int { return __str_length(this); }
-    toString(): str { return this; }
-    toLowerCase(): str { return __str_to_lower(this); }
-    toUpperCase(): str { return __str_to_upper(this); }
-    trim(): str { return __str_trim(this); }
-    trimStart(): str { return __str_trim_start(this); }
-    trimEnd(): str { return __str_trim_end(this); }
-    includes(search: str): bool { return __str_includes(this, search); }
-    contains(search: str): bool { return __str_includes(this, search); }
-    startsWith(search: str): bool { return __str_starts_with(this, search); }
-    endsWith(search: str): bool { return __str_ends_with(this, search); }
-    indexOf(search: str): int { return __str_index_of(this, search); }
-    lastIndexOf(search: str): int { return __str_last_index_of(this, search); }
-    substring(start: int, end?: int): str { return __str_substring(this, start, end); }
-    slice(start: int, end?: int): str { return __str_slice(this, start, end); }
-    at(index: int): str | null { return __str_at(this, index); }
-    replace(from: str, to: str): str { return __str_replace(this, from, to); }
-    replaceAll(from: str, to: str): str { return __str_replace_all(this, from, to); }
-    split(separator?: str): str[] { return __str_split(this, separator); }
-    charCode(): int { return __str_char_code_at(this, 0); }
-    charAt(pos: int): str { return __str_char_at(this, pos); }
-    charCodeAt(pos: int): int { return __str_char_code_at(this, pos); }
-    codePointAt(pos: int): int { return __str_code_point_at(this, pos); }
-    repeat(n: int): str { return __str_repeat(this, n); }
-    padStart(target: int, pad?: str): str { return __str_pad_start(this, target, pad); }
-    padEnd(target: int, pad?: str): str { return __str_pad_end(this, target, pad); }
-    concat(other: str): str { return __str_concat(this, other); }
-    substr(start: int, length?: int): str { return __str_substr(this, start, length); }
-    isEmpty(): bool { return __str_is_empty(this); }
-    isBlank(): bool { return __str_is_blank(this); }
-    isDigit(): bool { return __str_is_digit(this); }
-    isLetter(): bool { return __str_is_letter(this); }
-    isWhitespace(): bool { return __str_is_whitespace(this); }
-    reverse(): str { return __str_reverse(this); }
-    capitalize(): str { return __str_capitalize(this); }
-    lines(): str[] { return __str_lines(this); }
-    words(): str[] { return __str_words(this); }
-    toInt(): int { return __str_to_int(this); }
-    toFloat(): float { return __str_to_float(this); }
+export declare class str {
+    readonly length: int
+    split(separator?: str): str[]
+    trim(): str
+    trimStart(): str
+    trimEnd(): str
+    includes(search: str): bool
+    startsWith(prefix: str): bool
+    endsWith(suffix: str): bool
+    indexOf(search: str): int
+    lastIndexOf(search: str): int
+    toUpperCase(): str
+    toUpper(): str
+    toLowerCase(): str
+    toLower(): str
+    substring(start: int, end?: int): str
+    slice(start?: int, end?: int): str
+    replace(search: str, replacement: str): str
+    replaceAll(search: str, replacement: str): str
+    charAt(index: int): str
+    charCodeAt(index: int): int
+    repeat(count: int): str
+    padStart(length: int, fill?: str): str
+    padEnd(length: int, fill?: str): str
+    concat(other: str): str
+    substr(start: int, length?: int): str
+    isEmpty(): bool
+    isBlank(): bool
+    isDigit(): bool
+    isLetter(): bool
+    isWhitespace(): bool
+    reverse(): str
+    capitalize(): str
+    lines(): str[]
+    words(): str[]
+    toInt(): int | null
+    toFloat(): float | null
+    toString(): str
+    static fromCharCode(code: int): str
 }
 
-export class int {
-    static MAX_VALUE: int = 9223372036854775807;
-    static MIN_VALUE: int = -9223372036854775808;
-    static parse(s: str): int { return __int_parse(s); }
-    static isInteger(val: dynamic): bool { return __int_is_integer(val); }
-
-    toString(): str { return __int_to_str(this); }
-    valueOf(): int { return this; }
-    toLocaleString(): str { return __int_to_str(this); }
-    toFixed(digits?: int): str { return __int_to_fixed(this, digits); }
-    abs(): int { return __int_abs(this); }
-    sign(): int { return __int_sign(this); }
-    negate(): int { return __int_negate(this); }
-    bitwiseNot(): int { return __int_bitwise_not(this); }
-    min(other: int): int { return __int_min(this, other); }
-    max(other: int): int { return __int_max(this, other); }
-    clamp(lo: int, hi: int): int { return __int_clamp(this, lo, hi); }
-    toHex(): str { return __int_to_hex(this); }
-    toBinary(): str { return __int_to_binary(this); }
-    toOctal(): str { return __int_to_octal(this); }
-    toFloat(): float { return __int_to_float(this); }
-    pow(exponent: int): int { return __int_pow(this, exponent); }
+export declare class int {
+    toString(): str
+    toStr(): str
+    toFixed(digits?: int): str
+    abs(): int
+    sign(): int
+    negate(): int
+    bitwiseNot(): int
+    min(other: int): int
+    max(other: int): int
+    clamp(min: int, max: int): int
+    toHex(): str
+    toBinary(): str
+    toOctal(): str
+    toFloat(): float
+    pow(exp: int): int
+    static parse(s: str): int | null
 }
 
-export class float {
-    static MAX_VALUE: float = 1.7976931348623157e+308;
-    static MIN_VALUE: float = 5e-324;
-    static EPSILON: float = 2.220446049250313e-16;
-    static parse(s: str): float { return __float_parse(s); }
-    static isNaN(val: dynamic): bool { return __float_is_nan(val); }
-    static isFinite(val: dynamic): bool { return __float_is_finite(val); }
-
-    toString(): str { return __float_to_str(this); }
-    valueOf(): float { return this; }
-    toFixed(digits?: int): str { return __float_to_fixed(this, digits); }
-    abs(): float { return __float_abs(this); }
-    sign(): int { return __float_sign(this); }
-    negate(): float { return __float_negate(this); }
-    min(other: float): float { return __float_min(this, other); }
-    max(other: float): float { return __float_max(this, other); }
-    pow(exponent: float): float { return __float_pow(this, exponent); }
-    isInteger(): bool { return __float_is_integer(this); }
+export declare class float {
+    toString(): str
+    toStr(): str
+    toFixed(digits?: int): str
+    abs(): float
+    sign(): int
+    negate(): float
+    min(other: float): float
+    max(other: float): float
+    pow(exp: float): float
+    isNaN(): bool
+    isFinite(): bool
+    isInteger(): bool
+    static parse(s: str): float | null
 }
 
-export class bool {
-    toString(): str {
-        if (this) return "true";
-        return "false";
-    }
-    valueOf(): bool { return this; }
+export declare class bool {
+    toString(): str
 }
 
-export class char {
-    toString(): str { return __char_to_str(this); }
-    charCodeAt(): int { return __char_code_at(this); }
+export declare class char {
+    toString(): str
+    toInt(): int
+    isDigit(): bool
+    isLetter(): bool
+    isWhitespace(): bool
+    isUpper(): bool
+    isLower(): bool
+    toUpper(): char
+    toLower(): char
 }
 
-export class Array<T> {
-    get length(): int { return __array_length(this); }
-    push(item: T): void { __array_push(this, item); }
-    pop(): T { return __array_pop(this); }
-    shift(): T { return __array_shift(this); }
-    unshift(item: T): void { __array_unshift(this, item); }
-    join(separator?: str): str { return __array_join(this, separator); }
-    slice(start?: int, end?: int): T[] { return __array_slice(this, start, end); }
-    at(index: int): T | null { return __array_at(this, index); }
-    concat(...items: T[][]): T[] { return __array_concat(this, ...items); }
-    fill(value: T, start?: int, end?: int): T[] { return __array_fill(this, value, start, end); }
-    filter(predicate: (item: T, index: int, array: T[]) => bool): T[] { return __array_filter(this, predicate); }
-    find(predicate: (item: T, index: int, array: T[]) => bool): T | null { return __array_find(this, predicate); }
-    findIndex(predicate: (item: T, index: int, array: T[]) => bool): int { return __array_find_index(this, predicate); }
-    flat(depth?: int): T[] { return __array_flat(this, depth); }
-    flatMap<U>(callback: (item: T, index: int, array: T[]) => U[]): U[] { return __array_flat_map(this, callback); }
-    forEach(callback: (item: T, index: int, array: T[]) => void): void { __array_for_each(this, callback); }
-    map<U>(callback: (item: T, index: int, array: T[]) => U): U[] { return __array_map(this, callback); }
-    reduce<U>(callback: (acc: U, item: T, index: int, array: T[]) => U, initial?: U): U { return __array_reduce(this, callback, initial); }
-    reverse(): T[] { return __array_reverse(this); }
-    sort(compareFn?: (a: T, b: T) => int): T[] { return __array_sort(this, compareFn); }
-    splice(start: int, deleteCount?: int, ...items: T[]): T[] { return __array_splice(this, start, deleteCount, ...items); }
-    every(predicate: (item: T, index: int, array: T[]) => bool): bool { return __array_every(this, predicate); }
-    some(predicate: (item: T, index: int, array: T[]) => bool): bool { return __array_some(this, predicate); }
-    includes(search: T): bool { return __array_includes(this, search); }
-    indexOf(search: T): int { return __array_index_of(this, search); }
-
-    static isArray(obj:dynamic){
-        return __array_is_array(this, obj)
-    }
+export declare class Array<T> {
+    readonly length: int
+    push(item: T): void
+    pop(): T | null
+    shift(): T | null
+    unshift(item: T): void
+    join(separator?: str): str
+    includes(item: T): bool
+    indexOf(item: T): int
+    slice(start?: int, end?: int): T[]
+    at(index: int): T | null
+    concat(other: T[]): T[]
+    fill(value: T, start?: int, end?: int): T[]
+    filter(predicate: (item: T, index: int) => bool): T[]
+    find(predicate: (item: T) => bool): T | null
+    findIndex(predicate: (item: T) => bool): int
+    forEach(callback: (item: T, index: int) => void): void
+    map<U>(callback: (item: T, index: int) => U): U[]
+    reduce<U>(callback: (acc: U, item: T, index: int) => U, initial: U): U
+    reverse(): T[]
+    every(predicate: (item: T, index: int) => bool): bool
+    some(predicate: (item: T, index: int) => bool): bool
+    splice(start: int, deleteCount?: int, ...items: T[]): T[]
+    flat<U>(): U[]
+    flatMap<U>(callback: (item: T) => U[]): U[]
+    sort(comparator?: (a: T, b: T) => int): T[]
+    static isArray(value: unknown): bool
 }

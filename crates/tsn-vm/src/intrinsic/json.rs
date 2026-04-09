@@ -1,7 +1,9 @@
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::value::Value;
 use tsn_types::value::{new_array, new_object, ObjData};
 
+#[op("parse")]
 pub fn json_parse(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     match args.first() {
         Some(Value::Str(s)) => parse_str(s),
@@ -44,12 +46,15 @@ fn serde_to_tsn(sv: serde_json::Value) -> Value {
     }
 }
 
+#[op("stringify")]
 pub fn json_stringify(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let v = args.first().unwrap_or(&Value::Null);
     let sv = tsn_to_serde(v);
     let s = serde_json::to_string(&sv).unwrap_or_else(|_| "null".to_owned());
     Ok(Value::Str(Arc::from(s)))
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[json_parse_OP, json_stringify_OP];
 
 fn tsn_to_serde(v: &Value) -> serde_json::Value {
     match v {

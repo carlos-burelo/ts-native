@@ -27,12 +27,49 @@ pub fn str_from_char_code(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
 ) -> Result<Value, String> {
-    if let Some(Value::Int(code)) = args.first() {
-        if let Some(c) = std::char::from_u32(*code as u32) {
-            return Ok(Value::Str(Arc::from(c.to_string())));
+    let mut s = String::new();
+    for arg in args {
+        if let Value::Int(code) = arg {
+            if let Some(c) = std::char::from_u32(*code as u32) {
+                s.push(c);
+                continue;
+            }
         }
     }
-    Ok(Value::Null)
+    Ok(Value::Str(Arc::from(s)))
+}
+
+pub fn str_char_code(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
+    if let Some(Value::Str(s)) = args.first() {
+        return Ok(s
+            .chars()
+            .next()
+            .map(|c| Value::Int(c as u32 as i64))
+            .unwrap_or(Value::Int(-1)));
+    }
+    Ok(Value::Int(-1))
+}
+
+pub fn str_join(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
+    let arr = match args.first() {
+        Some(Value::Array(a)) => unsafe { &**a }.clone(),
+        _ => return Ok(Value::Str(Arc::from(""))),
+    };
+    let sep = match args.get(1) {
+        Some(Value::Str(s)) => s.as_ref().to_owned(),
+        _ => String::new(),
+    };
+    let parts: Vec<String> = arr.iter().map(|v| match v {
+        Value::Str(s) => s.as_ref().to_owned(),
+        other => other.to_string(),
+    }).collect();
+    Ok(Value::Str(Arc::from(parts.join(&sep))))
 }
 
 pub fn str_length(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
@@ -41,6 +78,7 @@ pub fn str_length(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
     }
     Ok(Value::Int(0))
 }
+
 
 pub fn str_to_lower(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     if let Some(Value::Str(s)) = args.first() {

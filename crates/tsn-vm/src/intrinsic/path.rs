@@ -1,6 +1,8 @@
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::value::Value;
 
+#[op("normalize")]
 pub fn path_normalize(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.first().map(|v| v.to_string()).unwrap_or_default();
     let p = std::path::Path::new(&s);
@@ -21,3 +23,5 @@ pub fn path_normalize(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resu
         comps.join(std::path::MAIN_SEPARATOR_STR),
     )))
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[path_normalize_OP];

@@ -1,32 +1,13 @@
 // std:console — console output module
 
-export function log(...args: dynamic[]): void {
-    __console_log(...args);
-}
+export declare function log(...args: dynamic[]): void;
+export declare function warn(...args: dynamic[]): void;
+export declare function error(...args: dynamic[]): void;
+export declare function info(...args: dynamic[]): void;
 
-export function warn(...args: dynamic[]): void {
-    __console_log(...args);
-}
-
-export function error(...args: dynamic[]): void {
-    __console_log(...args);
-}
-
-export function info(...args: dynamic[]): void {
-    __console_log(...args);
-}
-
-export namespace console {
-    export function log(...args: dynamic[]): void {
-        __console_log(...args);
-    }
-    export function warn(...args: dynamic[]): void {
-        __console_log(...args);
-    }
-    export function error(...args: dynamic[]): void {
-        __console_log(...args);
-    }
-    export function info(...args: dynamic[]): void {
-        __console_log(...args);
-    }
+export declare namespace console {
+    export declare function log(...args: dynamic[]): void;
+    export declare function warn(...args: dynamic[]): void;
+    export declare function error(...args: dynamic[]): void;
+    export declare function info(...args: dynamic[]): void;
 }

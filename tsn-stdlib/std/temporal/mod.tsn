@@ -1,4 +1,5 @@
-// std:temporal - High-level Date/Time API
+import { Time } from "std:time";
+import { Math } from "std:math";
 
 export namespace Temporal {
     export enum Month {
@@ -48,11 +49,11 @@ export namespace Temporal {
         epochMilliseconds: int;
         constructor(ms: int) { this.epochMilliseconds = ms; }
         
-        get epochSeconds(): int { return __math_trunc(this.epochMilliseconds / 1000); }
+        get epochSeconds(): int { return Math.trunc(this.epochMilliseconds / 1000); }
         
-        toString(): str { return __time_to_iso(this.epochMilliseconds); }
+        toString(): str { return Time.toISOString(this.epochMilliseconds); }
 
-        static from(s: str): Instant { return new Instant(__time_from_iso(s)); }
+        static from(s: str): Instant { return new Instant(Time.fromISO(s)); }
         static fromEpochMilliseconds(ms: int): Instant { return new Instant(ms); }
         static fromEpochSeconds(s: int): Instant { return new Instant(s * 1000); }
 
@@ -83,13 +84,13 @@ export namespace Temporal {
         }
 
         get dayOfWeek(): int {
-            return __time_to_parts(__time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0)).weekday;
+            return Time.toParts(Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0)).weekday;
         }
 
         get dayOfYear(): int {
-            let start = __time_from_parts(this.year, 1, 1, 0, 0, 0, 0);
-            let current = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
-            return __math_trunc((current - start) / 86400000) + 1;
+            let start = Time.fromParts(this.year, 1, 1, 0, 0, 0, 0);
+            let current = Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0);
+            return Math.trunc((current - start) / 86400000) + 1;
         }
 
         get daysInMonth(): int {
@@ -107,7 +108,7 @@ export namespace Temporal {
         }
 
         static from(s: str): PlainDate {
-            let p = __time_to_parts(__time_from_iso(s));
+            let p = Time.toParts(Time.fromISO(s));
             return new PlainDate(p.year, p.month, p.day);
         }
 
@@ -116,26 +117,26 @@ export namespace Temporal {
         }
 
         add(duration: Duration): PlainDate {
-            let ms = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
-            let res = __time_to_parts(ms + duration.totalMilliseconds);
+            let ms = Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let res = Time.toParts(ms + duration.totalMilliseconds);
             return new PlainDate(res.year, res.month, res.day);
         }
 
         subtract(duration: Duration): PlainDate {
-            let ms = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
-            let res = __time_to_parts(ms - duration.totalMilliseconds);
+            let ms = Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let res = Time.toParts(ms - duration.totalMilliseconds);
             return new PlainDate(res.year, res.month, res.day);
         }
 
         since(other: PlainDate): Duration {
-            let ms1 = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
-            let ms2 = __time_from_parts(other.year, other.month, other.day, 0, 0, 0, 0);
+            let ms1 = Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let ms2 = Time.fromParts(other.year, other.month, other.day, 0, 0, 0, 0);
             return new Duration(ms1 - ms2);
         }
 
         until(other: PlainDate): Duration {
-            let ms1 = __time_from_parts(this.year, this.month, this.day, 0, 0, 0, 0);
-            let ms2 = __time_from_parts(other.year, other.month, other.day, 0, 0, 0, 0);
+            let ms1 = Time.fromParts(this.year, this.month, this.day, 0, 0, 0, 0);
+            let ms2 = Time.fromParts(other.year, other.month, other.day, 0, 0, 0, 0);
             return new Duration(ms2 - ms1);
         }
     }
@@ -182,7 +183,7 @@ export namespace Temporal {
 
         add(duration: Duration): PlainTime {
             let totalMs = (this.hour * 3600 + this.minute * 60 + this.second) * 1000 + this.millisecond + duration.totalMilliseconds;
-            let res = __time_to_parts(totalMs);
+            let res = Time.toParts(totalMs);
             return new PlainTime(res.hour % 24, res.minute, res.second, res.millisecond);
         }
 
@@ -218,25 +219,25 @@ export namespace Temporal {
         }
 
         static from(s: str): PlainDateTime {
-            let p = __time_to_parts(__time_from_iso(s));
+            let p = Time.toParts(Time.fromISO(s));
             return new PlainDateTime(p.year, p.month, p.day, p.hour, p.minute, p.second, p.millisecond);
         }
 
         add(duration: Duration): PlainDateTime {
-            let ms = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
-            let res = __time_to_parts(ms + duration.totalMilliseconds);
+            let ms = Time.fromParts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let res = Time.toParts(ms + duration.totalMilliseconds);
             return new PlainDateTime(res.year, res.month, res.day, res.hour, res.minute, res.second, res.millisecond);
         }
 
         since(other: PlainDateTime): Duration {
-            let ms1 = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
-            let ms2 = __time_from_parts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
+            let ms1 = Time.fromParts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let ms2 = Time.fromParts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
             return new Duration(ms1 - ms2);
         }
 
         until(other: PlainDateTime): Duration {
-            let ms1 = __time_from_parts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
-            let ms2 = __time_from_parts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
+            let ms1 = Time.fromParts(this.year, this.month, this.day, this.hour, this.minute, this.second, this.millisecond);
+            let ms2 = Time.fromParts(other.year, other.month, other.day, other.hour, other.minute, other.second, other.millisecond);
             return new Duration(ms2 - ms1);
         }
     }
@@ -248,12 +249,12 @@ export namespace Temporal {
             this.totalMilliseconds = ms;
         }
 
-        get years(): int { return __math_trunc(this.totalMilliseconds / 31104000000); }
-        get months(): int { return __math_trunc((this.totalMilliseconds % 31104000000) / 2592000000); }
-        get days(): int { return __math_trunc((this.totalMilliseconds % 2592000000) / 86400000); }
-        get hours(): int { return __math_trunc((this.totalMilliseconds % 86400000) / 3600000); }
-        get minutes(): int { return __math_trunc((this.totalMilliseconds % 3600000) / 60000); }
-        get seconds(): int { return __math_trunc((this.totalMilliseconds % 60000) / 1000); }
+        get years(): int { return Math.trunc(this.totalMilliseconds / 31104000000); }
+        get months(): int { return Math.trunc((this.totalMilliseconds % 31104000000) / 2592000000); }
+        get days(): int { return Math.trunc((this.totalMilliseconds % 2592000000) / 86400000); }
+        get hours(): int { return Math.trunc((this.totalMilliseconds % 86400000) / 3600000); }
+        get minutes(): int { return Math.trunc((this.totalMilliseconds % 3600000) / 60000); }
+        get seconds(): int { return Math.trunc((this.totalMilliseconds % 60000) / 1000); }
         get milliseconds(): int { return this.totalMilliseconds % 1000; }
 
         get sign(): int { return this.totalMilliseconds < 0 ? -1 : 1; }
@@ -345,19 +346,19 @@ export namespace Temporal {
             if (tz !== null) this.timeZone = tz;
         }
 
-        get year(): int { return __time_to_parts(this.epochMilliseconds).year; }
-        get month(): int { return __time_to_parts(this.epochMilliseconds).month; }
-        get day(): int { return __time_to_parts(this.epochMilliseconds).day; }
-        get hour(): int { return __time_to_parts(this.epochMilliseconds).hour; }
-        get minute(): int { return __time_to_parts(this.epochMilliseconds).minute; }
-        get second(): int { return __time_to_parts(this.epochMilliseconds).second; }
+        get year(): int { return Time.toParts(this.epochMilliseconds).year; }
+        get month(): int { return Time.toParts(this.epochMilliseconds).month; }
+        get day(): int { return Time.toParts(this.epochMilliseconds).day; }
+        get hour(): int { return Time.toParts(this.epochMilliseconds).hour; }
+        get minute(): int { return Time.toParts(this.epochMilliseconds).minute; }
+        get second(): int { return Time.toParts(this.epochMilliseconds).second; }
         
         toString(): str {
-            return __time_to_iso(this.epochMilliseconds) + "[" + this.timeZone + "]";
+            return Time.toISOString(this.epochMilliseconds) + "[" + this.timeZone + "]";
         }
 
         static from(s: str): ZonedDateTime {
-            let ms = __time_from_iso(s);
+            let ms = Time.fromISO(s);
             let tz = "UTC";
             if (s.includes("[")) tz = s.split("[")[1].split("]")[0];
             return new ZonedDateTime(ms, tz);
@@ -365,15 +366,15 @@ export namespace Temporal {
     }
 
     export namespace Now {
-        export function instant(): Instant { return new Instant(__time_now()); }
+        export function instant(): Instant { return new Instant(Time.now()); }
 
         export function plainDateISO(): PlainDate {
-            let p = __time_to_parts(__time_now());
+            let p = Time.toParts(Time.now());
             return new PlainDate(p.year, p.month, p.day);
         }
 
         export function zonedDateTimeISO(tz: str = "UTC"): ZonedDateTime {
-            return new ZonedDateTime(__time_now(), tz);
+            return new ZonedDateTime(Time.now(), tz);
         }
 
         export function timeZoneId(): str { return "UTC"; }
@@ -388,3 +389,4 @@ export const PlainTime = Temporal.PlainTime;
 export const PlainDateTime = Temporal.PlainDateTime;
 export const Duration = Temporal.Duration;
 export const ZonedDateTime = Temporal.ZonedDateTime;
+

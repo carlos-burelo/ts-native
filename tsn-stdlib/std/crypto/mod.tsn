@@ -1,63 +1,21 @@
 // std:crypto — Cryptographic functions
 
-/**
- * Computes SHA-256 hash of a str. Returns hex str.
- */
-export function sha256(data: str): str {
-    return __crypto_sha256(data)
-}
+export declare function sha256(data: str): str;
+export declare function sha512(data: str): str;
+export declare function randomBytes(size: int): number[];
+export declare function randomHex(size: int): str;
+export declare function base64Encode(data: str): str;
+export declare function base64Decode(data: str): str;
+export declare function uuid(): str;
+export declare function hmac(algo: "sha256" | "sha512", key: str, data: str): str;
 
-/**
- * Computes SHA-512 hash of a str. Returns hex str.
- */
-export function sha512(data: str): str {
-    return __crypto_sha512(data)
-}
-
-/**
- * Generates N random bytes.
- */
-export function randomBytes(size: int): number[] {
-    return __crypto_random_bytes(size)
-}
-
-/**
- * Generates a random hex str of N length.
- */
-export function randomHex(size: int): str {
-    return __crypto_random_hex(size)
-}
-
-/**
- * Encodes str to Base64.
- */
-export function base64Encode(data: str): str {
-    return __crypto_base64_enc(data)
-}
-
-/**
- * Decodes Base64 str.
- */
-export function base64Decode(data: str): str {
-    return __crypto_base64_dec(data)
-}
-
-/**
- * Generates a UUID v4.
- */
-export function uuid(): str {
-    return __crypto_uuid()
-}
-
-/**
- * Computes HMAC of data with key.
- */
-export function hmac(algo: "sha256" | "sha512", key: str, data: str): str {
-    return __crypto_hmac(algo, key, data)
-}
-
-export class Crypto {
-    static uuid(){
-        return __crypto_uuid()
-    }
+export declare namespace Crypto {
+    export declare function sha256(data: str): str;
+    export declare function sha512(data: str): str;
+    export declare function randomBytes(size: int): number[];
+    export declare function randomHex(size: int): str;
+    export declare function base64Encode(data: str): str;
+    export declare function base64Decode(data: str): str;
+    export declare function uuid(): str;
+    export declare function hmac(algo: "sha256" | "sha512", key: str, data: str): str;
 }

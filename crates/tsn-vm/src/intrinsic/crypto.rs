@@ -3,9 +3,11 @@ use hmac::{Hmac, Mac};
 use rand::RngCore;
 use sha2::{Digest, Sha256, Sha512};
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::{value::new_array, Value};
 use uuid::Uuid;
 
+#[op("sha256")]
 pub fn crypto_sha256(args: &[Value]) -> Result<Value, String> {
     let input = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let mut hasher = Sha256::new();
@@ -14,6 +16,7 @@ pub fn crypto_sha256(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(format!("{:x}", result))))
 }
 
+#[op("sha512")]
 pub fn crypto_sha512(args: &[Value]) -> Result<Value, String> {
     let input = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let mut hasher = Sha512::new();
@@ -22,6 +25,7 @@ pub fn crypto_sha512(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(format!("{:x}", result))))
 }
 
+#[op("randomBytes")]
 pub fn crypto_random_bytes(args: &[Value]) -> Result<Value, String> {
     let len = match args.get(0) {
         Some(Value::Int(i)) if *i >= 0 => *i as usize,
@@ -33,6 +37,7 @@ pub fn crypto_random_bytes(args: &[Value]) -> Result<Value, String> {
     Ok(new_array(items))
 }
 
+#[op("randomHex")]
 pub fn crypto_random_hex(args: &[Value]) -> Result<Value, String> {
     let len = match args.get(0) {
         Some(Value::Int(i)) if *i >= 0 => *i as usize,
@@ -43,6 +48,7 @@ pub fn crypto_random_hex(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(hex::encode(buf))))
 }
 
+#[op("base64Encode")]
 pub fn crypto_base64_enc(args: &[Value]) -> Result<Value, String> {
     let input = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     Ok(Value::Str(Arc::from(
@@ -50,6 +56,7 @@ pub fn crypto_base64_enc(args: &[Value]) -> Result<Value, String> {
     )))
 }
 
+#[op("base64Decode")]
 pub fn crypto_base64_dec(args: &[Value]) -> Result<Value, String> {
     let input = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let decoded = base64::engine::general_purpose::STANDARD
@@ -60,6 +67,7 @@ pub fn crypto_base64_dec(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(s)))
 }
 
+#[op("hmac")]
 pub fn crypto_hmac(args: &[Value]) -> Result<Value, String> {
     let algo = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let key = args.get(1).map(|v| v.to_string()).unwrap_or_default();
@@ -83,6 +91,18 @@ pub fn crypto_hmac(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(hex::encode(digest))))
 }
 
+#[op("uuid")]
 pub fn crypto_uuid(_args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(Uuid::new_v4().to_string())))
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    crypto_sha256_OP,
+    crypto_sha512_OP,
+    crypto_random_bytes_OP,
+    crypto_random_hex_OP,
+    crypto_base64_enc_OP,
+    crypto_base64_dec_OP,
+    crypto_hmac_OP,
+    crypto_uuid_OP,
+];

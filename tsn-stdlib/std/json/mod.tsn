@@ -7,18 +7,14 @@
  */
 export type Json = dynamic
 
-export namespace JSON {
+export declare namespace JSON {
     /**
      * Parses a JSON str into a Json value.
      */
-    export function parse(text: str): Json {
-        return __json_parse(text)
-    }
+    export declare function parse(text: str): Json;
 
     /**
      * Serializes a Json value into a JSON str.
      */
-    export function stringify(value: Json, space?: int): str {
-        return __json_stringify(value, space === null ? 0 : space)
-    }
+    export declare function stringify(value: Json, space?: int): str;
 }

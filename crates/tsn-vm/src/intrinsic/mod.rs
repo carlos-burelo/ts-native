@@ -14,8 +14,5 @@ pub mod primitives;
 pub mod reflect;
 pub mod set;
 pub mod sys;
-pub mod table;
 pub mod testing;
 pub mod time;
-
-pub use table::dispatch_intrinsic;

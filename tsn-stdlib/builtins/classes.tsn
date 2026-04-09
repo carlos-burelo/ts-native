@@ -1,114 +1,76 @@
-// Builtin global classes: Error, Map, Set, Future, Iterator
-// These are auto-loaded and available without any import.
-
-// ---------------------------------------------------------------------------
-// Error
-// ---------------------------------------------------------------------------
-
-export class Error {
-    message: str;
-    name: str;
-    stack: str;
-
-    constructor(message?: str) {
-        this.message = message ?? "";
-        this.name = "Error";
-        this.stack = "";
-    }
-
-    toString(): str {
-        return this.name + ": " + this.message;
-    }
+export declare class Error {
+    readonly message: str
+    readonly name: str
+    readonly stack: str
+    constructor(message?: str)
+    toString(): str
 }
 
-export class TypeError extends Error {
-    constructor(message?: str) {
-        super(message)
-        this.name = "TypeError"
-    }
+export declare class TypeError extends Error {
+    constructor(message?: str)
 }
 
-export class RangeError extends Error {
-    constructor(message?: str) {
-        super(message)
-        this.name = "RangeError"
-    }
+export declare class RangeError extends Error {
+    constructor(message?: str)
 }
 
-// ---------------------------------------------------------------------------
-// Map<V>  (string-keyed hash map)
-// ---------------------------------------------------------------------------
-
-export class Map<V> {
-    constructor() {
-        return __map_new();
-    }
-
-    get(key: str): V | null { return __map_get(this, key); }
-    set(key: str, value: V): void { __map_set(this, key, value); }
-    has(key: str): bool { return __map_has(this, key); }
-    delete(key: str): bool { return __map_delete(this, key); }
-    clear(): void { __map_clear(this); }
-    keys(): str[] { return __map_keys(this); }
-    values(): V[] { return __map_values(this); }
-    get size(): int { return __map_size(this); }
+export declare class IoError extends Error {
+    readonly code: int
+    constructor(message: str, code?: int)
 }
 
-// ---------------------------------------------------------------------------
-// Set<T>
-// ---------------------------------------------------------------------------
-
-export class Set<T> {
-    constructor() {
-        return __set_new();
-    }
-
-    add(value: T): void { __set_add(this, value); }
-    has(value: T): bool { return __set_has(this, value); }
-    delete(value: T): bool { return __set_delete(this, value); }
-    clear(): void { __set_clear(this); }
-    values(): T[] { return __set_values(this); }
-    get size(): int { return __set_size(this); }
+export declare class Map<V> {
+    readonly size: int
+    get(key: str): V | null
+    set(key: str, value: V): void
+    has(key: str): bool
+    delete(key: str): bool
+    clear(): void
+    keys(): str[]
+    values(): V[]
+    entries(): [str, V][]
+    forEach(callback: (value: V, key: str) => void): void
+    static from<V>(entries: [str, V][]): Map<V>
 }
 
-// ---------------------------------------------------------------------------
-// Future<T>  (type stub — runtime uses Value::Future)
-// ---------------------------------------------------------------------------
-
-export class Future<T> {
-    then<R>(callback: (value: T) => R): Future<R> { return this.then(callback); }
-    map<R>(callback: (value: T) => R): Future<R> { return this.map(callback); }
-    catch(handler: (err: Error) => T): Future<T> { return this.catch(handler); }
-    unwrap(): T { return this.unwrap(); }
-    expect(msg: str): T { return this.expect(msg); }
-    valueOr(fallback: T): T { return this.valueOr(fallback); }
+export declare class Set<T> {
+    readonly size: int
+    add(value: T): void
+    has(value: T): bool
+    delete(value: T): bool
+    clear(): void
+    values(): T[]
+    forEach(callback: (value: T) => void): void
+    toArray(): T[]
+    static from<T>(items: T[]): Set<T>
 }
 
-// ---------------------------------------------------------------------------
-// Record<K, V>  (string-keyed dictionary)
-// ---------------------------------------------------------------------------
+export declare class Future<T> {
+    then<R>(callback: (value: T) => R): Future<R>
+    map<R>(callback: (value: T) => R): Future<R>
+    catch(handler: (err: Error) => T): Future<T>
+    unwrap(): T
+    expect(msg: str): T
+    valueOr(fallback: T): T
+    static resolve<T>(value: T): Future<T>
+    static reject<T>(error: Error): Future<T>
+    static all<T>(futures: Future<T>[]): Future<T[]>
+    static race<T>(futures: Future<T>[]): Future<T>
+}
+
+export declare class Generator<T> {
+    next(): { value: T; done: bool }
+    return(value?: T): { value: T; done: bool }
+}
 
 export interface Record<K, V> {
-    [key: K]: V;
+    [key: K]: V
 }
 
-// ---------------------------------------------------------------------------
-// Iterator<T>  (interface for the iteration protocol)
-// ---------------------------------------------------------------------------
-
 export interface Iterator<T> {
-    next(): { value: T; done: bool; };
+    next(): { value: T; done: bool }
 }
 
 export interface AsyncIterator<T> {
-    next(): Future<{ value: T; done: bool; }>;
-}
-
-// ---------------------------------------------------------------------------
-// Generator<T>  (returned by generator functions — function*)
-// ---------------------------------------------------------------------------
-
-export class Generator<T> {
-    next(): { value: T; done: bool; } { return __gen_next(this); }
-    return(value?: T): { value: T; done: bool; } { return __gen_return(this, value); }
+    next(): Future<{ value: T; done: bool }>
 }

@@ -1,6 +1,8 @@
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::value::Value;
 
+#[op("now")]
 pub fn time_now(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Result<Value, String> {
     Ok(Value::Int(unix_millis()))
 }
@@ -37,6 +39,7 @@ pub fn unix_ms_to_iso(ms: i64) -> Arc<str> {
     tsn_core::time::unix_to_iso(secs, millis).into()
 }
 
+#[op("fromISO")]
 pub fn time_from_iso(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     if let Some((secs, ms)) = tsn_core::time::iso_to_unix(&s) {
@@ -46,6 +49,7 @@ pub fn time_from_iso(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
     }
 }
 
+#[op("toParts")]
 pub fn time_to_parts(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let ms = match args.get(0) {
         Some(Value::Int(i)) => *i,
@@ -70,6 +74,7 @@ pub fn time_to_parts(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
     Ok(tsn_types::value::new_object(data))
 }
 
+#[op("toISOString")]
 pub fn time_to_iso(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let ms = match args.get(0) {
         Some(Value::Int(i)) => *i,
@@ -79,6 +84,7 @@ pub fn time_to_iso(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
     Ok(Value::Str(unix_ms_to_iso(ms)))
 }
 
+#[op("fromParts")]
 pub fn time_from_parts(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let y = args
         .get(0)
@@ -134,3 +140,11 @@ pub fn time_from_parts(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Res
         tsn_core::time::calendar_to_millis(y, mo, d, h, min, s, ms) as i64,
     ))
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    time_now_OP,
+    time_from_iso_OP,
+    time_to_parts_OP,
+    time_to_iso_OP,
+    time_from_parts_OP,
+];

@@ -1,44 +1,14 @@
 // std:reflect — Typed metadata and decorator context system
 
-let __meta_key_counter = 0
-
-function __meta_key_alloc(): int {
-    __meta_key_counter = __meta_key_counter + 1
-    return __meta_key_counter
+export interface MetaKey<T> {
+    get(target: ClassRef): T | null
+    set(target: ClassRef, value: T): void
+    has(target: ClassRef): bool
 }
 
-// ─── MetaKey ─────────────────────────────────────────────────────────────────
-// A typed, opaque handle for storing and retrieving metadata on class targets.
-// The type parameter T constrains what values can be stored under this key.
-// At runtime, each MetaKey holds a unique integer ID used as the storage slot.
-
-export class MetaKey<T> {
-    private __id: int
-
-    constructor(id: int) {
-        this.__id = id
-    }
-
-    get(target: ClassRef): T | null {
-        return __reflect_get_meta(__int_to_str(this.__id), target)
-    }
-
-    set(target: ClassRef, value: T): void {
-        __reflect_define_meta(__int_to_str(this.__id), value, target)
-    }
-
-    has(target: ClassRef): bool {
-        return __reflect_has_meta(__int_to_str(this.__id), target)
-    }
-
-    static create<T>(): MetaKey<T> {
-        return new MetaKey<T>(__meta_key_alloc())
-    }
+export declare namespace MetaKey {
+    export declare function create<T>(): MetaKey<T>
 }
-
-// ─── Context interfaces ───────────────────────────────────────────────────────
-// These types describe what decorator functions receive as their context arg.
-// They are structural — any object satisfying the shape is valid.
 
 export interface ClassContext {
     readonly name: str
@@ -64,24 +34,9 @@ export interface FnContext {
     readonly kind: str
 }
 
-// ─── Low-level Reflect namespace ─────────────────────────────────────────────
-// Direct access to the underlying metadata store, keyed by arbitrary strings.
-// Prefer MetaKey<T> over this API for type safety.
-
-export namespace Reflect {
-    export function defineMetadata(key: str, value: dynamic, target: dynamic): void {
-        __reflect_define_meta(key, value, target)
-    }
-
-    export function getMetadata(key: str, target: dynamic): dynamic {
-        return __reflect_get_meta(key, target)
-    }
-
-    export function hasMetadata(key: str, target: dynamic): bool {
-        return __reflect_has_meta(key, target)
-    }
-
-    export function getMetadataKeys(target: dynamic): str[] {
-        return __reflect_get_meta_keys(target)
-    }
+export declare namespace Reflect {
+    export declare function defineMetadata(key: str, value: dynamic, target: dynamic): void
+    export declare function getMetadata(key: str, target: dynamic): dynamic
+    export declare function hasMetadata(key: str, target: dynamic): bool
+    export declare function getMetadataKeys(target: dynamic): str[]
 }

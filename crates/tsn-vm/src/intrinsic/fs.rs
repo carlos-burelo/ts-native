@@ -1,15 +1,18 @@
 use std::fs;
 use std::path::Path;
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::value::{new_array, new_object, ObjData};
 use tsn_types::Value;
 
+#[op("readFile")]
 pub fn fs_read(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_read: expected path")?.to_string();
     let content = fs::read_to_string(path).map_err(|e| e.to_string())?;
     Ok(Value::Str(Arc::from(content)))
 }
 
+#[op("writeFile")]
 pub fn fs_write(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_write: expected path")?.to_string();
     let content = args.get(1).ok_or("fs_write: expected content")?.to_string();
@@ -17,11 +20,13 @@ pub fn fs_write(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Val
     Ok(Value::Null)
 }
 
+#[op("exists")]
 pub fn fs_exists(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_exists: expected path")?.to_string();
     Ok(Value::Bool(Path::new(&path).exists()))
 }
 
+#[op("kind")]
 pub fn fs_kind(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_kind: expected path")?.to_string();
     let meta = fs::metadata(path).map_err(|e| e.to_string())?;
@@ -35,6 +40,7 @@ pub fn fs_kind(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Valu
     Ok(Value::Str(Arc::from(kind)))
 }
 
+#[op("stat")]
 pub fn fs_stat(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_stat: expected path")?.to_string();
     let meta = fs::metadata(path).map_err(|e| e.to_string())?;
@@ -50,12 +56,14 @@ pub fn fs_stat(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Valu
     Ok(new_object(obj))
 }
 
+#[op("mkdir")]
 pub fn fs_mkdir(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_mkdir: expected path")?.to_string();
     fs::create_dir(path).map_err(|e| e.to_string())?;
     Ok(Value::Null)
 }
 
+#[op("mkdirAll")]
 pub fn fs_mkdir_all(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args
         .get(0)
@@ -65,6 +73,7 @@ pub fn fs_mkdir_all(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
     Ok(Value::Null)
 }
 
+#[op("readDir")]
 pub fn fs_read_dir(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_read_dir: expected path")?.to_string();
     let entries = fs::read_dir(path).map_err(|e| e.to_string())?;
@@ -76,6 +85,7 @@ pub fn fs_read_dir(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
     Ok(new_array(res))
 }
 
+#[op("remove")]
 pub fn fs_remove(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args.get(0).ok_or("fs_remove: expected path")?.to_string();
     let meta = fs::metadata(&path).map_err(|e| e.to_string())?;
@@ -87,6 +97,7 @@ pub fn fs_remove(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Va
     Ok(Value::Null)
 }
 
+#[op("removeAll")]
 pub fn fs_remove_all(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args
         .get(0)
@@ -96,6 +107,7 @@ pub fn fs_remove_all(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
     Ok(Value::Null)
 }
 
+#[op("rename")]
 pub fn fs_rename(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let from = args.get(0).ok_or("fs_rename: expected from")?.to_string();
     let to = args.get(1).ok_or("fs_rename: expected to")?.to_string();
@@ -103,6 +115,7 @@ pub fn fs_rename(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Va
     Ok(Value::Null)
 }
 
+#[op("copy")]
 pub fn fs_copy(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let from = args.get(0).ok_or("fs_copy: expected from")?.to_string();
     let to = args.get(1).ok_or("fs_copy: expected to")?.to_string();
@@ -110,6 +123,7 @@ pub fn fs_copy(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Valu
     Ok(Value::Null)
 }
 
+#[op("tempDir")]
 pub fn fs_temp_dir(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Result<Value, String> {
     Ok(Value::Str(Arc::from(
         std::env::temp_dir().to_string_lossy(),
@@ -138,6 +152,7 @@ pub fn fs_write_bytes(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Res
 pub fn fs_write_text(_ctx: &mut dyn tsn_types::Context, a: &[Value]) -> Result<Value, String> {
     fs_write(_ctx, a)
 }
+#[op("appendFile")]
 pub fn fs_append_text(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let path = args
         .get(0)
@@ -166,3 +181,20 @@ pub fn fs_read_link(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Resul
 pub fn fs_watch(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Result<Value, String> {
     Err("fs_watch: asynchronous events not supported in this intrinsic.".into())
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    fs_read_OP,
+    fs_write_OP,
+    fs_exists_OP,
+    fs_kind_OP,
+    fs_stat_OP,
+    fs_mkdir_OP,
+    fs_mkdir_all_OP,
+    fs_read_dir_OP,
+    fs_remove_OP,
+    fs_remove_all_OP,
+    fs_rename_OP,
+    fs_copy_OP,
+    fs_temp_dir_OP,
+    fs_append_text_OP,
+];

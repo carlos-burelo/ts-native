@@ -2,6 +2,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex, OnceLock};
+use tsn_op_macros::op;
 use tsn_types::{
     future::AsyncFuture,
     value::{new_object, ObjData},
@@ -34,9 +35,13 @@ thread_local! {
 
 // ─── Intrinsics ───────────────────────────────────────────────────────────────
 
+#[op("fetch")]
 pub fn http_fetch(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let url = args.get(0).map(|v| v.to_string()).unwrap_or_default();
-    let method = args.get(1).map(|v| v.to_string()).unwrap_or_else(|| "GET".into());
+    let method = args
+        .get(1)
+        .map(|v| v.to_string())
+        .unwrap_or_else(|| "GET".into());
     let headers = extract_obj_pairs(args.get(2));
     let body = match args.get(3) {
         Some(Value::Null) | None => None,
@@ -47,8 +52,7 @@ pub fn http_fetch(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
         _ => 30_000,
     };
 
-    let vtable = tsn_types::value::get_global_vtable()
-        .ok_or("http_fetch: heap not initialized")?;
+    let vtable = tsn_types::value::get_global_vtable().ok_or("http_fetch: heap not initialized")?;
 
     let fut = AsyncFuture::pending();
     let fut2 = fut.clone();
@@ -64,26 +68,49 @@ pub fn http_fetch(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
     Ok(Value::Future(fut))
 }
 
-pub fn http_server_create(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Result<Value, String> {
+#[op("server_create")]
+pub fn http_server_create(
+    _ctx: &mut dyn tsn_types::Context,
+    _args: &[Value],
+) -> Result<Value, String> {
     let id = NEXT_SERVER_ID.fetch_add(1, Ordering::SeqCst);
     routes_map().lock().unwrap().insert(id, Vec::new());
     Ok(Value::Int(id))
 }
 
-pub fn http_server_route(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+#[op("server_route")]
+pub fn http_server_route(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let id = match args.get(0) {
         Some(Value::Int(i)) => *i,
         _ => return Err("server_route: expected server id".into()),
     };
-    let method = args.get(1).map(|v| v.to_string().to_uppercase()).unwrap_or_else(|| "GET".into());
+    let method = args
+        .get(1)
+        .map(|v| v.to_string().to_uppercase())
+        .unwrap_or_else(|| "GET".into());
     let pattern = args.get(2).map(|v| v.to_string()).unwrap_or_default();
-    let cb = args.get(3).cloned().ok_or("server_route: missing callback")?;
+    let cb = args
+        .get(3)
+        .cloned()
+        .ok_or("server_route: missing callback")?;
 
-    routes_map().lock().unwrap().entry(id).or_default().push((method, pattern, cb));
+    routes_map()
+        .lock()
+        .unwrap()
+        .entry(id)
+        .or_default()
+        .push((method, pattern, cb));
     Ok(Value::Null)
 }
 
-pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+#[op("server_listen")]
+pub fn http_server_listen(
+    ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let id = match args.get(0) {
         Some(Value::Int(i)) => *i,
         _ => return Err("server_listen: expected server id".into()),
@@ -92,7 +119,10 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
         Some(Value::Int(i)) => *i as u16,
         _ => return Err("server_listen: expected port".into()),
     };
-    let res_ctor = args.get(2).cloned().ok_or("server_listen: missing ServerResponse ctor")?;
+    let res_ctor = args
+        .get(2)
+        .cloned()
+        .ok_or("server_listen: missing ServerResponse ctor")?;
 
     let listener = tiny_http::Server::http(format!("0.0.0.0:{}", port))
         .map_err(|e| format!("server_listen: {}", e))?;
@@ -115,7 +145,12 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
         let mut body_buf = String::new();
         let _ = std::io::Read::read_to_string(raw.as_reader(), &mut body_buf);
 
-        let routes = routes_map().lock().unwrap().get(&id).cloned().unwrap_or_default();
+        let routes = routes_map()
+            .lock()
+            .unwrap()
+            .get(&id)
+            .cloned()
+            .unwrap_or_default();
         let matched = find_route(&routes, &method, &path);
 
         let query_obj = parse_query_string(&query_str);
@@ -124,7 +159,14 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
             .map(|(_, pattern, _)| extract_params(pattern, &path))
             .unwrap_or_else(|| new_object(ObjData::new()));
         let req_headers = build_headers_obj(raw.headers());
-        let req_obj = make_request_obj(&method, &path, query_obj, params_obj, &body_buf, req_headers);
+        let req_obj = make_request_obj(
+            &method,
+            &path,
+            query_obj,
+            params_obj,
+            &body_buf,
+            req_headers,
+        );
 
         RESPONSE_SLOT.with(|s| *s.borrow_mut() = None);
 
@@ -132,8 +174,16 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
             Ok(v) => v,
             Err(e) => {
                 eprintln!("ServerResponse ctor failed: {}", e);
-                let h = tiny_http::Header::from_bytes("Content-Type".as_bytes(), "text/plain".as_bytes()).unwrap();
-                let _ = raw.respond(tiny_http::Response::from_string("Internal Server Error").with_status_code(500).with_header(h));
+                let h = tiny_http::Header::from_bytes(
+                    "Content-Type".as_bytes(),
+                    "text/plain".as_bytes(),
+                )
+                .unwrap();
+                let _ = raw.respond(
+                    tiny_http::Response::from_string("Internal Server Error")
+                        .with_status_code(500)
+                        .with_header(h),
+                );
                 continue;
             }
         };
@@ -169,7 +219,8 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
             None => (204, String::new(), "text/plain".into(), vec![]),
         };
 
-        let ct_header = tiny_http::Header::from_bytes("Content-Type".as_bytes(), ct.as_bytes()).unwrap();
+        let ct_header =
+            tiny_http::Header::from_bytes("Content-Type".as_bytes(), ct.as_bytes()).unwrap();
         let mut response = tiny_http::Response::from_string(body)
             .with_status_code(status)
             .with_header(ct_header);
@@ -182,7 +233,11 @@ pub fn http_server_listen(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> R
     }
 }
 
-pub fn http_response_send(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+#[op("response_send")]
+pub fn http_response_send(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     RESPONSE_SLOT.with(|s| {
         let mut slot = s.borrow_mut();
         if slot.is_none() {
@@ -191,7 +246,10 @@ pub fn http_response_send(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> 
                 _ => 200,
             };
             let body = args.get(1).map(|v| v.to_string()).unwrap_or_default();
-            let ct = args.get(2).map(|v| v.to_string()).unwrap_or_else(|| "text/plain".into());
+            let ct = args
+                .get(2)
+                .map(|v| v.to_string())
+                .unwrap_or_else(|| "text/plain".into());
             let extra = extract_obj_pairs(args.get(3));
             *slot = Some(PendingResponse {
                 status,
@@ -206,7 +264,13 @@ pub fn http_response_send(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-fn do_fetch(url: &str, method: &str, headers: &[(String, String)], body: Option<&str>, timeout_ms: u64) -> Result<Value, String> {
+fn do_fetch(
+    url: &str,
+    method: &str,
+    headers: &[(String, String)],
+    body: Option<&str>,
+    timeout_ms: u64,
+) -> Result<Value, String> {
     let agent = ureq::AgentBuilder::new()
         .timeout(std::time::Duration::from_millis(timeout_ms))
         .build();
@@ -224,7 +288,9 @@ fn do_fetch(url: &str, method: &str, headers: &[(String, String)], body: Option<
         Ok(resp) => {
             let s = resp.status();
             let st = resp.status_text().to_owned();
-            let rh = resp.headers_names().iter()
+            let rh = resp
+                .headers_names()
+                .iter()
                 .filter_map(|n| resp.header(n).map(|v| (n.clone(), v.to_owned())))
                 .collect::<Vec<_>>();
             let b = resp.into_string().map_err(|e| e.to_string())?;
@@ -232,7 +298,9 @@ fn do_fetch(url: &str, method: &str, headers: &[(String, String)], body: Option<
         }
         Err(ureq::Error::Status(code, resp)) => {
             let st = resp.status_text().to_owned();
-            let rh = resp.headers_names().iter()
+            let rh = resp
+                .headers_names()
+                .iter()
                 .filter_map(|n| resp.header(n).map(|v| (n.clone(), v.to_owned())))
                 .collect::<Vec<_>>();
             let b = resp.into_string().unwrap_or_default();
@@ -243,15 +311,24 @@ fn do_fetch(url: &str, method: &str, headers: &[(String, String)], body: Option<
 
     let mut headers_obj = ObjData::new();
     for (k, v) in resp_headers {
-        headers_obj.fields.insert(Arc::from(k.as_str()), Value::Str(Arc::from(v.as_str())));
+        headers_obj
+            .fields
+            .insert(Arc::from(k.as_str()), Value::Str(Arc::from(v.as_str())));
     }
 
     let mut obj = ObjData::new();
-    obj.fields.insert(Arc::from("status"), Value::Int(status as i64));
-    obj.fields.insert(Arc::from("statusText"), Value::Str(Arc::from(status_text.as_str())));
-    obj.fields.insert(Arc::from("ok"), Value::Bool(status >= 200 && status < 300));
-    obj.fields.insert(Arc::from("body"), Value::Str(Arc::from(body_text.as_str())));
-    obj.fields.insert(Arc::from("headers"), new_object(headers_obj));
+    obj.fields
+        .insert(Arc::from("status"), Value::Int(status as i64));
+    obj.fields.insert(
+        Arc::from("statusText"),
+        Value::Str(Arc::from(status_text.as_str())),
+    );
+    obj.fields
+        .insert(Arc::from("ok"), Value::Bool(status >= 200 && status < 300));
+    obj.fields
+        .insert(Arc::from("body"), Value::Str(Arc::from(body_text.as_str())));
+    obj.fields
+        .insert(Arc::from("headers"), new_object(headers_obj));
     Ok(new_object(obj))
 }
 
@@ -281,9 +358,14 @@ fn parse_query_string(qs: &str) -> Value {
             Some(i) => (&pair[..i], &pair[i + 1..]),
             None => (pair, ""),
         };
-        let key = urlencoding::decode(k).map(|s| s.into_owned()).unwrap_or_else(|_| k.to_owned());
-        let val = urlencoding::decode(v).map(|s| s.into_owned()).unwrap_or_else(|_| v.to_owned());
-        obj.fields.insert(Arc::from(key.as_str()), Value::Str(Arc::from(val.as_str())));
+        let key = urlencoding::decode(k)
+            .map(|s| s.into_owned())
+            .unwrap_or_else(|_| k.to_owned());
+        let val = urlencoding::decode(v)
+            .map(|s| s.into_owned())
+            .unwrap_or_else(|_| v.to_owned());
+        obj.fields
+            .insert(Arc::from(key.as_str()), Value::Str(Arc::from(val.as_str())));
     }
     new_object(obj)
 }
@@ -305,7 +387,11 @@ fn match_pattern(pattern: &str, path: &str) -> Option<Vec<(String, String)>> {
     Some(params)
 }
 
-fn find_route<'a>(routes: &'a [RouteEntry], method: &str, path: &str) -> Option<(String, String, Value)> {
+fn find_route<'a>(
+    routes: &'a [RouteEntry],
+    method: &str,
+    path: &str,
+) -> Option<(String, String, Value)> {
     for (m, pattern, cb) in routes {
         if m == method && match_pattern(pattern, path).is_some() {
             return Some((m.clone(), pattern.clone(), cb.clone()));
@@ -318,7 +404,8 @@ fn extract_params(pattern: &str, path: &str) -> Value {
     let mut obj = ObjData::new();
     if let Some(pairs) = match_pattern(pattern, path) {
         for (k, v) in pairs {
-            obj.fields.insert(Arc::from(k.as_str()), Value::Str(Arc::from(v.as_str())));
+            obj.fields
+                .insert(Arc::from(k.as_str()), Value::Str(Arc::from(v.as_str())));
         }
     }
     new_object(obj)
@@ -329,19 +416,39 @@ fn build_headers_obj(headers: &[tiny_http::Header]) -> Value {
     for h in headers {
         let name = h.field.to_string().to_lowercase();
         let val = h.value.to_string();
-        obj.fields.insert(Arc::from(name.as_str()), Value::Str(Arc::from(val.as_str())));
+        obj.fields.insert(
+            Arc::from(name.as_str()),
+            Value::Str(Arc::from(val.as_str())),
+        );
     }
     new_object(obj)
 }
 
-fn make_request_obj(method: &str, path: &str, query: Value, params: Value, body: &str, headers: Value) -> Value {
+fn make_request_obj(
+    method: &str,
+    path: &str,
+    query: Value,
+    params: Value,
+    body: &str,
+    headers: Value,
+) -> Value {
     let mut obj = ObjData::new();
-    obj.fields.insert(Arc::from("method"), Value::Str(Arc::from(method)));
-    obj.fields.insert(Arc::from("path"), Value::Str(Arc::from(path)));
+    obj.fields
+        .insert(Arc::from("method"), Value::Str(Arc::from(method)));
+    obj.fields
+        .insert(Arc::from("path"), Value::Str(Arc::from(path)));
     obj.fields.insert(Arc::from("query"), query);
     obj.fields.insert(Arc::from("params"), params);
-    obj.fields.insert(Arc::from("body"), Value::Str(Arc::from(body)));
+    obj.fields
+        .insert(Arc::from("body"), Value::Str(Arc::from(body)));
     obj.fields.insert(Arc::from("headers"), headers);
     new_object(obj)
 }
 
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    http_fetch_OP,
+    http_server_create_OP,
+    http_server_route_OP,
+    http_server_listen_OP,
+    http_response_send_OP,
+];

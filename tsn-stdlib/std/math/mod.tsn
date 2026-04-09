@@ -1,34 +1,33 @@
 // std:math — Mathematical constants and functions
 
-export namespace Math {
-    export const E = 2.718281828459045;
-    export const LN10 = 2.302585092994046;
-    export const LN2 = 0.6931471805599453;
-    export const LOG10E = 0.4342944819032518;
-    export const LOG2E = 1.4426950408889634;
-    export const PI = 3.141592653589793;
-    export const SQRT1_2 = 0.7071067811865476;
-    export const SQRT2 = 1.4142135623730951;
+export declare namespace Math {
+    export declare const E: float;
+    export declare const LN10: float;
+    export declare const LN2: float;
+    export declare const LOG10E: float;
+    export declare const LOG2E: float;
+    export declare const PI: float;
+    export declare const SQRT1_2: float;
+    export declare const SQRT2: float;
 
-    export function abs(x: float): float { return __math_abs(x) }
-    export function acos(x: float): float { return __math_acos(x) }
-    export function asin(x: float): float { return __math_asin(x) }
-    export function atan(x: float): float { return __math_atan(x) }
-    export function atan2(y: float, x: float): float { return __math_atan2(y, x) }
-    export function ceil(x: float): float { return __math_ceil(x) }
-    export function cos(x: float): float { return __math_cos(x) }
-    export function exp(x: float): float { return __math_exp(x) }
-    export function floor(x: float): float { return __math_floor(x) }
-    export function log(x: float): float { return __math_log(x) }
-    export function max(...args: float[]): float { return __math_max(...args) }
-    export function min(...args: float[]): float { return __math_min(...args) }
-    export function pow(x: float, y: float): float { return __math_pow(x, y) }
-    export function random(): float { return __math_random() }
-    export function round(x: float): float { return __math_round(x) }
-    export function sin(x: float): float { return __math_sin(x) }
-    export function sqrt(x: float): float { return __math_sqrt(x) }
-    export function tan(x: float): float { return __math_tan(x) }
-    export function sign(x: float): float { return __math_sign(x) }
-    export function trunc(x: float): float { return __math_trunc(x) }
+    export declare function abs(x: float): float;
+    export declare function acos(x: float): float;
+    export declare function asin(x: float): float;
+    export declare function atan(x: float): float;
+    export declare function atan2(y: float, x: float): float;
+    export declare function ceil(x: float): float;
+    export declare function cos(x: float): float;
+    export declare function exp(x: float): float;
+    export declare function floor(x: float): float;
+    export declare function log(x: float): float;
+    export declare function max(...args: float[]): float;
+    export declare function min(...args: float[]): float;
+    export declare function pow(x: float, y: float): float;
+    export declare function random(): float;
+    export declare function round(x: float): float;
+    export declare function sin(x: float): float;
+    export declare function sqrt(x: float): float;
+    export declare function tan(x: float): float;
+    export declare function sign(x: float): float;
+    export declare function trunc(x: float): float;
 }
-

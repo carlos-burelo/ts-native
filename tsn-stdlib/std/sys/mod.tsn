@@ -1,31 +1,11 @@
 // std:sys module
 
-export namespace Sys {
-    export function platform(): str {
-        return __sys_platform()
-    }
-
-    export function cwd(): str {
-        return __sys_cwd()
-    }
-
-    export function args(): str[] {
-        return __sys_args()
-    }
-
-    export function exit(code: int): void {
-        __sys_exit(code)
-    }
-
-    export function env(key: str): str | null {
-        return __sys_env_get(key)
-    }
-
-    export function setEnv(key: str, value: str): void {
-        __sys_env_set(key, value)
-    }
-
-    export function now(): int {
-        return __time_now()
-    }
+export declare namespace Sys {
+    export declare function platform(): str;
+    export declare function cwd(): str;
+    export declare function args(): str[];
+    export declare function exit(code: int): void;
+    export declare function env(key: str): str | null;
+    export declare function setEnv(key: str, value: str): void;
+    export declare function now(): int;
 }

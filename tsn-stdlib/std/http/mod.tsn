@@ -1,15 +1,15 @@
-// ─── Client types ─────────────────────────────────────────────────────────────
+// std:http — HTTP client/server
 
 export type HttpMethod = str
 
-export namespace Method {
-    export const GET: str = "GET"
-    export const POST: str = "POST"
-    export const PUT: str = "PUT"
-    export const PATCH: str = "PATCH"
-    export const DELETE: str = "DELETE"
-    export const HEAD: str = "HEAD"
-    export const OPTIONS: str = "OPTIONS"
+export declare namespace Method {
+    export declare const GET: str
+    export declare const POST: str
+    export declare const PUT: str
+    export declare const PATCH: str
+    export declare const DELETE: str
+    export declare const HEAD: str
+    export declare const OPTIONS: str
 }
 
 export interface RequestInit {
@@ -19,156 +19,54 @@ export interface RequestInit {
     timeout?: int
 }
 
-// ─── Client response ──────────────────────────────────────────────────────────
-
-export class Response {
+export declare class Response {
     status: int
     statusText: str
     ok: bool
     headers: dynamic
     body: str
-
-    constructor(status: int, statusText: str, body: str, headers: dynamic) {
-        this.status = status
-        this.statusText = statusText
-        this.body = body
-        this.headers = headers
-        this.ok = status >= 200 && status < 300
-    }
-
-    text(): str { return this.body }
-    json(): dynamic { return __json_parse(this.body) }
+    text(): str
+    json(): dynamic
 }
 
-// ─── fetch ────────────────────────────────────────────────────────────────────
+export declare function fetch(url: str, init?: dynamic): Future<Response>
 
-export function fetch(url: str, init?: dynamic): Future<Response> {
-    const method: str = (init !== null && init.method !== null) ? init.method : "GET"
-    const headers: dynamic = (init !== null && init.headers !== null) ? init.headers : null
-    const body: str | null = (init !== null && init.body !== null) ? init.body : null
-    const timeout: int = (init !== null && init.timeout !== null) ? init.timeout : 30000
-    return __http_fetch(url, method, headers, body, timeout)
+export declare namespace HTTP {
+    export declare function fetch(url: str, init?: dynamic): Future<Response>
+    export declare function get(url: str, headers?: dynamic): Future<Response>
+    export declare function post(url: str, body?: str, headers?: dynamic): Future<Response>
+    export declare function put(url: str, body?: str, headers?: dynamic): Future<Response>
+    export declare function patch(url: str, body?: str, headers?: dynamic): Future<Response>
+    export declare function del(url: str, headers?: dynamic): Future<Response>
 }
 
-export namespace HTTP {
-    export function fetch(url: str, init?: dynamic): Future<Response> {
-        const method: str = (init !== null && init.method !== null) ? init.method : "GET"
-        const headers: dynamic = (init !== null && init.headers !== null) ? init.headers : null
-        const body: str | null = (init !== null && init.body !== null) ? init.body : null
-        const timeout: int = (init !== null && init.timeout !== null) ? init.timeout : 30000
-        return __http_fetch(url, method, headers, body, timeout)
-    }
-
-    export function get(url: str, headers?: dynamic): Future<Response> {
-        return __http_fetch(url, "GET", headers, null, 30000)
-    }
-
-    export function post(url: str, body?: str, headers?: dynamic): Future<Response> {
-        return __http_fetch(url, "POST", headers, body, 30000)
-    }
-
-    export function put(url: str, body?: str, headers?: dynamic): Future<Response> {
-        return __http_fetch(url, "PUT", headers, body, 30000)
-    }
-
-    export function patch(url: str, body?: str, headers?: dynamic): Future<Response> {
-        return __http_fetch(url, "PATCH", headers, body, 30000)
-    }
-
-    export function del(url: str, headers?: dynamic): Future<Response> {
-        return __http_fetch(url, "DELETE", headers, null, 30000)
-    }
-}
-
-// ─── Server ───────────────────────────────────────────────────────────────────
-
-export class Request {
+export declare class Request {
     method: str
     path: str
     query: dynamic
     params: dynamic
     body: str
     headers: dynamic
-
-    constructor(method: str, path: str, query: dynamic, params: dynamic, body: str, headers: dynamic) {
-        this.method = method
-        this.path = path
-        this.query = query
-        this.params = params
-        this.body = body
-        this.headers = headers
-    }
 }
 
-export class ServerResponse {
+export declare class ServerResponse {
     _status: int
     _body: str
     _headers: dynamic
-
-    constructor() {
-        this._status = 200
-        this._body = ""
-        this._headers = {}
-    }
-
-    status(code: int): this {
-        this._status = code
-        return this
-    }
-
-    header(name: str, value: str): this {
-        this._headers[name] = value
-        return this
-    }
-
-    json(data: dynamic): void {
-        this._headers["Content-Type"] = "application/json"
-        __http_response_send(this._status, __json_stringify(data), "application/json", this._headers)
-    }
-
-    send(body: str): void {
-        __http_response_send(this._status, body, "text/plain", this._headers)
-    }
-
-    text(body: str): void {
-        this._headers["Content-Type"] = "text/plain"
-        __http_response_send(this._status, body, "text/plain", this._headers)
-    }
-
-    html(body: str): void {
-        this._headers["Content-Type"] = "text/html"
-        __http_response_send(this._status, body, "text/html", this._headers)
-    }
+    status(code: int): this
+    header(name: str, value: str): this
+    json(data: dynamic): void
+    send(body: str): void
+    text(body: str): void
+    html(body: str): void
 }
 
-export class Server {
+export declare class Server {
     private _id: int
-
-    constructor() {
-        this._id = __http_server_create()
-    }
-
-    get(path: str, callback: (req: Request, res: ServerResponse) => void): void {
-        __http_server_route(this._id, "GET", path, callback)
-    }
-
-    post(path: str, callback: (req: Request, res: ServerResponse) => void): void {
-        __http_server_route(this._id, "POST", path, callback)
-    }
-
-    put(path: str, callback: (req: Request, res: ServerResponse) => void): void {
-        __http_server_route(this._id, "PUT", path, callback)
-    }
-
-    patch(path: str, callback: (req: Request, res: ServerResponse) => void): void {
-        __http_server_route(this._id, "PATCH", path, callback)
-    }
-
-    delete(path: str, callback: (req: Request, res: ServerResponse) => void): void {
-        __http_server_route(this._id, "DELETE", path, callback)
-    }
-
-    listen(port: int): void {
-        __http_server_listen(this._id, port, ServerResponse)
-    }
+    get(path: str, callback: (req: Request, res: ServerResponse) => void): void
+    post(path: str, callback: (req: Request, res: ServerResponse) => void): void
+    put(path: str, callback: (req: Request, res: ServerResponse) => void): void
+    patch(path: str, callback: (req: Request, res: ServerResponse) => void): void
+    delete(path: str, callback: (req: Request, res: ServerResponse) => void): void
+    listen(port: int): void
 }

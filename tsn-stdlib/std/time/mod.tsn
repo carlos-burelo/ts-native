@@ -1,15 +1,10 @@
 // std:time — time utilities
 
-export namespace Time {
-    export function now(): int {
-        return __time_now()
-    }
-
-    export function millis(): int {
-        return __time_now()
-    }
-
-    export function toISOString(ms: int): str {
-        return __time_to_iso(ms)
-    }
+export declare namespace Time {
+    export declare function now(): int;
+    export declare function millis(): int;
+    export declare function toISOString(ms: int): str;
+    export declare function fromISO(iso: str): int;
+    export declare function toParts(ms: int): dynamic;
+    export declare function fromParts(year: int, month: int, day: int, hour?: int, minute?: int, second?: int, millisecond?: int): int;
 }

@@ -1,26 +1,31 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::{
     value::{new_array, new_object, ObjData},
     Value,
 };
 use url::Url;
 
+#[op("isIp")]
 pub fn net_is_ip(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     Ok(Value::Bool(s.parse::<std::net::IpAddr>().is_ok()))
 }
 
+#[op("isIpv4")]
 pub fn net_is_ipv4(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     Ok(Value::Bool(s.parse::<std::net::Ipv4Addr>().is_ok()))
 }
 
+#[op("isIpv6")]
 pub fn net_is_ipv6(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     Ok(Value::Bool(s.parse::<std::net::Ipv6Addr>().is_ok()))
 }
 
+#[op("joinHostPort")]
 pub fn net_join_host_port(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
@@ -38,6 +43,7 @@ pub fn net_join_host_port(
     Ok(Value::Str(Arc::from(res)))
 }
 
+#[op("splitHostPort")]
 pub fn net_split_host_port(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
@@ -59,12 +65,14 @@ pub fn net_split_host_port(
     ]))
 }
 
+#[op("parseURL")]
 pub fn net_parse_url(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let url = Url::parse(&s).map_err(|e| format!("Net.parseURL: {}", e))?;
     Ok(url_to_value(&url))
 }
 
+#[op("resolveUrl")]
 pub fn net_resolve_url(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let base = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let next = args.get(1).map(|v| v.to_string()).unwrap_or_default();
@@ -75,6 +83,7 @@ pub fn net_resolve_url(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Res
     Ok(Value::Str(Arc::from(res.to_string())))
 }
 
+#[op("parseQuery")]
 pub fn net_parse_query(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let s = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let s = s.trim_start_matches('?');
@@ -86,6 +95,7 @@ pub fn net_parse_query(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Res
     Ok(new_object(data))
 }
 
+#[op("buildQuery")]
 pub fn net_build_query(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let q = args.get(0).ok_or("Net.buildQuery: missing argument")?;
     let pairs = to_kv_pairs(q)?;
@@ -96,6 +106,7 @@ pub fn net_build_query(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Res
     Ok(Value::Str(Arc::from(ser.finish())))
 }
 
+#[op("appendQuery")]
 pub fn net_append_query(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
@@ -113,6 +124,7 @@ pub fn net_append_query(
     Ok(Value::Str(Arc::from(url.to_string())))
 }
 
+#[op("encodeUriComponent")]
 pub fn net_enc_uri_component(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
@@ -121,6 +133,7 @@ pub fn net_enc_uri_component(
     Ok(Value::Str(Arc::from(urlencoding::encode(&s).into_owned())))
 }
 
+#[op("decodeUriComponent")]
 pub fn net_dec_uri_component(
     _ctx: &mut dyn tsn_types::Context,
     args: &[Value],
@@ -130,6 +143,7 @@ pub fn net_dec_uri_component(
     Ok(Value::Str(Arc::from(decoded.into_owned())))
 }
 
+#[op("basicAuth")]
 pub fn net_basic_auth(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let user = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let pass = args.get(1).map(|v| v.to_string()).unwrap_or_default();
@@ -190,3 +204,19 @@ fn to_kv_pairs(v: &Value) -> Result<Vec<(String, String)>, String> {
         _ => Err("expected object for query params".into()),
     }
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    net_is_ip_OP,
+    net_is_ipv4_OP,
+    net_is_ipv6_OP,
+    net_join_host_port_OP,
+    net_split_host_port_OP,
+    net_parse_url_OP,
+    net_resolve_url_OP,
+    net_parse_query_OP,
+    net_build_query_OP,
+    net_append_query_OP,
+    net_enc_uri_component_OP,
+    net_dec_uri_component_OP,
+    net_basic_auth_OP,
+];

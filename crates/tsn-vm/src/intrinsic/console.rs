@@ -1,4 +1,5 @@
 use std::sync::atomic::{AtomicBool, Ordering};
+use tsn_op_macros::op;
 use tsn_types::value::Value;
 
 static CONSOLE_SILENT: AtomicBool = AtomicBool::new(false);
@@ -7,6 +8,7 @@ pub fn set_console_silent(silent: bool) {
     CONSOLE_SILENT.store(silent, Ordering::Relaxed);
 }
 
+#[op("debug")]
 pub fn console_debug(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     eprintln!(
         "[debug] {}",
@@ -18,6 +20,7 @@ pub fn console_debug(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
     Ok(Value::Null)
 }
 
+#[op("log")]
 pub fn console_log(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     if CONSOLE_SILENT.load(Ordering::Relaxed) {
         return Ok(Value::Null);
@@ -31,3 +34,5 @@ pub fn console_log(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
     );
     Ok(Value::Null)
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[console_debug_OP, console_log_OP];

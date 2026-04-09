@@ -1,6 +1,7 @@
 use parking_lot::Mutex;
 use std::collections::HashMap;
 use std::sync::Arc;
+use tsn_op_macros::op;
 use tsn_types::{value::new_array, Value};
 
 use std::sync::OnceLock;
@@ -20,6 +21,7 @@ fn target_key(v: &Value) -> String {
     }
 }
 
+#[op("defineMetadata")]
 pub fn reflect_define_meta(args: &[Value]) -> Result<Value, String> {
     let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let val = args.get(1).cloned().unwrap_or(Value::Null);
@@ -31,6 +33,7 @@ pub fn reflect_define_meta(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Null)
 }
 
+#[op("getMetadata")]
 pub fn reflect_get_meta(args: &[Value]) -> Result<Value, String> {
     let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let target = args.get(1).map(target_key).unwrap_or_default();
@@ -45,6 +48,7 @@ pub fn reflect_get_meta(args: &[Value]) -> Result<Value, String> {
     Ok(val)
 }
 
+#[op("hasMetadata")]
 pub fn reflect_has_meta(args: &[Value]) -> Result<Value, String> {
     let key = args.get(0).map(|v| v.to_string()).unwrap_or_default();
     let target = args.get(1).map(target_key).unwrap_or_default();
@@ -58,6 +62,7 @@ pub fn reflect_has_meta(args: &[Value]) -> Result<Value, String> {
     Ok(Value::Bool(has))
 }
 
+#[op("getMetadataKeys")]
 pub fn reflect_get_meta_keys(args: &[Value]) -> Result<Value, String> {
     let target = args.get(0).map(target_key).unwrap_or_default();
 
@@ -73,3 +78,10 @@ pub fn reflect_get_meta_keys(args: &[Value]) -> Result<Value, String> {
 
     Ok(new_array(keys))
 }
+
+pub const OPS: &[crate::host_ops::HostOp] = &[
+    reflect_define_meta_OP,
+    reflect_get_meta_OP,
+    reflect_has_meta_OP,
+    reflect_get_meta_keys_OP,
+];
