@@ -1,4 +1,4 @@
-export function run(): void {
+export function run() {
     print("\n══ 6. Destructuring ══")
 
     const obj1 = { a: 1, b: 2, c: 3 }

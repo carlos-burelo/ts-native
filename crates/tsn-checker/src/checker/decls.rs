@@ -1,6 +1,8 @@
 use super::Checker;
 use crate::binder::widen_literal;
 use crate::binder::BindResult;
+use crate::checker_expressions::infer::{collect_checked_return_types, collect_yield_types};
+use crate::types::{FunctionType, Type};
 use tsn_core::TypeKind;
 use tsn_core::ast::{Decl, Decorator, ExportDecl, ExportDefaultDecl, ImportSpecifier, VarKind};
 use tsn_core::Diagnostic;
@@ -63,9 +65,11 @@ impl Checker {
             }
 
             Decl::Function(f) => {
-                // Register the function name token with its symbol_id so rename works.
                 let scope = bind.scopes.get(self.current_scope);
-                if let Some(sym_id) = scope.resolve(&f.id, &bind.scopes) {
+                let sym_id_opt = scope.resolve(&f.id, &bind.scopes);
+
+                // Register the function name token with its symbol_id so rename works.
+                if let Some(sym_id) = sym_id_opt {
                     if let Some(ty) = bind.arena.get(sym_id).ty.clone() {
                         self.record_type_with_symbol(f.id_offset, ty, sym_id);
                     }
@@ -86,6 +90,64 @@ impl Checker {
 
                 self.current_scope = saved_scope;
                 self.expected_return_type = saved_expected;
+
+                // For generator functions with no explicit return type, infer yield type and
+                // record Generator<T> at f.range.start.offset.
+                if f.return_type.is_none() && f.modifiers.is_generator {
+                    if let Some(sym_id) = sym_id_opt {
+                        let yield_tys = collect_yield_types(&f.body, &self.expr_types);
+                        let yield_ty = match yield_tys.len() {
+                            0 => Type::Dynamic,
+                            1 => yield_tys.into_iter().next().unwrap(),
+                            _ => Type::union(yield_tys),
+                        };
+                        if !yield_ty.is_dynamic() {
+                            if let Some(base_ty) = bind.arena.get(sym_id).ty.clone() {
+                                if let TypeKind::Fn(ft) = base_ty.0 {
+                                    let gen_ty = Type::generic(
+                                        tsn_core::well_known::GENERATOR.to_string(),
+                                        vec![yield_ty],
+                                    );
+                                    let updated = Type::fn_(FunctionType {
+                                        return_type: Box::new(gen_ty),
+                                        ..ft
+                                    });
+                                    self.record_type_with_symbol(
+                                        f.range.start.offset,
+                                        updated,
+                                        sym_id,
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // When no explicit return type, infer it from the body and record the updated
+                // fn type at f.range.start.offset (= sym.offset in binder, used by pipeline).
+                if f.return_type.is_none() && !f.modifiers.is_generator {
+                    if let Some(sym_id) = sym_id_opt {
+                        let return_tys = collect_checked_return_types(&f.body, &self.expr_types);
+                        let inferred_ret = match return_tys.len() {
+                            0 => Type::Void,
+                            1 => return_tys.into_iter().next().unwrap(),
+                            _ => Type::union(return_tys),
+                        };
+                        if let Some(base_ty) = bind.arena.get(sym_id).ty.clone() {
+                            if let TypeKind::Fn(ft) = base_ty.0 {
+                                let updated = Type::fn_(FunctionType {
+                                    return_type: Box::new(inferred_ret),
+                                    ..ft
+                                });
+                                self.record_type_with_symbol(
+                                    f.range.start.offset,
+                                    updated,
+                                    sym_id,
+                                );
+                            }
+                        }
+                    }
+                }
 
                 self.check_decorators(&f.decorators, bind);
             }

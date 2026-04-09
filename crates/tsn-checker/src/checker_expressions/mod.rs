@@ -1,6 +1,6 @@
 mod check;
 pub(super) mod helpers;
-mod infer;
+pub(crate) mod infer;
 mod member_cache;
 mod members;
 mod narrowing;

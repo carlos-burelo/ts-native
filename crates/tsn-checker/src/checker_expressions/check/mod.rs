@@ -32,8 +32,13 @@ impl Checker {
                 symbol_id,
             },
         );
-        self.expr_types
-            .insert(end, crate::checker::ExprInfo { ty, symbol_id });
+        // Use or_insert for the end offset: inner expressions (already recorded) take priority
+        // over outer expressions that may have a less specific type (e.g. Dynamic for assignments).
+        if start != end {
+            self.expr_types
+                .entry(end)
+                .or_insert(crate::checker::ExprInfo { ty, symbol_id });
+        }
     }
 
     fn check_expr_no_record(&mut self, expr: &Expr, bind: &BindResult) {

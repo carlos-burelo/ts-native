@@ -21,6 +21,7 @@ pub const FUTURE: &str = "Future";
 pub const RECORD: &str = "Record";
 pub const MAP: &str = "Map";
 pub const SET: &str = "Set";
+pub const GENERATOR: &str = "Generator";
 
 // Error hierarchy
 pub const ERROR: &str = "Error";

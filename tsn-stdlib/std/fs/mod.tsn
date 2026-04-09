@@ -30,7 +30,7 @@ export async function readFile(path: str): str {
 }
 
 export async function readText(path: str): str {
-    return readFile(path)
+    return await readFile(path)
 }
 
 /**
@@ -40,14 +40,14 @@ export async function writeFile(path: str, content: str): void {
     __fs_write(path, content)
 }
 
-export function writeText(path: str, content: str): void {
-    writeFile(path, content)
+export async function writeText(path: str, content: str): void {
+    await writeFile(path, content)
 }
 
 /**
  * Appends str to file.
  */
-export function appendFile(path: str, content: str): void {
+export async function appendFile(path: str, content: str): void {
     __fs_append_text(path, content)
 }
 

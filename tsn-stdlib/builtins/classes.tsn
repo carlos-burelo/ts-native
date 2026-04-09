@@ -85,6 +85,14 @@ export class Future<T> {
 }
 
 // ---------------------------------------------------------------------------
+// Record<K, V>  (string-keyed dictionary)
+// ---------------------------------------------------------------------------
+
+export interface Record<K, V> {
+    [key: K]: V;
+}
+
+// ---------------------------------------------------------------------------
 // Iterator<T>  (interface for the iteration protocol)
 // ---------------------------------------------------------------------------
 
@@ -94,4 +102,13 @@ export interface Iterator<T> {
 
 export interface AsyncIterator<T> {
     next(): Future<{ value: T; done: bool; }>;
+}
+
+// ---------------------------------------------------------------------------
+// Generator<T>  (returned by generator functions — function*)
+// ---------------------------------------------------------------------------
+
+export class Generator<T> {
+    next(): { value: T; done: bool; } { return __gen_next(this); }
+    return(value?: T): { value: T; done: bool; } { return __gen_return(this, value); }
 }

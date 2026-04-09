@@ -93,19 +93,36 @@ fn fn_return_hint(
     })
 }
 
+/// Returns true if the function declaration line has an explicit return type annotation.
+/// Pattern: `)` followed by `:` before `{` — e.g. `fn foo(x: int): str {`
 fn line_has_explicit_return_annotation(state: &DocumentState, line: u32) -> bool {
     let line_tokens: Vec<_> = state.tokens.iter().filter(|t| t.line == line).collect();
-    let mut found_arrow = false;
-    let mut found_lbrace = false;
+    let mut depth = 0i32;
+    let mut after_last_rparen = false;
+    let mut found_colon_after_rparen = false;
     for tok in &line_tokens {
-        if tok.kind == tsn_core::TokenKind::Arrow {
-            found_arrow = true;
-        }
-        if tok.kind == tsn_core::TokenKind::LBrace || tok.kind == tsn_core::TokenKind::FatArrow {
-            found_lbrace = true;
+        match tok.kind {
+            tsn_core::TokenKind::LParen => {
+                depth += 1;
+                after_last_rparen = false;
+            }
+            tsn_core::TokenKind::RParen => {
+                depth -= 1;
+                if depth == 0 {
+                    after_last_rparen = true;
+                    found_colon_after_rparen = false;
+                }
+            }
+            tsn_core::TokenKind::Colon if after_last_rparen => {
+                found_colon_after_rparen = true;
+            }
+            tsn_core::TokenKind::LBrace if found_colon_after_rparen => {
+                return true;
+            }
+            _ => {}
         }
     }
-    found_arrow && found_lbrace
+    false
 }
 
 fn find_rparen_col_on_line(state: &DocumentState, line: u32, fn_col: u32) -> Option<u32> {

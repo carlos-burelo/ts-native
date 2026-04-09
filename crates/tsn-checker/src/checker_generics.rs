@@ -278,7 +278,11 @@ pub(crate) fn collect_type_inferences(
 ) {
     match &pattern.0 {
         TypeKind::Named(name, _origin) if params.contains(name) => {
-            out.entry(name.clone()).or_insert_with(|| concrete.clone());
+            let entry = out.entry(name.clone()).or_insert_with(|| concrete.clone());
+            // Prefer concrete over Dynamic: update if current mapping is Dynamic and new is not.
+            if entry.is_dynamic() && !concrete.is_dynamic() {
+                *entry = concrete.clone();
+            }
         }
         TypeKind::Array(inner) => {
             if let TypeKind::Array(c_inner) = &concrete.0 {

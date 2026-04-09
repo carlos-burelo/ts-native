@@ -87,8 +87,17 @@ impl Checker {
                 Type::Dynamic
             }
 
-            Expr::New { callee, .. } => {
+            Expr::New {
+                callee, type_args, ..
+            } => {
                 if let Expr::Identifier { name, .. } = callee.as_ref() {
+                    if !type_args.is_empty() {
+                        let args: Vec<Type> = type_args
+                            .iter()
+                            .map(|a| self.resolve_type_node_cached(a, bind))
+                            .collect();
+                        return Type::generic(name.clone(), args);
+                    }
                     return Type::named(name.clone());
                 }
                 crate::binder::infer_expr_type(expr, Some(bind))
@@ -279,6 +288,65 @@ impl Checker {
                 })
             }
 
+            Expr::Object { properties, .. } => {
+                // Only override the binder's inference when there are spreads — the binder can't
+                // resolve local variables so spreads always produce nothing in its pass.
+                let has_spread = properties
+                    .iter()
+                    .any(|p| matches!(p, tsn_core::ast::ObjectProp::Spread { .. }));
+                if !has_spread {
+                    return crate::binder::infer_expr_type(expr, Some(bind));
+                }
+                let mut members: Vec<ObjectTypeMember> = Vec::new();
+                for prop in properties {
+                    match prop {
+                        tsn_core::ast::ObjectProp::Spread { argument, .. } => {
+                            let spread_ty = self.infer_type(argument, bind);
+                            match &spread_ty.non_nullified().0 {
+                                TypeKind::Object(ms) => members.extend(ms.clone()),
+                                TypeKind::Named(_, _) | TypeKind::Generic(_, _, _) => {
+                                    // Named type — flatten its known members into the object.
+                                    let key = match &spread_ty.non_nullified().0 {
+                                        TypeKind::Named(n, _) => Some(n.clone()),
+                                        TypeKind::Generic(n, _, _) => Some(n.clone()),
+                                        _ => None,
+                                    };
+                                    if let Some(cls) = key {
+                                        if let Some(ms) = bind.class_members.get(&cls) {
+                                            for m in ms {
+                                                members.push(ObjectTypeMember::Property {
+                                                    name: m.name.clone(),
+                                                    ty: m.ty.clone(),
+                                                    optional: m.is_optional,
+                                                    readonly: m.is_readonly,
+                                                });
+                                            }
+                                        }
+                                    }
+                                }
+                                _ => {}
+                            }
+                        }
+                        tsn_core::ast::ObjectProp::Property { key, value, .. } => {
+                            use tsn_core::ast::PropKey;
+                            let name = match key {
+                                PropKey::Identifier(n) | PropKey::Str(n) => n.clone(),
+                                PropKey::Computed(_) | PropKey::Int(_) => continue,
+                            };
+                            let ty = self.infer_type(value, bind);
+                            members.push(ObjectTypeMember::Property {
+                                name,
+                                ty,
+                                optional: false,
+                                readonly: false,
+                            });
+                        }
+                        _ => {}
+                    }
+                }
+                Type::object(members)
+            }
+
             Expr::Satisfies { expression, .. } => self.infer_type(expression, bind),
 
             Expr::Await { argument, .. } => {
@@ -359,7 +427,10 @@ impl Checker {
 
 /// Walk a block statement and collect the inferred types of all `return` expressions,
 /// using the already-checked `expr_types` map. Does NOT descend into nested function bodies.
-fn collect_checked_return_types(stmt: &Stmt, expr_types: &FxHashMap<u32, ExprInfo>) -> Vec<Type> {
+pub(crate) fn collect_checked_return_types(
+    stmt: &Stmt,
+    expr_types: &FxHashMap<u32, ExprInfo>,
+) -> Vec<Type> {
     let mut out = Vec::new();
     collect_returns(stmt, expr_types, &mut out);
     out
@@ -422,6 +493,74 @@ fn collect_returns(stmt: &Stmt, expr_types: &FxHashMap<u32, ExprInfo>, out: &mut
         }
         // Nested Decl::Function / Expr::Arrow have their own return context — skip
         _ => {}
+    }
+}
+
+/// Walk a block statement and collect the inferred types of all `yield` expressions,
+/// using the already-checked `expr_types` map. Does NOT descend into nested function bodies.
+pub(crate) fn collect_yield_types(
+    stmt: &Stmt,
+    expr_types: &FxHashMap<u32, ExprInfo>,
+) -> Vec<Type> {
+    let mut out = Vec::new();
+    collect_yields(stmt, expr_types, &mut out);
+    out
+}
+
+fn collect_yields(stmt: &Stmt, expr_types: &FxHashMap<u32, ExprInfo>, out: &mut Vec<Type>) {
+    match stmt {
+        Stmt::Block { stmts, .. } => {
+            for s in stmts {
+                collect_yields(s, expr_types, out);
+            }
+        }
+        Stmt::Expr { expression, .. } => {
+            collect_yields_expr(expression, expr_types, out);
+        }
+        Stmt::Return { argument: Some(e), .. } => {
+            collect_yields_expr(e, expr_types, out);
+        }
+        Stmt::If { consequent, alternate, .. } => {
+            collect_yields(consequent, expr_types, out);
+            if let Some(alt) = alternate {
+                collect_yields(alt, expr_types, out);
+            }
+        }
+        Stmt::While { body, .. } | Stmt::DoWhile { body, .. } => {
+            collect_yields(body, expr_types, out);
+        }
+        Stmt::For { body, .. } | Stmt::ForIn { body, .. } | Stmt::ForOf { body, .. } => {
+            collect_yields(body, expr_types, out);
+        }
+        Stmt::Try { block, catch, finally, .. } => {
+            collect_yields(block, expr_types, out);
+            if let Some(c) = catch {
+                collect_yields(c.body.as_ref(), expr_types, out);
+            }
+            if let Some(f) = finally {
+                collect_yields(f, expr_types, out);
+            }
+        }
+        Stmt::Labeled { body, .. } => collect_yields(body, expr_types, out),
+        Stmt::Switch { cases, .. } => {
+            for case in cases {
+                for s in &case.body {
+                    collect_yields(s, expr_types, out);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_yields_expr(expr: &Expr, expr_types: &FxHashMap<u32, ExprInfo>, out: &mut Vec<Type>) {
+    if let Expr::Yield { argument: Some(_), range, .. } = expr {
+        let offset = range.start.offset;
+        if let Some(info) = expr_types.get(&offset) {
+            if !info.ty.is_dynamic() {
+                out.push(info.ty.clone());
+            }
+        }
     }
 }
 

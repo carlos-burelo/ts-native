@@ -14,9 +14,9 @@ export function run(): void {
     class Temperature {
         private _celsius: float
         constructor(c: float) { this._celsius = c }
-        get celsius(): float { return this._celsius }
+        get celsius() { return this._celsius }
         set celsius(v: float) { this._celsius = v }
-        get fahrenheit(): float { return this._celsius * 1.8 + 32.0 }
+        get fahrenheit() { return this._celsius * 1.8 + 32.0 }
     }
 
     const t = new Temperature(100.0)
@@ -29,12 +29,12 @@ export function run(): void {
     class Animal {
         name: str
         constructor(n: str) { this.name = n }
-        speak(): str { return "..." }
-        toString(): str { return `Animal(${this.name})` }
+        speak() { return "..." }
+        toString() { return `Animal(${this.name})` }
     }
     class Dog extends Animal {
         constructor(n: str) { super(n) }
-        override speak(): str { return "Woof" }
+        override speak() { return "Woof" }
     }
     class PoliceDog extends Dog {
         badge: int
@@ -42,7 +42,7 @@ export function run(): void {
             super(n)
             this.badge = badge
         }
-        override speak(): str { return super.speak() + "!" }
+        override speak() { return super.speak() + "!" }
     }
 
     const a = new Animal("generic")

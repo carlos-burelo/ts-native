@@ -123,6 +123,7 @@ impl super::Binder {
         let mut sym = Symbol::new(SymbolKind::Function, f.id.clone(), line).with_type(fn_type);
         sym.col = f.range.start.column;
         sym.offset = f.range.start.offset;
+        sym.has_explicit_type = f.return_type.is_some();
         sym.is_async = f.modifiers.is_async;
         sym.is_generator = f.modifiers.is_generator;
         sym.doc = f.doc.clone();

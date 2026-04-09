@@ -14,50 +14,47 @@ impl DocumentState {
 
         let mut chain: Vec<usize> = vec![ident_idx];
         let mut curr = ident_idx;
+        // Type derived from a `new Expr()` or call expression before a `.` (rparen-anchored).
+        let mut rparen_base_type: Option<Type> = None;
+
         while curr >= 2 && self.tokens[curr - 1].kind == TokenKind::Dot {
-            curr -= 2;
-            chain.insert(0, curr);
+            let prev = &self.tokens[curr - 2];
+            if prev.kind == TokenKind::Identifier || prev.kind.can_be_identifier() {
+                curr -= 2;
+                chain.insert(0, curr);
+            } else if prev.kind == TokenKind::RParen {
+                // e.g., `new Builder().method` or `foo().method`
+                // The type of the expression ending at `)` is in expr_types.
+                rparen_base_type = self.expr_types.get(&prev.offset).map(|i| i.ty.clone());
+                break;
+            } else {
+                break;
+            }
         }
 
         let base_ident_idx = chain[0];
         let base_ident = &self.tokens[base_ident_idx];
-        let mut current_type =
-            if let Some(sym) = self.symbol_at_pos(base_ident.line, base_ident.col) {
-                if base_ident_idx == ident_idx && chain.len() == 1 {
-                    return Some(ChainResult::Symbol(sym));
-                }
+        let mut current_type = if let Some(ty) = rparen_base_type {
+            ty
+        } else if let Some(sym) = self.symbol_at_pos(base_ident.line, base_ident.col) {
+            if base_ident_idx == ident_idx && chain.len() == 1 {
+                return Some(ChainResult::Symbol(sym));
+            }
 
-                if sym.ty.is_dynamic()
-                    && matches!(
-                        sym.kind,
-                        SymbolKind::Class
-                            | SymbolKind::Interface
-                            | SymbolKind::Namespace
-                            | SymbolKind::Enum
-                    )
-                {
-                    Type(TypeKind::Named(sym.name.clone(), None))
-                } else {
-                    sym.ty.clone()
-                }
-            } else if base_ident.kind == TokenKind::This {
-                self.symbols
-                    .iter()
-                    .filter(|s| {
-                        !s.is_from_stdlib
-                            && matches!(s.kind, SymbolKind::Class | SymbolKind::Interface)
-                            && s.line <= base_ident.line
-                    })
-                    .max_by_key(|s| s.line)
-                    .map(|s| Type(TypeKind::Named(s.name.clone(), None)))
-                    .unwrap_or(Type::Dynamic)
-            } else if let Some(prim) = literal_primitive_type(base_ident.kind) {
-                Type(TypeKind::Named(prim.to_owned(), None))
+            if sym.ty.is_dynamic()
+                && matches!(
+                    sym.kind,
+                    SymbolKind::Class
+                        | SymbolKind::Interface
+                        | SymbolKind::Namespace
+                        | SymbolKind::Enum
+                )
+            {
+                Type(TypeKind::Named(sym.name.clone(), None))
             } else {
-                Type::Dynamic
-            };
-
-        let mut parent_name = if base_ident.kind == TokenKind::This {
+                sym.ty.clone()
+            }
+        } else if base_ident.kind == TokenKind::This {
             self.symbols
                 .iter()
                 .filter(|s| {
@@ -66,12 +63,31 @@ impl DocumentState {
                         && s.line <= base_ident.line
                 })
                 .max_by_key(|s| s.line)
-                .map(|s| s.name.clone())
-                .unwrap_or_else(|| "this".to_owned())
+                .map(|s| Type(TypeKind::Named(s.name.clone(), None)))
+                .unwrap_or(Type::Dynamic)
+        } else if let Some(prim) = literal_primitive_type(base_ident.kind) {
+            Type(TypeKind::Named(prim.to_owned(), None))
         } else {
-            literal_primitive_type(base_ident.kind)
+            Type::Dynamic
+        };
+
+        let mut parent_name = match &current_type.0 {
+            TypeKind::Named(n, _) if base_ident.kind != TokenKind::This => n.clone(),
+            TypeKind::Generic(n, _, _) if base_ident.kind != TokenKind::This => n.clone(),
+            _ if base_ident.kind == TokenKind::This => self
+                .symbols
+                .iter()
+                .filter(|s| {
+                    !s.is_from_stdlib
+                        && matches!(s.kind, SymbolKind::Class | SymbolKind::Interface)
+                        && s.line <= base_ident.line
+                })
+                .max_by_key(|s| s.line)
+                .map(|s| s.name.clone())
+                .unwrap_or_else(|| "this".to_owned()),
+            _ => literal_primitive_type(base_ident.kind)
                 .map(str::to_owned)
-                .unwrap_or_else(|| base_ident.lexeme.clone())
+                .unwrap_or_else(|| base_ident.lexeme.clone()),
         };
 
         if !current_type.is_dynamic() {
