@@ -51,7 +51,7 @@ pub fn run(opts: &RunOpts) -> PipelineResult<()> {
     } else {
         read_source(&opts.file_path)?
     };
-    let proto = if opts.eval.is_none() && !opts.debug.any() {
+    let (proto, precompiled) = if opts.eval.is_none() && !opts.debug.any() {
         compile_source_cached(&source, &opts.file_path, opts.verbose)?
     } else {
         compile_source(&source, &opts.file_path, opts.verbose, &opts.debug)?
@@ -59,7 +59,7 @@ pub fn run(opts: &RunOpts) -> PipelineResult<()> {
     if opts.no_run {
         return Ok(());
     }
-    execute(proto, &source, &opts.file_path, &opts.debug)
+    execute(proto, precompiled, &source, &opts.file_path, &opts.debug)
 }
 
 pub fn compile_file(
@@ -68,7 +68,8 @@ pub fn compile_file(
     debug: &DebugFlags,
 ) -> PipelineResult<FunctionProto> {
     let source = read_source(path)?;
-    compile_source(&source, path, verbose, debug)
+    let (proto, _) = compile_source(&source, path, verbose, debug)?;
+    Ok(proto)
 }
 
 fn compile_source(
@@ -76,13 +77,13 @@ fn compile_source(
     path: &str,
     verbose: bool,
     debug: &DebugFlags,
-) -> PipelineResult<FunctionProto> {
+) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
     let tokens = lex(source, path, verbose, debug);
     let program = parse(tokens, source, path, verbose, debug)?;
     compile(&program, source, verbose, debug)
 }
 
-fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineResult<FunctionProto> {
+fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
     let source_hash = source_cache_hash(source);
     let cache_path = compile_cache_path(path);
 
@@ -91,7 +92,25 @@ fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineRes
             if verbose {
                 eprintln!("[tsn] compile cache hit");
             }
-            return Ok(proto);
+            let tokens = tsn_lexer::scan(source, path);
+            let program = tsn_parser::parse(tokens, path).map_err(|errs| {
+                let msgs: Vec<String> = errs
+                    .iter()
+                    .map(|e| {
+                        format_error_with_context(
+                            source,
+                            path,
+                            e.range.start.line,
+                            e.range.start.column,
+                            "parse",
+                            &e.message,
+                        )
+                    })
+                    .collect();
+                CliError::fatal(msgs.join("\n"))
+            })?;
+            let precompiled = crate::module_precompile::precompile_direct_imports(&program, path);
+            return Ok((proto, precompiled));
         }
         Ok(None) => {}
         Err(e) => {
@@ -105,13 +124,13 @@ fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineRes
         eprintln!("[tsn] compile cache miss");
     }
 
-    let proto = compile_source(source, path, verbose, &DebugFlags::default())?;
+    let (proto, precompiled) = compile_source(source, path, verbose, &DebugFlags::default())?;
     if let Err(e) = store_cached_proto(&cache_path, source_hash, &proto) {
         if verbose {
             eprintln!("[tsn] compile cache write skipped: {}", e);
         }
     }
-    Ok(proto)
+    Ok((proto, precompiled))
 }
 
 fn read_source(path: &str) -> PipelineResult<String> {
@@ -219,7 +238,7 @@ fn compile(
     source: &str,
     verbose: bool,
     debug: &DebugFlags,
-) -> PipelineResult<FunctionProto> {
+) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
     let check_result = tsn_checker::Checker::check(program);
     if !check_result.diagnostics.is_empty() {
         let mut msgs = Vec::new();
@@ -271,6 +290,11 @@ fn compile(
         eprintln!("[tsn] compiled {} bytecode words", proto.chunk.code.len());
     }
 
+    let precompiled = crate::module_precompile::precompile_direct_imports(program, &program.filename);
+    if verbose && !precompiled.is_empty() {
+        eprintln!("[tsn] precompiled {} direct dependency modules", precompiled.len());
+    }
+
     if debug.bytecode {
         header(C_BYTECODE, "bytecode", &program.filename);
         crate::disasm::print(&proto);
@@ -291,11 +315,12 @@ fn compile(
         debug_scope(&proto, &program.filename);
     }
 
-    Ok(proto)
+    Ok((proto, precompiled))
 }
 
 pub fn execute(
     proto: FunctionProto,
+    precompiled: std::collections::HashMap<String, std::sync::Arc<FunctionProto>>,
     source: &str,
     path: &str,
     debug: &DebugFlags,
@@ -303,6 +328,11 @@ pub fn execute(
     let mut machine = tsn_vm::Vm::new();
     machine.trace = debug.trace;
     machine.calls = debug.calls;
+
+    // Set precompiled modules in the VM to avoid runtime compilation.
+    if !precompiled.is_empty() {
+        machine.set_precompiled_protos(precompiled);
+    }
 
     for builtin_proto in builtin_protos_owned()? {
         machine

@@ -75,25 +75,27 @@ impl Checker {
                     }
                 }
 
-                let saved_expected = self.expected_return_type.take();
-                self.expected_return_type = f
-                    .return_type
-                    .as_ref()
-                    .map(|rt| self.resolve_type_node_cached(rt, bind));
+                if !f.modifiers.is_declare {
+                    let saved_expected = self.expected_return_type.take();
+                    self.expected_return_type = f
+                        .return_type
+                        .as_ref()
+                        .map(|rt| self.resolve_type_node_cached(rt, bind));
 
-                let saved_scope = self.current_scope;
-                if let Some(fn_scope) = self.next_child_scope(bind) {
-                    self.current_scope = fn_scope;
+                    let saved_scope = self.current_scope;
+                    if let Some(fn_scope) = self.next_child_scope(bind) {
+                        self.current_scope = fn_scope;
+                    }
+
+                    self.check_stmt(&f.body, bind);
+
+                    self.current_scope = saved_scope;
+                    self.expected_return_type = saved_expected;
                 }
-
-                self.check_stmt(&f.body, bind);
-
-                self.current_scope = saved_scope;
-                self.expected_return_type = saved_expected;
 
                 // For generator functions with no explicit return type, infer yield type and
                 // record Generator<T> at f.range.start.offset.
-                if f.return_type.is_none() && f.modifiers.is_generator {
+                if !f.modifiers.is_declare && f.return_type.is_none() && f.modifiers.is_generator {
                     if let Some(sym_id) = sym_id_opt {
                         let yield_tys = collect_yield_types(&f.body, &self.expr_types);
                         let yield_ty = match yield_tys.len() {
@@ -125,7 +127,7 @@ impl Checker {
 
                 // When no explicit return type, infer it from the body and record the updated
                 // fn type at f.range.start.offset (= sym.offset in binder, used by pipeline).
-                if f.return_type.is_none() && !f.modifiers.is_generator {
+                if !f.modifiers.is_declare && f.return_type.is_none() && !f.modifiers.is_generator {
                     if let Some(sym_id) = sym_id_opt {
                         let return_tys = collect_checked_return_types(&f.body, &self.expr_types);
                         let inferred_ret = match return_tys.len() {
@@ -266,6 +268,9 @@ impl Checker {
                 ExportDecl::Decl { declaration, .. } => self.check_decl(declaration, bind),
                 ExportDecl::Default { declaration, .. } => match declaration.as_ref() {
                     ExportDefaultDecl::Function(f) => {
+                        if f.modifiers.is_declare {
+                            return;
+                        }
                         let saved_expected = self.expected_return_type.take();
                         self.expected_return_type = f
                             .return_type

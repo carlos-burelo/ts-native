@@ -211,9 +211,7 @@ impl Binder {
             class_parents: HashMap::new(),
             override_errors: Vec::new(),
             diagnostics: Vec::new(),
-            source_file: std::fs::canonicalize(&program.filename)
-                .map(|p| p.to_string_lossy().into_owned())
-                .unwrap_or_else(|_| program.filename.clone()),
+            source_file: program.filename.clone(),
             sum_type_variants: HashMap::new(),
             sum_variant_parent: HashMap::new(),
             sum_variant_fields: HashMap::new(),

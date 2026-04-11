@@ -57,9 +57,8 @@ fn resolve_specifier_to_uri(
     doc_dir: Option<&std::path::Path>,
 ) -> Option<String> {
     if specifier.starts_with("std:") {
-        let stdlib = tsn_checker::module_resolver::stdlib_dir()?;
-        let module_name = specifier.strip_prefix("std:")?;
-        let mod_path = stdlib.join("std").join(module_name).join("mod.tsn");
+        let loader = tsn_modules::ModuleLoader::from_env();
+        let mod_path = loader.tsn_source_path(specifier)?;
         if mod_path.is_file() {
             let canonical = std::fs::canonicalize(&mod_path).ok()?;
             return Some(path_to_uri(&canonical.to_string_lossy()));

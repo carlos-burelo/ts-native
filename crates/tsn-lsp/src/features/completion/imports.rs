@@ -19,44 +19,16 @@ pub fn build_import_completions(prefix: &str, doc_uri: &str) -> Vec<CompletionIt
 }
 
 fn stdlib_module_completions(prefix: &str) -> Vec<CompletionItem> {
-    let stdlib = match tsn_checker::module_resolver::stdlib_dir() {
-        Some(d) => d,
-        None => return Vec::new(),
-    };
-
-    let std_dir = stdlib.join("std");
-    let rd = match std::fs::read_dir(&std_dir) {
-        Ok(rd) => rd,
-        Err(_) => return Vec::new(),
-    };
-
-    let mut items = Vec::new();
-    for entry in rd.flatten() {
-        let path = entry.path();
-        if !path.is_dir() {
-            continue;
-        }
-        let name = match entry.file_name().into_string() {
-            Ok(n) => n,
-            Err(_) => continue,
-        };
-        // Only include dirs that have a mod.tsn
-        if !path.join("mod.tsn").is_file() {
-            continue;
-        }
-        let label = format!("{}{}", STD_PREFIX, name);
-        if !label.starts_with(prefix) {
-            continue;
-        }
-        items.push(CompletionItem {
-            label,
+    tsn_modules::MODULE_REGISTRY
+        .iter()
+        .filter(|m| matches!(m.kind, tsn_modules::ModuleKind::Stdlib) && m.id.starts_with(prefix))
+        .map(|m| CompletionItem {
+            label: m.id.to_owned(),
             kind: Some(CompletionItemKind::MODULE),
             detail: Some("stdlib module".into()),
             ..Default::default()
-        });
-    }
-    items.sort_by(|a, b| a.label.cmp(&b.label));
-    items
+        })
+        .collect()
 }
 
 fn relative_tsn_completions(prefix: &str, doc_uri: &str) -> Vec<CompletionItem> {
@@ -178,11 +150,13 @@ fn build_relative_export_completions(module_path: &str, doc_uri: &str) -> Vec<Co
     let with_ext = if joined.extension().is_none() {
         joined.with_extension("tsn")
     } else {
-        joined
+        joined.clone()
     };
-    let abs_str = std::fs::canonicalize(&with_ext)
-        .map(|p| p.to_string_lossy().into_owned())
-        .unwrap_or_else(|_| with_ext.to_string_lossy().into_owned());
+    let abs_str = if with_ext.exists() {
+        with_ext.to_string_lossy().into_owned()
+    } else {
+        joined.to_string_lossy().into_owned()
+    };
 
     let exports = tsn_checker::module_resolver::resolve_module_exports(&abs_str, &mut Vec::new());
 
@@ -223,14 +197,14 @@ pub fn resolve_relative_module_debug(module_path: &str, doc_uri: &str) -> Option
     let with_ext = if joined.extension().is_none() {
         joined.with_extension("tsn")
     } else {
-        joined
+        joined.clone()
     };
 
-    Some(
-        std::fs::canonicalize(&with_ext)
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_else(|_| with_ext.to_string_lossy().into_owned()),
-    )
+    if with_ext.exists() {
+        Some(with_ext.to_string_lossy().into_owned())
+    } else {
+        Some(joined.to_string_lossy().into_owned())
+    }
 }
 
 pub fn import_insert_text(label: &str) -> String {

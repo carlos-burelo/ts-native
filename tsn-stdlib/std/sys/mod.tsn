@@ -1,6 +1,6 @@
 // std:sys module
 
-export declare namespace Sys {
+export namespace Sys {
     export declare function platform(): str;
     export declare function cwd(): str;
     export declare function args(): str[];

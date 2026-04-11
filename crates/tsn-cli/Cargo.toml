@@ -14,7 +14,9 @@ tsn-parser   = { path = "../tsn-parser" }
 tsn-checker  = { path = "../tsn-checker" }
 tsn-compiler = { path = "../tsn-compiler" }
 tsn-vm       = { path = "../tsn-vm" }
+tsn-runtime  = { path = "../tsn-runtime" }
 tsn-lsp      = { path = "../tsn-lsp" }
+tsn-modules  = { path = "../tsn-modules" }
 tower-lsp    = "0.20"
 bincode = "1"
 
@@ -22,4 +24,5 @@ bincode = "1"
 tsn-lexer    = { path = "../tsn-lexer" }
 tsn-parser   = { path = "../tsn-parser" }
 tsn-compiler = { path = "../tsn-compiler" }
+tsn-modules  = { path = "../tsn-modules" }
 bincode = "1"

@@ -1,42 +1,42 @@
-// std:reflect — Typed metadata and decorator context system
+// std:reflect — Metaprogramming and Reflection utilities
 
-export interface MetaKey<T> {
-    get(target: ClassRef): T | null
-    set(target: ClassRef, value: T): void
-    has(target: ClassRef): bool
-}
+/**
+ * Defines metadata on a target.
+ */
+export namespace Reflect {
+    /**
+     * Defines metadata on a target.
+     */
+    export declare function defineMetadata(key: str, value: dynamic, target: str): void;
 
-export declare namespace MetaKey {
-    export declare function create<T>(): MetaKey<T>
-}
+    /**
+     * Gets metadata from a target.
+     */
+    export declare function getMetadata(key: str, target: str): dynamic;
 
-export interface ClassContext {
-    readonly name: str
-    readonly kind: str
+    /**
+     * Checks if a target has metadata with the given key.
+     */
+    export declare function hasMetadata(key: str, target: str): bool;
+
+    /**
+     * Gets all metadata keys defined on a target.
+     */
+    export declare function getMetadataKeys(target: str): str[];
 }
 
 export interface MethodContext {
-    readonly name: str
-    readonly kind: str
-    readonly isStatic: bool
-    readonly isPrivate: bool
+    name: str;
+    isStatic: bool;
 }
 
-export interface FieldContext {
-    readonly name: str
-    readonly kind: str
-    readonly isStatic: bool
-    readonly isPrivate: bool
+export interface MetaKeyRef<T> {
+    set(target: ClassRef, value: T): void;
+    get(target: ClassRef): dynamic | null;
+    has(target: ClassRef): bool;
+    keys(target: ClassRef): str[];
 }
 
-export interface FnContext {
-    readonly name: str
-    readonly kind: str
-}
-
-export declare namespace Reflect {
-    export declare function defineMetadata(key: str, value: dynamic, target: dynamic): void
-    export declare function getMetadata(key: str, target: dynamic): dynamic
-    export declare function hasMetadata(key: str, target: dynamic): bool
-    export declare function getMetadataKeys(target: dynamic): str[]
+export namespace MetaKey {
+    export declare function create<T>(): MetaKeyRef<T>;
 }

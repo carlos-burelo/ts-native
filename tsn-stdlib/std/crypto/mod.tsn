@@ -1,21 +1,10 @@
-// std:crypto — Cryptographic functions
-
-export declare function sha256(data: str): str;
-export declare function sha512(data: str): str;
-export declare function randomBytes(size: int): number[];
-export declare function randomHex(size: int): str;
-export declare function base64Encode(data: str): str;
-export declare function base64Decode(data: str): str;
-export declare function uuid(): str;
-export declare function hmac(algo: "sha256" | "sha512", key: str, data: str): str;
-
-export declare namespace Crypto {
-    export declare function sha256(data: str): str;
-    export declare function sha512(data: str): str;
-    export declare function randomBytes(size: int): number[];
-    export declare function randomHex(size: int): str;
-    export declare function base64Encode(data: str): str;
-    export declare function base64Decode(data: str): str;
-    export declare function uuid(): str;
-    export declare function hmac(algo: "sha256" | "sha512", key: str, data: str): str;
+export namespace Crypto {
+    export function sha256(data: str): str 
+    export function sha512(data: str): str 
+    export function randomBytes(size: int): int[]
+    export function randomHex(size: int): str 
+    export function base64Encode(data: str): str 
+    export function base64Decode(data: str): str 
+    export function uuid(): str 
+    export function hmac(algo: str, key: str, data: str): str 
 }

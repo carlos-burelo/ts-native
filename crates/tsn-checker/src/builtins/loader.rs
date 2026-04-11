@@ -5,7 +5,6 @@ use crate::types::{ClassMemberInfo, Type};
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-const BUILTIN_SPECS: &[&str] = &["builtin:global", "builtin:primitives", "builtin:classes"];
 static BUILTIN_EXPORTS: OnceLock<HashMap<String, Symbol>> = OnceLock::new();
 static BUILTIN_MEMBERS: OnceLock<BuiltinMembers> = OnceLock::new();
 
@@ -46,7 +45,7 @@ pub fn merge_builtin_members(bind: &mut BindResult) {
 
 fn build_builtin_exports() -> HashMap<String, Symbol> {
     let mut globals = HashMap::new();
-    for spec in BUILTIN_SPECS {
+    for spec in tsn_modules::BUILTIN_MODULES {
         globals.extend(resolve_stdlib_module_exports(spec));
     }
     globals
@@ -54,7 +53,7 @@ fn build_builtin_exports() -> HashMap<String, Symbol> {
 
 fn build_builtin_members() -> BuiltinMembers {
     let mut members = BuiltinMembers::default();
-    for spec in BUILTIN_SPECS {
+    for spec in tsn_modules::BUILTIN_MODULES {
         if let Some(rb) = resolve_stdlib_module_bind(spec) {
             members.class_members.extend(rb.class_members);
             members.interface_members.extend(rb.interface_members);

@@ -1,4 +1,6 @@
-// std:async module
+// std:async module (contract-only)
 
 export declare function spawn(callee: dynamic, ...args: dynamic[]): dynamic;
 export declare function sleep(ms: int): void;
+export declare function setInterval(ms: int, repeat: bool, callback: dynamic, ...args: dynamic[]): int;
+export declare function clearInterval(id: int): void;

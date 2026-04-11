@@ -8,9 +8,24 @@ pub(super) fn try_parse_decl_stmt(
     next_kind: TokenKind,
     decorators: Vec<tsn_core::ast::Decorator>,
 ) -> Option<Result<Stmt, String>> {
+    if kind == TokenKind::Declare {
+        s.advance();
+        return try_parse_decl_stmt_mode(s, s.kind(), s.peek_kind(1), decorators, true);
+    }
+
+    try_parse_decl_stmt_mode(s, kind, next_kind, decorators, false)
+}
+
+pub(super) fn try_parse_decl_stmt_mode(
+    s: &mut TokenStream,
+    kind: TokenKind,
+    next_kind: TokenKind,
+    decorators: Vec<tsn_core::ast::Decorator>,
+    is_declare: bool,
+) -> Option<Result<Stmt, String>> {
     let result = match kind {
         TokenKind::Function => {
-            let mut decl = match super::decls::parse_function_decl(s, decorators, false) {
+            let mut decl = match super::decls::parse_function_decl(s, decorators, false, is_declare) {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };
@@ -19,7 +34,7 @@ pub(super) fn try_parse_decl_stmt(
         }
         TokenKind::Async if next_kind == TokenKind::Function => {
             s.advance();
-            let mut decl = match super::decls::parse_function_decl(s, decorators, true) {
+            let mut decl = match super::decls::parse_function_decl(s, decorators, true, is_declare) {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };
@@ -27,7 +42,7 @@ pub(super) fn try_parse_decl_stmt(
             Ok(Stmt::Decl(Box::new(Decl::Function(decl))))
         }
         TokenKind::Class | TokenKind::Abstract => {
-            let mut decl = match super::decls::parse_class_decl(s, decorators) {
+            let mut decl = match super::decls::parse_class_decl(s, decorators, is_declare) {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };
@@ -86,7 +101,7 @@ pub(super) fn try_parse_decl_stmt(
             Ok(Stmt::Decl(Box::new(Decl::Extension(decl))))
         }
         TokenKind::Let | TokenKind::Const | TokenKind::Var => {
-            let mut decl = match super::decls::parse_var_decl(s) {
+            let mut decl = match super::decls::parse_var_decl_with_declare(s, is_declare) {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };

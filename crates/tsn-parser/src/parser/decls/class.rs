@@ -7,6 +7,7 @@ use tsn_core::TokenKind;
 pub fn parse_class_decl(
     s: &mut TokenStream,
     decorators: Vec<Decorator>,
+    is_declare: bool,
 ) -> Result<ClassDecl, String> {
     let range = s.range();
     let is_abstract = s.eat(TokenKind::Abstract);
@@ -55,7 +56,7 @@ pub fn parse_class_decl(
         if s.check(TokenKind::RBrace) {
             break;
         }
-        body.push(parse_class_member(s)?);
+        body.push(parse_class_member(s, is_declare)?);
     }
     s.expect(TokenKind::RBrace)?;
 
@@ -69,6 +70,7 @@ pub fn parse_class_decl(
         body,
         modifiers: Modifiers {
             is_abstract,
+            is_declare,
             ..Default::default()
         },
         decorators,
@@ -77,7 +79,7 @@ pub fn parse_class_decl(
     })
 }
 
-fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
+fn parse_class_member(s: &mut TokenStream, class_is_declare: bool) -> Result<ClassMember, String> {
     let range = s.range();
     let decorators = super::super::patterns::parse_decorator_list(s)?;
 
@@ -149,7 +151,15 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
     if s.check(TokenKind::Constructor) {
         s.advance();
         let params = super::super::patterns::parse_params(s)?;
-        let body = super::super::stmts::parse_block(s)?;
+        let body = if class_is_declare {
+            if s.check(TokenKind::LBrace) {
+                return Err("declare constructor cannot have a body".to_owned());
+            }
+            s.eat_semicolon();
+            tsn_core::ast::Stmt::Empty { range: s.range() }
+        } else {
+            super::super::stmts::parse_block(s)?
+        };
         return Ok(ClassMember::Constructor {
             params,
             body,
@@ -158,7 +168,15 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
     }
     if s.check(TokenKind::Destructor) {
         s.advance();
-        let body = super::super::stmts::parse_block(s)?;
+        let body = if class_is_declare {
+            if s.check(TokenKind::LBrace) {
+                return Err("declare destructor cannot have a body".to_owned());
+            }
+            s.eat_semicolon();
+            tsn_core::ast::Stmt::Empty { range: s.range() }
+        } else {
+            super::super::stmts::parse_block(s)?
+        };
         return Ok(ClassMember::Destructor { body, range });
     }
 
@@ -182,6 +200,9 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
             None
         };
         let body = if s.check(TokenKind::LBrace) {
+            if class_is_declare {
+                return Err("declare getter cannot have a body".to_owned());
+            }
             Some(super::super::stmts::parse_block(s)?)
         } else {
             s.eat_semicolon();
@@ -202,6 +223,9 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
         let param = super::super::patterns::parse_single_param(s)?;
         s.expect(TokenKind::RParen)?;
         let body = if s.check(TokenKind::LBrace) {
+            if class_is_declare {
+                return Err("declare setter cannot have a body".to_owned());
+            }
             Some(super::super::stmts::parse_block(s)?)
         } else {
             s.eat_semicolon();
@@ -231,6 +255,9 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
             None
         };
         let body = if s.check(TokenKind::LBrace) {
+            if class_is_declare {
+                return Err("declare method cannot have a body".to_owned());
+            }
             Some(super::super::stmts::parse_block(s)?)
         } else {
             s.eat_semicolon();
@@ -254,6 +281,9 @@ fn parse_class_member(s: &mut TokenStream) -> Result<ClassMember, String> {
         None
     };
     let init = if s.eat(TokenKind::Eq) {
+        if class_is_declare {
+            return Err("declare property cannot have initializer".to_owned());
+        }
         Some(parse_expr(s)?)
     } else {
         None

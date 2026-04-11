@@ -7,30 +7,44 @@ impl super::super::Vm {
         let sentinel = Value::plain_object();
         self.modules.insert(abs_path.to_owned(), sentinel);
 
-        let source = std::fs::read_to_string(abs_path).map_err(|e| {
-            if e.kind() == std::io::ErrorKind::PermissionDenied {
-                format!(
-                    "cannot read module '{}': Access Denied (is it a directory without index.tsn?)",
-                    abs_path
-                )
-            } else {
-                format!("cannot read module '{}': {}", abs_path, e)
-            }
-        })?;
+        let canonical_abs = std::fs::canonicalize(abs_path)
+            .ok()
+            .map(|p| p.to_string_lossy().into_owned());
 
-        let tokens = tsn_lexer::scan(&source, abs_path);
-        let program = tsn_parser::parse(tokens, abs_path)
-            .map_err(|errs| format!("parse error in '{}': {}", abs_path, errs[0].message))?;
+        // Check if we have a precompiled proto for this module.
+        let proto = if let Some(precompiled) = self.precompiled_protos.get(abs_path).or_else(|| {
+            canonical_abs
+                .as_ref()
+                .and_then(|p| self.precompiled_protos.get(p))
+        }) {
+            (**precompiled).clone()
+        } else {
+            // Fall back to runtime compilation if no precompiled version available.
+            let source = std::fs::read_to_string(abs_path).map_err(|e| {
+                if e.kind() == std::io::ErrorKind::PermissionDenied {
+                    format!(
+                        "cannot read module '{}': Access Denied (is it a directory without index.tsn?)",
+                        abs_path
+                    )
+                } else {
+                    format!("cannot read module '{}': {}", abs_path, e)
+                }
+            })?;
 
-        let check_result = tsn_checker::Checker::check(&program);
-        let proto = tsn_compiler::compile_with_check_result(
-            &program,
-            &check_result.type_annotations,
-            &check_result.extension_calls,
-            &check_result.extension_members,
-            &check_result.extension_set_members,
-        )
-        .map_err(|e| format!("compile error in '{}': {}", abs_path, e))?;
+            let tokens = tsn_lexer::scan(&source, abs_path);
+            let program = tsn_parser::parse(tokens, abs_path)
+                .map_err(|errs| format!("parse error in '{}': {}", abs_path, errs[0].message))?;
+
+            let check_result = tsn_checker::Checker::check(&program);
+            tsn_compiler::compile_with_check_result(
+                &program,
+                &check_result.type_annotations,
+                &check_result.extension_calls,
+                &check_result.extension_members,
+                &check_result.extension_set_members,
+            )
+            .map_err(|e| format!("compile error in '{}': {}", abs_path, e))?
+        };
 
         let saved_exports =
             std::mem::replace(&mut self.module_exports, tsn_types::RuntimeObject::new());
@@ -64,56 +78,43 @@ impl super::super::Vm {
 }
 
 impl super::super::Vm {
+    fn resolve_import_value(&mut self, path: &str) -> Result<Value, String> {
+        if let Some(module) = self.modules.get(path).cloned() {
+            return Ok(module);
+        }
+
+        if let Some(native) = tsn_runtime::build_module_by_id(path) {
+            self.modules.insert(path.to_owned(), native.clone());
+            return Ok(native);
+        }
+
+        // For non-native modules, load TSN source from registry/filesystem.
+        if let Some(abs) = resolve_import_path(path, &self.frames) {
+            if let Some(cached) = self.modules.get(&abs).cloned() {
+                return Ok(cached);
+            }
+            let exports = self.load_module_file(&abs)?;
+            self.modules.insert(abs, exports.clone());
+            return Ok(exports);
+        }
+
+        Ok(Value::plain_object())
+    }
+
     pub(super) fn exec_import_op(&mut self, op: OpCode) -> Result<(), String> {
         match op {
             OpCode::OpImport => {
                 let idx = self.read_u16();
                 let path = self.get_str_const(idx);
-
-                if let Some(module) = self.modules.get(path.as_ref()).cloned() {
-                    self.push(module);
-                } else {
-                    let abs_path = resolve_import_path(path.as_ref(), &self.frames);
-                    match abs_path {
-                        None => {
-                            self.push(Value::plain_object());
-                        }
-                        Some(abs) => {
-                            if let Some(cached) = self.modules.get(&abs).cloned() {
-                                self.push(cached);
-                            } else {
-                                let exports = self.load_module_file(&abs)?;
-                                self.modules.insert(abs.clone(), exports.clone());
-                                self.push(exports);
-                            }
-                        }
-                    }
-                }
+                let resolved = self.resolve_import_value(path.as_ref())?;
+                self.push(resolved);
             }
             OpCode::OpReexport => {
                 let idx = self.read_u16();
                 let path = self.get_str_const(idx);
 
-                let resolved: Option<Value> = {
-                    if let Some(v) = self.modules.get(path.as_ref()).cloned() {
-                        Some(v)
-                    } else {
-                        let abs = resolve_import_path(path.as_ref(), &self.frames);
-                        match abs {
-                            None => None,
-                            Some(a) => {
-                                if let Some(cached) = self.modules.get(&a).cloned() {
-                                    Some(cached)
-                                } else {
-                                    let exports = self.load_module_file(&a)?;
-                                    self.modules.insert(a, exports.clone());
-                                    Some(exports)
-                                }
-                            }
-                        }
-                    }
-                };
-                if let Some(Value::Object(map)) = resolved {
+                let resolved = self.resolve_import_value(path.as_ref())?;
+                if let Value::Object(map) = resolved {
                     for (k, v) in unsafe { &*map }.fields.iter() {
                         self.module_exports.insert(Arc::from(k.as_ref()), v.clone());
                     }
@@ -152,8 +153,25 @@ pub(super) fn resolve_import_path(
             path.set_extension("tsn");
         }
 
-        let canonical = std::fs::canonicalize(&path).ok()?;
-        return Some(canonical.to_string_lossy().into_owned());
+        // Normalize path to remove . and .. components
+        let normalized = path.components().fold(
+            std::path::PathBuf::new(),
+            |mut acc, c| {
+                use std::path::Component::*;
+                match c {
+                    Prefix(_) | RootDir => { acc.push(c); }
+                    CurDir => {}
+                    ParentDir => { acc.pop(); }
+                    Normal(_) => acc.push(c),
+                }
+                acc
+            }
+        );
+
+        if normalized.is_file() {
+            return Some(normalized.to_string_lossy().into_owned());
+        }
+        return None;
     }
 
     // New SPEC: std: and builtin:

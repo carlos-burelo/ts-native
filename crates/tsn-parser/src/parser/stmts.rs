@@ -94,6 +94,7 @@ pub fn parse_block(s: &mut TokenStream) -> Result<Stmt, String> {
                         | TokenKind::Let
                         | TokenKind::Const
                         | TokenKind::Var
+                        | TokenKind::Declare
                         | TokenKind::Function
                         | TokenKind::Class => break,
                         _ => {
@@ -204,7 +205,8 @@ fn parse_for_stmt(s: &mut TokenStream) -> Result<Stmt, String> {
             });
         }
 
-        let decl = super::decls::parse_var_decl_after_head(s, decl_range, kind, head_range, pat)?;
+        let decl =
+            super::decls::parse_var_decl_after_head(s, decl_range, kind, head_range, pat, false)?;
         Some(Box::new(ForInit::Var {
             kind: decl.kind,
             declarators: decl.declarators,

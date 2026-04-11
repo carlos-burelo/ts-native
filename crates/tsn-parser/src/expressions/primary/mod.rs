@@ -234,7 +234,7 @@ fn parse_function_expr_inner(s: &mut TokenStream, is_async: bool) -> Result<Expr
 
 fn parse_class_expr(s: &mut TokenStream) -> Result<Expr, String> {
     let range = s.range();
-    let decl = crate::parser::parse_class_decl(s, vec![])?;
+    let decl = crate::parser::parse_class_decl(s, vec![], false)?;
     Ok(Expr::ClassExpr {
         declaration: Box::new(decl),
         range,

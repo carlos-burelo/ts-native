@@ -1,13 +1,15 @@
-// std:console — console output module
+// std:console — console output module (contract-only)
 
 export declare function log(...args: dynamic[]): void;
 export declare function warn(...args: dynamic[]): void;
 export declare function error(...args: dynamic[]): void;
 export declare function info(...args: dynamic[]): void;
+export declare function debug(...args: dynamic[]): void;
 
-export declare namespace console {
+export namespace console {
     export declare function log(...args: dynamic[]): void;
     export declare function warn(...args: dynamic[]): void;
     export declare function error(...args: dynamic[]): void;
     export declare function info(...args: dynamic[]): void;
+    export declare function debug(...args: dynamic[]): void;
 }

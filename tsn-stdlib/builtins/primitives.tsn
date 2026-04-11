@@ -1,120 +1,133 @@
+// Built-in primitive type contracts (declaration-only).
+
 export declare class str {
-    readonly length: int
-    split(separator?: str): str[]
-    trim(): str
-    trimStart(): str
-    trimEnd(): str
-    includes(search: str): bool
-    startsWith(prefix: str): bool
-    endsWith(suffix: str): bool
-    indexOf(search: str): int
-    lastIndexOf(search: str): int
-    toUpperCase(): str
-    toUpper(): str
-    toLowerCase(): str
-    toLower(): str
-    substring(start: int, end?: int): str
-    slice(start?: int, end?: int): str
-    replace(search: str, replacement: str): str
-    replaceAll(search: str, replacement: str): str
-    charAt(index: int): str
-    charCodeAt(index: int): int
-    repeat(count: int): str
-    padStart(length: int, fill?: str): str
-    padEnd(length: int, fill?: str): str
-    concat(other: str): str
-    substr(start: int, length?: int): str
-    isEmpty(): bool
-    isBlank(): bool
-    isDigit(): bool
-    isLetter(): bool
-    isWhitespace(): bool
-    reverse(): str
-    capitalize(): str
-    lines(): str[]
-    words(): str[]
-    toInt(): int | null
-    toFloat(): float | null
-    toString(): str
-    static fromCharCode(code: int): str
+    static EMPTY: str;
+    static fromCharCode(...codes: int[]): str;
+    static from(val: dynamic): str;
+    static join(arr: str[], sep?: str): str;
+
+    readonly length: int;
+    toString(): str;
+    valueOf(): str;
+    toLowerCase(): str;
+    toUpperCase(): str;
+    trim(): str;
+    trimStart(): str;
+    trimEnd(): str;
+    includes(search: str): bool;
+    contains(search: str): bool;
+    startsWith(search: str): bool;
+    endsWith(search: str): bool;
+    indexOf(search: str): int;
+    lastIndexOf(search: str): int;
+    substring(start: int, end?: int): str;
+    slice(start: int, end?: int): str;
+    at(index: int): str | null;
+    replace(from: str, to: str): str;
+    replaceAll(from: str, to: str): str;
+    split(separator?: str): str[];
+    charCode(): int;
+    charAt(pos: int): str;
+    charCodeAt(pos: int): int;
+    codePointAt(pos: int): int;
+    repeat(n: int): str;
+    padStart(target: int, pad?: str): str;
+    padEnd(target: int, pad?: str): str;
+    concat(other: str): str;
+    substr(start: int, length?: int): str;
+    isEmpty(): bool;
+    isBlank(): bool;
+    isDigit(): bool;
+    isLetter(): bool;
+    isWhitespace(): bool;
+    reverse(): str;
+    capitalize(): str;
+    lines(): str[];
+    words(): str[];
+    toInt(): int;
+    toFloat(): float;
 }
 
 export declare class int {
-    toString(): str
-    toStr(): str
-    toFixed(digits?: int): str
-    abs(): int
-    sign(): int
-    negate(): int
-    bitwiseNot(): int
-    min(other: int): int
-    max(other: int): int
-    clamp(min: int, max: int): int
-    toHex(): str
-    toBinary(): str
-    toOctal(): str
-    toFloat(): float
-    pow(exp: int): int
-    static parse(s: str): int | null
+    static MAX_VALUE: int;
+    static MIN_VALUE: int;
+    static parse(s: str): int;
+    static isInteger(val: dynamic): bool;
+
+    toString(): str;
+    valueOf(): int;
+    toLocaleString(): str;
+    toFixed(digits?: int): str;
+    abs(): int;
+    sign(): int;
+    negate(): int;
+    bitwiseNot(): int;
+    min(other: int): int;
+    max(other: int): int;
+    clamp(lo: int, hi: int): int;
+    toHex(): str;
+    toBinary(): str;
+    toOctal(): str;
+    toFloat(): float;
+    pow(exponent: int): int;
 }
 
 export declare class float {
-    toString(): str
-    toStr(): str
-    toFixed(digits?: int): str
-    abs(): float
-    sign(): int
-    negate(): float
-    min(other: float): float
-    max(other: float): float
-    pow(exp: float): float
-    isNaN(): bool
-    isFinite(): bool
-    isInteger(): bool
-    static parse(s: str): float | null
+    static MAX_VALUE: float;
+    static MIN_VALUE: float;
+    static EPSILON: float;
+    static parse(s: str): float;
+    static isNaN(val: dynamic): bool;
+    static isFinite(val: dynamic): bool;
+
+    toString(): str;
+    valueOf(): float;
+    toFixed(digits?: int): str;
+    abs(): float;
+    sign(): int;
+    negate(): float;
+    min(other: float): float;
+    max(other: float): float;
+    pow(exponent: float): float;
+    isInteger(): bool;
 }
 
 export declare class bool {
-    toString(): str
+    toString(): str;
+    valueOf(): bool;
 }
 
 export declare class char {
-    toString(): str
-    toInt(): int
-    isDigit(): bool
-    isLetter(): bool
-    isWhitespace(): bool
-    isUpper(): bool
-    isLower(): bool
-    toUpper(): char
-    toLower(): char
+    toString(): str;
+    charCodeAt(): int;
 }
 
 export declare class Array<T> {
-    readonly length: int
-    push(item: T): void
-    pop(): T | null
-    shift(): T | null
-    unshift(item: T): void
-    join(separator?: str): str
-    includes(item: T): bool
-    indexOf(item: T): int
-    slice(start?: int, end?: int): T[]
-    at(index: int): T | null
-    concat(other: T[]): T[]
-    fill(value: T, start?: int, end?: int): T[]
-    filter(predicate: (item: T, index: int) => bool): T[]
-    find(predicate: (item: T) => bool): T | null
-    findIndex(predicate: (item: T) => bool): int
-    forEach(callback: (item: T, index: int) => void): void
-    map<U>(callback: (item: T, index: int) => U): U[]
-    reduce<U>(callback: (acc: U, item: T, index: int) => U, initial: U): U
-    reverse(): T[]
-    every(predicate: (item: T, index: int) => bool): bool
-    some(predicate: (item: T, index: int) => bool): bool
-    splice(start: int, deleteCount?: int, ...items: T[]): T[]
-    flat<U>(): U[]
-    flatMap<U>(callback: (item: T) => U[]): U[]
-    sort(comparator?: (a: T, b: T) => int): T[]
-    static isArray(value: unknown): bool
+    readonly length: int;
+    push(item: T): void;
+    pop(): T;
+    shift(): T;
+    unshift(item: T): void;
+    join(separator?: str): str;
+    slice(start?: int, end?: int): T[];
+    at(index: int): T | null;
+    concat(...items: T[][]): T[];
+    fill(value: T, start?: int, end?: int): T[];
+    filter(predicate: (item: T, index: int, array: T[]) => bool): T[];
+    find(predicate: (item: T, index: int, array: T[]) => bool): T | null;
+    findIndex(predicate: (item: T, index: int, array: T[]) => bool): int;
+    flat(depth?: int): T[];
+    flatMap<U>(callback: (item: T, index: int, array: T[]) => U[]): U[];
+    forEach(callback: (item: T, index: int, array: T[]) => void): void;
+    map<U>(callback: (item: T, index: int, array: T[]) => U): U[];
+    reduce<U>(callback: (acc: U, item: T, index: int, array: T[]) => U, initial?: U): U;
+    reverse(): T[];
+    sort(compareFn?: (a: T, b: T) => int): T[];
+    splice(start: int, deleteCount?: int, ...items: T[]): T[];
+    every(predicate: (item: T, index: int, array: T[]) => bool): bool;
+    some(predicate: (item: T, index: int, array: T[]) => bool): bool;
+    includes(search: T): bool;
+    indexOf(search: T): int;
+
+    static isArray(obj: dynamic): bool;
 }

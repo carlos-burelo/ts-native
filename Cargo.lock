@@ -1404,6 +1404,7 @@ dependencies = [
  "rustc-hash",
  "tsn-core",
  "tsn-lexer",
+ "tsn-modules",
  "tsn-parser",
 ]
 
@@ -1418,7 +1419,9 @@ dependencies = [
  "tsn-core",
  "tsn-lexer",
  "tsn-lsp",
+ "tsn-modules",
  "tsn-parser",
+ "tsn-runtime",
  "tsn-vm",
 ]
 
@@ -1456,7 +1459,24 @@ dependencies = [
  "tsn-checker",
  "tsn-core",
  "tsn-lexer",
+ "tsn-modules",
  "tsn-parser",
+]
+
+[[package]]
+name = "tsn-modules"
+version = "0.1.0"
+dependencies = [
+ "tsn-core",
+]
+
+[[package]]
+name = "tsn-op-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -1465,6 +1485,30 @@ version = "0.1.0"
 dependencies = [
  "tsn-core",
  "tsn-lexer",
+]
+
+[[package]]
+name = "tsn-runtime"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.7",
+ "hex",
+ "hmac",
+ "mio",
+ "parking_lot",
+ "rand",
+ "rust_decimal",
+ "serde_json",
+ "sha2",
+ "tiny_http",
+ "tsn-core",
+ "tsn-modules",
+ "tsn-op-macros",
+ "tsn-types",
+ "ureq",
+ "url",
+ "urlencoding",
+ "uuid",
 ]
 
 [[package]]
@@ -1495,7 +1539,10 @@ dependencies = [
  "tsn-compiler",
  "tsn-core",
  "tsn-lexer",
+ "tsn-modules",
+ "tsn-op-macros",
  "tsn-parser",
+ "tsn-runtime",
  "tsn-types",
  "ureq",
  "url",

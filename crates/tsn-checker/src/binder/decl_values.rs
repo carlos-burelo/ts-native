@@ -176,7 +176,9 @@ impl super::Binder {
             );
         }
 
-        self.bind_stmt(&f.body);
+        if !f.modifiers.is_declare {
+            self.bind_stmt(&f.body);
+        }
         self.current = saved;
 
         let _ = sym_id;

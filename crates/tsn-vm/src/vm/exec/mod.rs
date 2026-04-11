@@ -277,7 +277,7 @@ impl super::Vm {
                     let argc = self.read_u16() as usize;
                     let start = self.stack.len().saturating_sub(argc);
                     let args: Vec<Value> = self.stack.drain(start..).collect();
-                    let result = crate::intrinsic::dispatch_intrinsic(intrinsic_id, self, &args)?;
+                    let result = tsn_runtime::dispatch_intrinsic(intrinsic_id, self, &args)?;
                     self.push(result);
                 }
                 OpCode::OpCallIntrinsicSpread => {
@@ -286,7 +286,7 @@ impl super::Vm {
                     let start = self.stack.len().saturating_sub(argc);
                     let raw_args: Vec<Value> = self.stack.drain(start..).collect();
                     let args = self.flatten_spread_args(raw_args)?;
-                    let result = crate::intrinsic::dispatch_intrinsic(intrinsic_id, self, &args)?;
+                    let result = tsn_runtime::dispatch_intrinsic(intrinsic_id, self, &args)?;
                     self.push(result);
                 }
             }

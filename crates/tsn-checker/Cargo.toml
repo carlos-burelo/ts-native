@@ -7,4 +7,5 @@ edition = "2021"
 tsn-core    = { path = "../tsn-core" }
 tsn-lexer   = { path = "../tsn-lexer" }
 tsn-parser  = { path = "../tsn-parser" }
+tsn-modules = { path = "../tsn-modules" }
 rustc-hash  = { workspace = true }

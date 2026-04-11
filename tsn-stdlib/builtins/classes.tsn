@@ -1,76 +1,60 @@
+// Builtin global classes (declaration-only).
+
 export declare class Error {
-    readonly message: str
-    readonly name: str
-    readonly stack: str
-    constructor(message?: str)
-    toString(): str
+    message: str;
+    name: str;
+    stack: str;
+    constructor(message?: str);
+    toString(): str;
 }
 
 export declare class TypeError extends Error {
-    constructor(message?: str)
+    constructor(message?: str);
 }
 
 export declare class RangeError extends Error {
-    constructor(message?: str)
-}
-
-export declare class IoError extends Error {
-    readonly code: int
-    constructor(message: str, code?: int)
+    constructor(message?: str);
 }
 
 export declare class Map<V> {
-    readonly size: int
-    get(key: str): V | null
-    set(key: str, value: V): void
-    has(key: str): bool
-    delete(key: str): bool
-    clear(): void
-    keys(): str[]
-    values(): V[]
-    entries(): [str, V][]
-    forEach(callback: (value: V, key: str) => void): void
-    static from<V>(entries: [str, V][]): Map<V>
+    constructor();
+    get(key: str): V | null;
+    set(key: str, value: V): void;
+    has(key: str): bool;
+    delete(key: str): bool;
+    clear(): void;
+    keys(): str[];
+    values(): V[];
+    readonly size: int;
 }
 
 export declare class Set<T> {
-    readonly size: int
-    add(value: T): void
-    has(value: T): bool
-    delete(value: T): bool
-    clear(): void
-    values(): T[]
-    forEach(callback: (value: T) => void): void
-    toArray(): T[]
-    static from<T>(items: T[]): Set<T>
+    constructor();
+    add(value: T): void;
+    has(value: T): bool;
+    delete(value: T): bool;
+    clear(): void;
+    values(): T[];
+    readonly size: int;
 }
 
 export declare class Future<T> {
-    then<R>(callback: (value: T) => R): Future<R>
-    map<R>(callback: (value: T) => R): Future<R>
-    catch(handler: (err: Error) => T): Future<T>
-    unwrap(): T
-    expect(msg: str): T
-    valueOr(fallback: T): T
-    static resolve<T>(value: T): Future<T>
-    static reject<T>(error: Error): Future<T>
-    static all<T>(futures: Future<T>[]): Future<T[]>
-    static race<T>(futures: Future<T>[]): Future<T>
-}
-
-export declare class Generator<T> {
-    next(): { value: T; done: bool }
-    return(value?: T): { value: T; done: bool }
-}
-
-export interface Record<K, V> {
-    [key: K]: V
+    then<R>(callback: (value: T) => R): Future<R>;
+    map<R>(callback: (value: T) => R): Future<R>;
+    catch(handler: (err: Error) => T): Future<T>;
+    unwrap(): T;
+    expect(msg: str): T;
+    valueOr(fallback: T): T;
 }
 
 export interface Iterator<T> {
-    next(): { value: T; done: bool }
+    next(): { value: T; done: bool; };
 }
 
 export interface AsyncIterator<T> {
-    next(): Future<{ value: T; done: bool }>
+    next(): Future<{ value: T; done: bool; }>;
+}
+
+export interface ClassRef {
+    name: str;
 }

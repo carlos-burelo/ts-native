@@ -86,7 +86,9 @@ fn annotate_decl(decl: &Decl, ann: &mut TypeAnnotations, bind: &BindResult) {
             }
         }
         Decl::Function(f) => {
-            annotate_stmt(&f.body, ann, bind);
+            if !f.modifiers.is_declare {
+                annotate_stmt(&f.body, ann, bind);
+            }
         }
         Decl::Import(i) => {
             for spec in &i.specifiers {

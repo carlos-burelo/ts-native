@@ -56,6 +56,7 @@ pub struct Vm {
     pub(super) try_handlers: Vec<TryEntry>,
     pub(super) modules: HashMap<String, Value>,
     pub(super) module_exports: tsn_types::RuntimeObject,
+    pub(super) precompiled_protos: HashMap<String, Arc<FunctionProto>>,
     pub(super) vm_suspend: Option<VmSuspend>,
     pub(crate) pending_spawns: Vec<(Box<Vm>, AsyncFuture)>,
     pub(crate) pending_async_gen_spawns: Vec<(TaskId, Box<Vm>)>,
@@ -69,7 +70,9 @@ pub struct Vm {
 impl Vm {
     pub fn new() -> Self {
         crate::runtime::init_heap();
-        let globals = Arc::new(RwLock::new(HashMap::new()));
+        let mut globals_map = HashMap::new();
+        tsn_runtime::register_globals(&mut globals_map);
+        let globals = Arc::new(RwLock::new(globals_map));
         let modules = HashMap::new();
         let vm = Vm {
             stack: Vec::with_capacity(256),
@@ -78,6 +81,7 @@ impl Vm {
             try_handlers: Vec::new(),
             modules,
             module_exports: tsn_types::RuntimeObject::new(),
+            precompiled_protos: HashMap::new(),
             trace: false,
             calls: false,
             vm_suspend: None,
@@ -104,6 +108,7 @@ impl Vm {
             globals: Arc::new(RwLock::new(snapshot)),
             try_handlers: Vec::new(),
             module_exports: tsn_types::RuntimeObject::new(),
+            precompiled_protos: HashMap::new(),
             trace: false,
             calls: false,
             vm_suspend: None,
@@ -123,6 +128,7 @@ impl Vm {
             globals,
             try_handlers: Vec::new(),
             module_exports: tsn_types::RuntimeObject::new(),
+            precompiled_protos: HashMap::new(),
             trace: false,
             calls: false,
             vm_suspend: None,
@@ -140,6 +146,10 @@ impl Vm {
 
     pub fn opcode_profile_snapshot(&self) -> Option<Vec<u64>> {
         self.opcode_profile.as_ref().map(|p| p.snapshot())
+    }
+
+    pub fn set_precompiled_protos(&mut self, protos: std::collections::HashMap<String, Arc<FunctionProto>>) {
+        self.precompiled_protos = protos;
     }
 
     pub(super) fn push(&mut self, v: Value) {

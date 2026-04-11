@@ -1,5 +1,7 @@
-import { Time } from "std:time";
-import { Math } from "std:math";
+// std:temporal - High-level Date/Time API
+
+import { Time } from "std:time"
+import { Math } from "std:math"
 
 export namespace Temporal {
     export enum Month {
@@ -389,4 +391,3 @@ export const PlainTime = Temporal.PlainTime;
 export const PlainDateTime = Temporal.PlainDateTime;
 export const Duration = Temporal.Duration;
 export const ZonedDateTime = Temporal.ZonedDateTime;
-

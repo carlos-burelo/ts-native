@@ -10,6 +10,9 @@ tsn-parser = { path = "../tsn-parser" }
 tsn-checker = { path = "../tsn-checker" }
 tsn-compiler = { path = "../tsn-compiler" }
 tsn-types = { path = "../tsn-types" }
+tsn-op-macros = { path = "../tsn-op-macros" }
+tsn-modules = { path = "../tsn-modules" }
+tsn-runtime = { path = "../tsn-runtime" }
 parking_lot = "0.12.5"
 rust_decimal = { version = "1", features = ["serde"] }
 mio = { version = "1", features = ["os-poll", "net"] }

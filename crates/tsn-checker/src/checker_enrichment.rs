@@ -226,6 +226,9 @@ fn enrich_decl(
             }
         }
         Decl::Function(f) => {
+            if f.modifiers.is_declare {
+                return;
+            }
             if let Stmt::Block { stmts, .. } = &f.body {
                 enrich_stmts(
                     fn_map,

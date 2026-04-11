@@ -94,6 +94,7 @@ pub fn parse_export_decl(
 ) -> Result<ExportDecl, String> {
     let range = s.range();
     s.expect(TokenKind::Export)?;
+    let is_declare = s.eat(TokenKind::Declare);
 
     if s.check(TokenKind::Type) && s.peek_kind(1) == TokenKind::LBrace {
         s.advance();
@@ -123,12 +124,12 @@ pub fn parse_export_decl(
         let decl = match s.kind() {
             TokenKind::Function | TokenKind::Async => {
                 let is_async = s.eat(TokenKind::Async);
-                let mut fn_decl = parse_function_decl(s, decorators.clone(), is_async)?;
+                let mut fn_decl = parse_function_decl(s, decorators.clone(), is_async, is_declare)?;
                 fn_decl.doc = s.take_pending_doc();
                 ExportDefaultDecl::Function(fn_decl)
             }
             TokenKind::Class | TokenKind::Abstract => {
-                let mut cls = parse_class_decl(s, decorators.clone())?;
+                let mut cls = parse_class_decl(s, decorators.clone(), is_declare)?;
                 cls.doc = s.take_pending_doc();
                 ExportDefaultDecl::Class(cls)
             }
@@ -192,7 +193,21 @@ pub fn parse_export_decl(
         });
     }
 
-    let decl = super::super::stmts::parse_stmt_or_decl_inner(s)?;
+    let decl = if is_declare {
+        match super::super::stmt_decls::try_parse_decl_stmt_mode(
+            s,
+            s.kind(),
+            s.peek_kind(1),
+            decorators,
+            true,
+        ) {
+            Some(Ok(stmt)) => stmt,
+            Some(Err(e)) => return Err(e),
+            None => return Err("Expected declaration after `export declare`".to_owned()),
+        }
+    } else {
+        super::super::stmts::parse_stmt_or_decl_inner(s)?
+    };
     if let Stmt::Decl(d) = decl {
         return Ok(ExportDecl::Decl {
             declaration: d,

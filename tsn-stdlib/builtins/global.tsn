@@ -1,18 +1,11 @@
-export interface ClassRef {
-    readonly name: str
-}
+// Builtin globals (declaration-only).
 
-export interface FunctionRef {
-    readonly name: str
-    readonly length: int
-}
+export declare function print(...args: dynamic[]): void;
+export declare function debug(...args: dynamic[]): void;
+export declare function assert(label: str, cond: bool): void;
+export declare function assertSummary(): void;
+export declare function input(prompt?: str): str;
 
-export declare function print(...args: unknown[]): void
-export declare function debug(...args: unknown[]): void
-export declare function assert(label: str, cond: bool): void
-export declare function assertSummary(): void
-export declare function input(prompt?: str): str
-
-export declare const NaN: float
-export declare const Infinity: float
-export declare const Symbol: { iterator: unknown; asyncIterator: unknown }
+export declare const NaN: float;
+export declare const Infinity: float;
+export declare const Symbol: dynamic;

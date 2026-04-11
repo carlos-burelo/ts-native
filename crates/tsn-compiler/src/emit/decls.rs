@@ -516,12 +516,18 @@ impl Compiler {
             }
             ExportDecl::Default { declaration, .. } => match declaration.as_ref() {
                 ExportDefaultDecl::Function(f) => {
+                    if f.modifiers.is_declare {
+                        return Ok(());
+                    }
                     self.compile_fn_decl(f)?;
                     self.emit_get_var(&f.id);
                     let key = self.add_str("default");
                     self.emit1(OpCode::OpMergeExports, key);
                 }
                 ExportDefaultDecl::Class(c) => {
+                    if c.modifiers.is_declare {
+                        return Ok(());
+                    }
                     self.compile_class_decl(c)?;
                     if let Some(id) = &c.id {
                         self.emit_get_var(id);
@@ -584,10 +590,28 @@ fn runtime_export_names(decl: &Decl) -> Vec<String> {
         Decl::Variable(v) => v
             .declarators
             .iter()
-            .flat_map(|d| pattern_binding_names(&d.id))
+            .flat_map(|d| {
+                if v.is_declare {
+                    Vec::new()
+                } else {
+                    pattern_binding_names(&d.id)
+                }
+            })
             .collect(),
-        Decl::Function(f) => vec![f.id.clone()],
-        Decl::Class(c) => c.id.iter().cloned().collect(),
+        Decl::Function(f) => {
+            if f.modifiers.is_declare {
+                vec![]
+            } else {
+                vec![f.id.clone()]
+            }
+        }
+        Decl::Class(c) => {
+            if c.modifiers.is_declare {
+                vec![]
+            } else {
+                c.id.iter().cloned().collect()
+            }
+        }
         Decl::Enum(e) => vec![e.id.clone()],
         Decl::Namespace(n) => vec![n.id.clone()],
         Decl::SumType(st) => st.variants.iter().map(|v| v.name.clone()).collect(),

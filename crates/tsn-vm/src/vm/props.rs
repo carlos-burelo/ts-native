@@ -11,6 +11,8 @@ mod str;
 use std::sync::Arc;
 
 use tsn_core::well_known;
+use tsn_runtime::modules::{map, set};
+use tsn_runtime::modules::primitives as rt_prim;
 use tsn_types::chunk::CacheEntry;
 use tsn_types::value::{find_method_with_owner, BoundMethod, Closure, ObjData, Value};
 
@@ -428,7 +430,7 @@ impl super::Vm {
                 }
                 self.get_primitive_property(obj, well_known::DECIMAL, key)
             }
-            Value::Char(_) => self.get_primitive_property(obj, well_known::CHAR, key),
+            Value::Char(_) => get_char_property(obj, key),
             Value::Bool(_) => {
                 let v = bool::get_property(obj, key);
                 if v.is_ok() {
@@ -437,8 +439,8 @@ impl super::Vm {
                 self.get_primitive_property(obj, well_known::BOOL, key)
             }
             Value::Symbol(s) => self.get_symbol_property(obj, s.clone()),
-            Value::Map(m) => crate::intrinsic::map::get_property(obj, *m, key),
-            Value::Set(s) => crate::intrinsic::set::get_property(obj, *s, key),
+            Value::Map(m) => map::get_property(obj, *m, key),
+            Value::Set(s) => set::get_property(obj, *s, key),
             Value::Future(_) => future::get_property(obj, key),
             Value::Range(r) => range::get_property(obj, r.start, r.end, r.inclusive, key),
             Value::Generator(gen) => generator::get_property(obj, gen, key),
@@ -669,5 +671,13 @@ impl super::Vm {
             }
             _ => Err(format!("cannot index {} with []", obj.type_name())),
         }
+    }
+}
+
+fn get_char_property(obj: &Value, key: &str) -> Result<Value, String> {
+    match key {
+        "toString" => Ok(Value::native_bound(obj.clone(), rt_prim::char_to_str, "toString")),
+        "charCodeAt" => Ok(Value::native_bound(obj.clone(), rt_prim::char_code_at, "charCodeAt")),
+        _ => Err(format!("property '{}' not found on primitive char", key)),
     }
 }

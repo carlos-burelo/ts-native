@@ -1,40 +1,17 @@
-// std:net — Network and URL utilities
+// std:net — Network and URL utilities (contract-only)
 
-export declare function isIp(s: str): bool;
-export declare function isIpv4(s: str): bool;
-export declare function isIpv6(s: str): bool;
-export declare function joinHostPort(host: str, port: int): str;
-export declare function splitHostPort(s: str): [str, str];
-
-export declare class URL {
-    href: str;
-    protocol: str;
-    hostname: str;
-    port: int | null;
-    pathname: str;
-    search: str;
-    hash: str;
-
-    constructor(url: str);
-    toString(): str;
-}
-
-export declare function resolveUrl(base: str, next: str): str;
-export declare function parseQuery(s: str): dynamic;
-export declare function encodeUriComponent(s: str): str;
-export declare function decodeUriComponent(s: str): str;
-export declare function basicAuth(user: str, pass: str): str;
-
-export declare namespace Net {
+export namespace Net {
     export declare function isIp(s: str): bool;
     export declare function isIpv4(s: str): bool;
     export declare function isIpv6(s: str): bool;
     export declare function joinHostPort(host: str, port: int): str;
     export declare function splitHostPort(s: str): [str, str];
-    export declare function resolveUrl(base: str, next: str): str;
+    export declare function parseURL(url: str): dynamic;
+    export declare function resolveURL(base: str, next: str): str;
     export declare function parseQuery(s: str): dynamic;
-    export declare function encodeUriComponent(s: str): str;
-    export declare function decodeUriComponent(s: str): str;
+    export declare function buildQuery(q: dynamic): str;
+    export declare function appendQuery(url: str, q: dynamic): str;
+    export declare function encodeURI(s: str): str;
+    export declare function decodeURI(s: str): str;
     export declare function basicAuth(user: str, pass: str): str;
-    export declare const URL: typeof URL;
 }

@@ -12,6 +12,7 @@ tsn-core    = { path = "../tsn-core" }
 tsn-lexer   = { path = "../tsn-lexer" }
 tsn-parser  = { path = "../tsn-parser" }
 tsn-checker = { path = "../tsn-checker" }
+tsn-modules = { path = "../tsn-modules" }
 
 tower-lsp  = "0.20"
 tokio      = { version = "1", features = ["full"] }

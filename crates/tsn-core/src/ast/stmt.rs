@@ -17,6 +17,7 @@ pub struct VarDeclarator {
 pub struct VariableDecl {
     pub kind: VarKind,
     pub declarators: Vec<VarDeclarator>,
+    pub is_declare: bool,
     pub doc: Option<String>,
     pub range: SourceRange,
 }

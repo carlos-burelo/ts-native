@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(select-object *)",
+      "Bash(@findstr *)",
+      "Bash(target\\release\\tsn.exe *)"
+    ]
+  },
+  "$version": 3
+}

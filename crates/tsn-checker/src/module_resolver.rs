@@ -2,7 +2,7 @@ use crate::binder::{BindResult, Binder};
 use crate::symbol::{Symbol, SymbolKind};
 use crate::types::Type;
 use std::collections::HashMap;
-use std::fs::{canonicalize, read_to_string};
+use std::fs::read_to_string;
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use tsn_core::ast::{Decl, ExportDecl, ExportDefaultDecl, Pattern, Stmt};
@@ -32,42 +32,8 @@ pub fn invalidate_module_cache() {
 
 pub type ExportMap = HashMap<String, Symbol>;
 
-pub fn stdlib_dir() -> Option<PathBuf> {
-    for cand in tsn_core::paths::stdlib_candidates() {
-        if cand.is_dir() {
-            if let Ok(abs) = canonicalize(&cand) {
-                return Some(abs);
-            }
-            return Some(cand);
-        }
-    }
-
-    None
-}
-
 pub fn stdlib_path_for(specifier: &str) -> Option<PathBuf> {
-    let root = stdlib_dir()?;
-    let path = if let Some(rest) = specifier.strip_prefix("std:") {
-        root.join("std").join(rest).join("mod.tsn")
-    } else if let Some(rest) = specifier.strip_prefix("builtin:") {
-        root.join("builtins").join(format!("{}.tsn", rest))
-    } else {
-        return None;
-    };
-
-    if path.is_file() {
-        Some(path)
-    } else {
-        if specifier.starts_with("std:") {
-            let alt = path
-                .parent()?
-                .join(format!("{}.tsn", specifier.strip_prefix("std:")?));
-            if alt.is_file() {
-                return Some(alt);
-            }
-        }
-        None
-    }
+    tsn_modules::ModuleLoader::from_env().tsn_source_path(specifier)
 }
 
 pub fn resolve_stdlib_module_exports(specifier: &str) -> ExportMap {
@@ -103,7 +69,7 @@ pub fn find_module_bind_for_type(type_name: &str, origin_modules: &[String]) -> 
 }
 
 pub fn is_known_stdlib(specifier: &str) -> bool {
-    stdlib_path_for(specifier).is_some()
+    tsn_modules::is_known(specifier)
 }
 
 pub fn resolve_specifier_path(base_dir: &Path, specifier: &str) -> Option<String> {
@@ -115,8 +81,8 @@ pub fn resolve_specifier_path(base_dir: &Path, specifier: &str) -> Option<String
     };
 
     for candidate in candidates {
-        if let Ok(abs) = canonicalize(&candidate) {
-            return Some(abs.to_string_lossy().into_owned());
+        if candidate.exists() {
+            return Some(candidate.to_string_lossy().into_owned());
         }
     }
 

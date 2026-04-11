@@ -1,72 +1,52 @@
-// std:http — HTTP client/server
+import { JSON } from "std:json"
 
-export type HttpMethod = str
+export class Response {
+    body: str;
+    ok: bool;
 
-export declare namespace Method {
-    export declare const GET: str
-    export declare const POST: str
-    export declare const PUT: str
-    export declare const PATCH: str
-    export declare const DELETE: str
-    export declare const HEAD: str
-    export declare const OPTIONS: str
+    constructor(body: str, status: int) {
+        this.body = body;
+        this.ok = status >= 200 && status < 300;
+    }
+
+    static from(body: str, status: int): Response {
+        return new Response(body, status);
+    }
+
+    json(data?:dynamic): dynamic {
+        if (data == null){
+            return JSON.parse(this.body);
+        } else {
+            return JSON.parse(data)
+        }
+    }
+
+    text(): str {
+        return this.body;
+    }
+
+    status(code: int): this{
+        return this
+    }
+
+    send(data: dynamic): this{
+        return this
+    }
 }
 
-export interface RequestInit {
-    method?: str
-    headers?: dynamic
-    body?: str
-    timeout?: int
-}
 
-export declare class Response {
-    status: int
-    statusText: str
-    ok: bool
-    headers: dynamic
-    body: str
-    text(): str
-    json(): dynamic
-}
-
-export declare function fetch(url: str, init?: dynamic): Future<Response>
-
-export declare namespace HTTP {
-    export declare function fetch(url: str, init?: dynamic): Future<Response>
-    export declare function get(url: str, headers?: dynamic): Future<Response>
-    export declare function post(url: str, body?: str, headers?: dynamic): Future<Response>
-    export declare function put(url: str, body?: str, headers?: dynamic): Future<Response>
-    export declare function patch(url: str, body?: str, headers?: dynamic): Future<Response>
-    export declare function del(url: str, headers?: dynamic): Future<Response>
-}
-
-export declare class Request {
-    method: str
-    path: str
+export class Request {
     query: dynamic
     params: dynamic
-    body: str
-    headers: dynamic
+    body: dynamic
 }
 
-export declare class ServerResponse {
-    _status: int
-    _body: str
-    _headers: dynamic
-    status(code: int): this
-    header(name: str, value: str): this
-    json(data: dynamic): void
-    send(body: str): void
-    text(body: str): void
-    html(body: str): void
-}
+export class Server {
+    get(path: str, callback: (req: Request, res: Response) => void){}
+    post(path: str, callback: (req: Request, res: Response) => void){}
+    put(path: str, callback: (req: Request, res: Response) => void){}
+    patch(path: str, callback: (req: Request, res: Response) => void){}
+    delete(path: str, callback: (req: Request, res: Response) => void){}
 
-export declare class Server {
-    private _id: int
-    get(path: str, callback: (req: Request, res: ServerResponse) => void): void
-    post(path: str, callback: (req: Request, res: ServerResponse) => void): void
-    put(path: str, callback: (req: Request, res: ServerResponse) => void): void
-    patch(path: str, callback: (req: Request, res: ServerResponse) => void): void
-    delete(path: str, callback: (req: Request, res: ServerResponse) => void): void
-    listen(port: int): void
+    listen(post: int){}
 }

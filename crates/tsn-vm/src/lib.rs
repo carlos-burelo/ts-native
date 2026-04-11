@@ -1,5 +1,4 @@
 pub extern crate tsn_types;
-pub mod intrinsic;
 pub mod runtime;
 pub mod vm;
 use tsn_compiler::chunk::FunctionProto;

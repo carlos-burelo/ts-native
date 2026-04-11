@@ -555,9 +555,27 @@ impl Compiler {
 
     pub(super) fn compile_decl(&mut self, decl: &Decl) -> Result<(), String> {
         match decl {
-            Decl::Variable(v) => self.compile_var_decl(v),
-            Decl::Function(f) => self.compile_fn_decl(f),
-            Decl::Class(c) => self.compile_class_decl(c),
+            Decl::Variable(v) => {
+                if v.is_declare {
+                    Ok(())
+                } else {
+                    self.compile_var_decl(v)
+                }
+            }
+            Decl::Function(f) => {
+                if f.modifiers.is_declare {
+                    Ok(())
+                } else {
+                    self.compile_fn_decl(f)
+                }
+            }
+            Decl::Class(c) => {
+                if c.modifiers.is_declare {
+                    Ok(())
+                } else {
+                    self.compile_class_decl(c)
+                }
+            }
             Decl::Import(i) => self.compile_import(i),
             Decl::Export(e) => self.compile_export(e),
             Decl::Interface(_) | Decl::TypeAlias(_) => Ok(()),

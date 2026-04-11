@@ -1,12 +1,39 @@
-// std:path — Path manipulation module
+// std:path — Path manipulation module (contract-only)
 
-export declare namespace Path {
+/**
+ * Normalizes the given path, resolving '..' and '.' segments.
+ */
+export namespace Path {
     export declare const sep: str;
     export declare const delimiter: str;
+
+    /**
+     * Normalizes the given path, resolving '..' and '.' segments.
+     */
     export declare function normalize(path: str): str;
+
+    /**
+     * Joins all given path segments together using the platform-specific separator.
+     */
     export declare function join(...segments: str[]): str;
+
+    /**
+     * Returns the directory name of a path.
+     */
     export declare function dirname(path: str): str;
+
+    /**
+     * Returns the last portion of a path.
+     */
     export declare function basename(path: str, ext?: str): str;
+
+    /**
+     * Returns the extension of the path.
+     */
     export declare function extname(path: str): str;
+
+    /**
+     * Returns true if the path is absolute.
+     */
     export declare function isAbsolute(path: str): bool;
 }

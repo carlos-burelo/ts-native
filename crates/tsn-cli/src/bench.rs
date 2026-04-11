@@ -268,6 +268,8 @@ pub fn run_bench(
     let proto = tsn_compiler::compile_with_annotations(&program, &check_result.type_annotations)
         .map_err(|e| CliError::fatal(format!("compile error: {e}")))?;
 
+    let precompiled = crate::module_precompile::precompile_direct_imports(&program, path);
+
     let builtin_protos: Vec<tsn_compiler::FunctionProto> = crate::pipeline::builtin_protos_owned()?;
 
     let globals_snapshot = tsn_vm::build_globals_snapshot(&builtin_protos)
@@ -275,25 +277,34 @@ pub fn run_bench(
 
     let proto_ref = &proto;
     let snapshot_ref = &globals_snapshot;
+    let precompiled_ref = &precompiled;
     let exec_samples = time_n(runs, || {
-        tsn_vm::intrinsic::console::set_console_silent(!with_output);
+        tsn_runtime::reset_testing_counters();
+        tsn_runtime::set_console_silent(!with_output);
+        tsn_runtime::set_testing_silent(!with_output);
         let mut machine = tsn_vm::Vm::from_globals_snapshot(snapshot_ref.clone());
+        machine.set_precompiled_protos(precompiled_ref.clone());
         let result = machine
             .run_proto(proto_ref.clone())
             .map(|_| ())
             .map_err(|e| e.to_string());
-        tsn_vm::intrinsic::console::set_console_silent(false);
+        tsn_runtime::set_console_silent(false);
+        tsn_runtime::set_testing_silent(false);
         result
     })?;
 
-    tsn_vm::intrinsic::console::set_console_silent(true);
+    tsn_runtime::reset_testing_counters();
+    tsn_runtime::set_console_silent(true);
+    tsn_runtime::set_testing_silent(true);
     let mut profile_vm = tsn_vm::Vm::from_globals_snapshot(globals_snapshot.clone());
+    profile_vm.set_precompiled_protos(precompiled.clone());
     profile_vm.enable_opcode_profile();
     profile_vm
         .run_proto(proto.clone())
         .map_err(|e| CliError::fatal(format!("profile run failed: {}", e)))?;
     let opcode_counts = profile_vm.opcode_profile_snapshot().unwrap_or_default();
-    tsn_vm::intrinsic::console::set_console_silent(false);
+    tsn_runtime::set_console_silent(false);
+    tsn_runtime::set_testing_silent(false);
 
     let stats = vec![
         PhaseStats::from_samples("read", WHT, &read_samples),

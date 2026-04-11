@@ -1,6 +1,7 @@
-// std:io — Input/Output streams
+// std:io — Input/Output streams (contract-only)
 
 export declare function write(...args: dynamic[]): void;
+export declare function writeln(...args: dynamic[]): void;
 export declare function print(...args: dynamic[]): void;
 export declare function flush(): void;
 export declare function readLine(prompt?: str): str;

@@ -4,6 +4,8 @@ mod bench_output;
 mod disasm;
 mod doctor;
 mod error;
+mod import_collector;
+mod module_precompile;
 mod pipeline;
 use args::Command;
 use std::process;

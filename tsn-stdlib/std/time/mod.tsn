@@ -1,10 +1,10 @@
 // std:time — time utilities
 
-export declare namespace Time {
+export namespace Time {
     export declare function now(): int;
     export declare function millis(): int;
     export declare function toISOString(ms: int): str;
     export declare function fromISO(iso: str): int;
     export declare function toParts(ms: int): dynamic;
-    export declare function fromParts(year: int, month: int, day: int, hour?: int, minute?: int, second?: int, millisecond?: int): int;
+    export declare function fromParts(year: int, month: int, day: int, hour: int, minute: int, second: int, millisecond: int): int;
 }

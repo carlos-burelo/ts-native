@@ -7,7 +7,7 @@
  */
 export type Json = dynamic
 
-export declare namespace JSON {
+export namespace JSON {
     /**
      * Parses a JSON str into a Json value.
      */

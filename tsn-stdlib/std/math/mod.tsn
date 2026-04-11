@@ -1,6 +1,6 @@
 // std:math — Mathematical constants and functions
 
-export declare namespace Math {
+export namespace Math {
     export declare const E: float;
     export declare const LN10: float;
     export declare const LN2: float;
@@ -31,3 +31,4 @@ export declare namespace Math {
     export declare function sign(x: float): float;
     export declare function trunc(x: float): float;
 }
+

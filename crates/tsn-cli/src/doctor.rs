@@ -7,7 +7,8 @@ pub fn run_doctor() -> CliResult<()> {
     let exe = std::env::current_exe().ok();
     let home = tsn_core::paths::tsn_home_dir();
     let cache = tsn_core::paths::tsn_cache_dir();
-    let stdlib = tsn_checker::module_resolver::stdlib_dir();
+    let loader = tsn_modules::ModuleLoader::from_env();
+    let stdlib = loader.stdlib_root();
 
     println!("TSN Doctor");
     println!("  version: {}", env!("CARGO_PKG_VERSION"));
@@ -26,13 +27,13 @@ pub fn run_doctor() -> CliResult<()> {
         println!("  TSN_STDLIB env: <not set>");
     }
 
-    match stdlib {
-        Some(path) => {
-            println!("  stdlib: {} (ok)", path.display());
-            Ok(())
-        }
-        None => Err(CliError::fatal(
+    if stdlib.exists() {
+        println!("  stdlib: {} (ok)", stdlib.display());
+        Ok(())
+    } else {
+        println!("  stdlib: {} (NOT FOUND)", stdlib.display());
+        Err(CliError::fatal(
             "stdlib not found. Run installer script or set TSN_STDLIB to a valid directory.",
-        )),
+        ))
     }
 }
