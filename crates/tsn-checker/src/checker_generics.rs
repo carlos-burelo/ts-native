@@ -1,8 +1,9 @@
 use crate::binder::{infer_expr_type, pattern_lead_name, BindResult};
 use crate::checker::Checker;
+use crate::symbol::SymbolKind;
 use crate::types::{ClassMemberInfo, FunctionParam, FunctionType, Type, TypeContext};
 use std::collections::HashMap;
-use tsn_core::ast::{Expr, Stmt};
+use tsn_core::ast::{Arg, ArrowBody, Expr, Pattern, Stmt, TypeNode};
 use tsn_core::TypeKind;
 
 pub(crate) fn build_generic_mapping(
@@ -21,8 +22,8 @@ pub(crate) fn build_generic_mapping(
 
 pub(crate) fn build_call_mapping(
     callee: &Expr,
-    type_args: &[tsn_core::ast::TypeNode],
-    args: &[tsn_core::ast::Arg],
+    type_args: &[TypeNode],
+    args: &[Arg],
     ft: &FunctionType,
     checker: &mut Checker,
     bind: &BindResult,
@@ -30,7 +31,7 @@ pub(crate) fn build_call_mapping(
     let fn_type_params: Vec<String> = if !ft.type_params.is_empty() {
         ft.type_params.clone()
     } else if let Expr::Identifier { name, .. } = callee {
-        checker.symbol_type_params(name, crate::symbol::SymbolKind::Function, bind)
+        checker.symbol_type_params(name, SymbolKind::Function, bind)
     } else {
         Vec::new()
     };
@@ -59,14 +60,14 @@ pub(crate) fn build_call_mapping(
 pub(crate) fn infer_mapping_from_args(
     type_params: &[String],
     param_types: &[FunctionParam],
-    args: &[tsn_core::ast::Arg],
+    args: &[Arg],
     checker: &mut Checker,
     bind: &BindResult,
 ) -> HashMap<String, Type> {
     let mut mapping = HashMap::new();
     for (param, arg) in param_types.iter().zip(args.iter()) {
         let arg_ty = match arg {
-            tsn_core::ast::Arg::Positional(e) => {
+            Arg::Positional(e) => {
                 // For Fn-typed params, try contextual typing: use the expected param
                 // types to infer the concrete return type of untyped arrow callbacks.
                 if let TypeKind::Fn(expected_fn) = &param.ty.0 {
@@ -78,8 +79,8 @@ pub(crate) fn infer_mapping_from_args(
                 }
                 checker.infer_type(e, bind)
             }
-            tsn_core::ast::Arg::Named { value, .. } => checker.infer_type(value, bind),
-            tsn_core::ast::Arg::Spread(_) => continue,
+            Arg::Named { value, .. } => checker.infer_type(value, bind),
+            Arg::Spread(_) => continue,
         };
         collect_type_inferences(&param.ty, &arg_ty, type_params, &mut mapping);
     }
@@ -105,7 +106,7 @@ fn infer_arrow_with_context(
         let has_ann = ap.type_ann.is_some()
             || matches!(
                 &ap.pattern,
-                tsn_core::ast::Pattern::Identifier {
+                Pattern::Identifier {
                     type_ann: Some(_),
                     ..
                 }
@@ -123,8 +124,8 @@ fn infer_arrow_with_context(
 
     let ctx = LocalContext { bind, locals };
     let ret_ty = match body.as_ref() {
-        tsn_core::ast::ArrowBody::Expr(e) => infer_expr_type(e, Some(&ctx)),
-        tsn_core::ast::ArrowBody::Block(block) => {
+        ArrowBody::Expr(e) => infer_expr_type(e, Some(&ctx)),
+        ArrowBody::Block(block) => {
             let mut return_tys: Vec<Type> = Vec::new();
             collect_block_return_types(block, &ctx, &mut return_tys);
             match return_tys.len() {
@@ -265,7 +266,7 @@ impl TypeContext for LocalContext<'_> {
         self.bind.source_file()
     }
 
-    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, tsn_core::ast::TypeNode)> {
+    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, TypeNode)> {
         self.bind.get_alias_node(name)
     }
 }

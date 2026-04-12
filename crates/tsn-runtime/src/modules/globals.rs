@@ -15,7 +15,10 @@ pub fn global_input(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
 }
 
 pub fn global_assert(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
-    let label = args.first().map(Value::to_string).unwrap_or_else(|| "assert failed".to_owned());
+    let label = args
+        .first()
+        .map(Value::to_string)
+        .unwrap_or_else(|| "assert failed".to_owned());
     let cond = matches!(args.get(1), Some(Value::Bool(true)));
     if cond {
         Ok(Value::Null)
@@ -46,7 +49,8 @@ pub fn symbol_global() -> Value {
 
 pub fn str_type_global() -> Value {
     let mut cls = ClassObj::new_native("str");
-    cls.statics.insert(Arc::from("EMPTY"), Value::Str(Arc::from("")));
+    cls.statics
+        .insert(Arc::from("EMPTY"), Value::Str(Arc::from("")));
     cls.statics.insert(
         Arc::from("fromCharCode"),
         Value::native(
@@ -67,10 +71,14 @@ pub fn str_type_global() -> Value {
 
 pub fn int_type_global() -> Value {
     let mut cls = ClassObj::new_native("int");
-    cls.statics
-        .insert(Arc::from("MAX_VALUE"), Value::Int(9_223_372_036_854_775_807));
-    cls.statics
-        .insert(Arc::from("MIN_VALUE"), Value::Int(-9_223_372_036_854_775_808));
+    cls.statics.insert(
+        Arc::from("MAX_VALUE"),
+        Value::Int(9_223_372_036_854_775_807),
+    );
+    cls.statics.insert(
+        Arc::from("MIN_VALUE"),
+        Value::Int(-9_223_372_036_854_775_808),
+    );
     cls.statics.insert(
         Arc::from("parse"),
         Value::native(crate::modules::primitives::int_parse, "parse"),
@@ -161,10 +169,7 @@ pub fn error_ctor(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
     set_error_fields(args, "Error")
 }
 
-pub fn type_error_ctor(
-    _ctx: &mut dyn tsn_types::Context,
-    args: &[Value],
-) -> Result<Value, String> {
+pub fn type_error_ctor(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     set_error_fields(args, "TypeError")
 }
 
@@ -175,10 +180,7 @@ pub fn range_error_ctor(
     set_error_fields(args, "RangeError")
 }
 
-pub fn error_to_string(
-    _ctx: &mut dyn tsn_types::Context,
-    args: &[Value],
-) -> Result<Value, String> {
+pub fn error_to_string(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let this_ptr = match args.first() {
         Some(Value::Object(o)) => *o,
         _ => return Ok(Value::Str(Arc::from("Error"))),
@@ -210,10 +212,7 @@ pub fn error_classes_globals() -> (Value, Value, Value) {
 
     let mut type_error_cls = ClassObj::new_native("TypeError");
     type_error_cls.superclass = Some(error_arc.clone());
-    type_error_cls.add_method(
-        "constructor",
-        Value::native(type_error_ctor, "constructor"),
-    );
+    type_error_cls.add_method("constructor", Value::native(type_error_ctor, "constructor"));
     type_error_cls.add_method("toString", Value::native(error_to_string, "toString"));
 
     let mut range_error_cls = ClassObj::new_native("RangeError");

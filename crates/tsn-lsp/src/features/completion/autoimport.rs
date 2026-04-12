@@ -3,7 +3,9 @@ use std::collections::HashSet;
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, Position, Range, TextEdit};
 use tsn_checker::SymbolKind;
 
-use crate::constants::{SORT_AUTOIMPORT, STD_LIB_PATH_SEGMENT, STD_PREFIX, STDLIB_STD_PATH, TSN_EXTENSION};
+use crate::constants::{
+    SORT_AUTOIMPORT, STDLIB_STD_PATH, STD_LIB_PATH_SEGMENT, STD_PREFIX, TSN_EXTENSION,
+};
 use crate::document::import::uri_to_path;
 use crate::index::ProjectIndex;
 

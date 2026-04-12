@@ -21,7 +21,11 @@ pub fn float_to_fixed(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resu
             Some(Value::Int(d)) => *d as usize,
             _ => 0,
         };
-        return Ok(Value::Str(Arc::from(format!("{:.prec$}", n, prec = decimals))));
+        return Ok(Value::Str(Arc::from(format!(
+            "{:.prec$}",
+            n,
+            prec = decimals
+        ))));
     }
     Ok(Value::Null)
 }
@@ -82,7 +86,10 @@ pub fn float_is_finite(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Res
     Ok(Value::Bool(false))
 }
 
-pub fn float_is_integer(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+pub fn float_is_integer(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     if let Some(Value::Float(f)) = args.first() {
         return Ok(Value::Bool(f.fract() == 0.0));
     }

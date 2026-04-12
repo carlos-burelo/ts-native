@@ -2,12 +2,10 @@ use crate::document::{DocumentState, TokenRecord};
 use crate::index::ProjectIndex;
 use crate::util::converters::range_on_line;
 use crate::workspace::Workspace;
-use tower_lsp::lsp_types::{
-    PrepareRenameResponse, TextEdit, Url, WorkspaceEdit,
-};
+use std::collections::HashMap;
+use tower_lsp::lsp_types::{PrepareRenameResponse, TextEdit, Url, WorkspaceEdit};
 use tsn_checker::symbol::SymbolId;
 use tsn_core::TokenKind;
-use std::collections::HashMap;
 
 pub fn build_prepare_rename(
     state: &DocumentState,
@@ -65,7 +63,11 @@ pub fn build_rename(
 
         // Also rename import { OldName } usages if the symbol is exported.
         if let Some(idx) = index {
-            if idx.definitions_of(&old_name).iter().any(|(u, _)| u == &file_uri) {
+            if idx
+                .definitions_of(&old_name)
+                .iter()
+                .any(|(u, _)| u == &file_uri)
+            {
                 // This file exports the symbol; rename import specifiers in dependents.
                 for dep_uri in idx.dependents_of(&file_uri) {
                     if let Some(dep_state) = workspace.get(dep_uri) {
@@ -99,11 +101,7 @@ pub fn build_rename(
 }
 
 /// Collect edits to rename `old_name` inside `import { ... }` statements.
-fn import_name_edits(
-    state: &DocumentState,
-    old_name: &str,
-    new_name: &str,
-) -> Vec<TextEdit> {
+fn import_name_edits(state: &DocumentState, old_name: &str, new_name: &str) -> Vec<TextEdit> {
     // Find import-related tokens: identifier tokens inside `import { … }` blocks.
     let mut edits = Vec::new();
     let mut in_import = false;
@@ -142,11 +140,7 @@ fn import_name_edits(
     edits
 }
 
-fn find_ident_at<'a>(
-    state: &'a DocumentState,
-    line: u32,
-    col: u32,
-) -> Option<&'a TokenRecord> {
+fn find_ident_at<'a>(state: &'a DocumentState, line: u32, col: u32) -> Option<&'a TokenRecord> {
     state.tokens.iter().find(|t| {
         t.line == line
             && t.col <= col

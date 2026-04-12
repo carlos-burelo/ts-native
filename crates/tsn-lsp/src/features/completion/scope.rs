@@ -1,7 +1,7 @@
 use tower_lsp::lsp_types::{CompletionItem, CompletionItemKind, InsertTextFormat};
 use tsn_checker::SymbolKind;
 
-use crate::constants::{SORT_LOCAL, SORT_PARAM, SORT_GLOBAL};
+use crate::constants::{SORT_GLOBAL, SORT_LOCAL, SORT_PARAM};
 use crate::document::DocumentState;
 
 pub fn build_scope_completions(state: &DocumentState, line: u32) -> Vec<CompletionItem> {

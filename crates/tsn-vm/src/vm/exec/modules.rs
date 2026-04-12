@@ -4,51 +4,36 @@ use tsn_types::value::{Closure, Value};
 
 impl super::super::Vm {
     pub(super) fn load_module_file(&mut self, abs_path: &str) -> Result<Value, String> {
+        let precompiled_proto = if let Some(precompiled) = self.precompiled_protos.get(abs_path) {
+            Arc::clone(precompiled)
+        } else {
+            let canonical_abs = std::fs::canonicalize(abs_path)
+                .ok()
+                .map(|p| p.to_string_lossy().into_owned());
+
+            if let Some(canonical_path) = canonical_abs.as_ref() {
+                if let Some(precompiled) = self.precompiled_protos.get(canonical_path) {
+                    Arc::clone(precompiled)
+                } else {
+                    return Err(format!(
+                        "module '{}' (resolved '{}') was not precompiled; runtime module compilation is disabled",
+                        abs_path, canonical_path
+                    ));
+                }
+            } else {
+                return Err(format!(
+                    "module '{}' (resolved '{}') was not precompiled; runtime module compilation is disabled",
+                    abs_path, abs_path
+                ));
+            }
+        };
+
         let sentinel = Value::plain_object();
         self.modules.insert(abs_path.to_owned(), sentinel);
 
-        let canonical_abs = std::fs::canonicalize(abs_path)
-            .ok()
-            .map(|p| p.to_string_lossy().into_owned());
-
-        // Check if we have a precompiled proto for this module.
-        let proto = if let Some(precompiled) = self.precompiled_protos.get(abs_path).or_else(|| {
-            canonical_abs
-                .as_ref()
-                .and_then(|p| self.precompiled_protos.get(p))
-        }) {
-            (**precompiled).clone()
-        } else {
-            // Fall back to runtime compilation if no precompiled version available.
-            let source = std::fs::read_to_string(abs_path).map_err(|e| {
-                if e.kind() == std::io::ErrorKind::PermissionDenied {
-                    format!(
-                        "cannot read module '{}': Access Denied (is it a directory without index.tsn?)",
-                        abs_path
-                    )
-                } else {
-                    format!("cannot read module '{}': {}", abs_path, e)
-                }
-            })?;
-
-            let tokens = tsn_lexer::scan(&source, abs_path);
-            let program = tsn_parser::parse(tokens, abs_path)
-                .map_err(|errs| format!("parse error in '{}': {}", abs_path, errs[0].message))?;
-
-            let check_result = tsn_checker::Checker::check(&program);
-            tsn_compiler::compile_with_check_result(
-                &program,
-                &check_result.type_annotations,
-                &check_result.extension_calls,
-                &check_result.extension_members,
-                &check_result.extension_set_members,
-            )
-            .map_err(|e| format!("compile error in '{}': {}", abs_path, e))?
-        };
-
         let saved_exports =
             std::mem::replace(&mut self.module_exports, tsn_types::RuntimeObject::new());
-        self.run_proto_inline(proto)?;
+        self.run_proto_inline(precompiled_proto)?;
         let exports = self.take_module_exports();
         self.module_exports = saved_exports;
 
@@ -57,10 +42,10 @@ impl super::super::Vm {
 
     pub(super) fn run_proto_inline(
         &mut self,
-        proto: tsn_compiler::FunctionProto,
+        proto: Arc<tsn_compiler::FunctionProto>,
     ) -> Result<Value, String> {
         let closure = Arc::new(Closure {
-            proto: Arc::new(proto),
+            proto,
             upvalues: vec![],
         });
         let base = self.stack.len();
@@ -98,7 +83,14 @@ impl super::super::Vm {
             return Ok(exports);
         }
 
-        Ok(Value::plain_object())
+        if tsn_modules::is_known(path) {
+            return Err(format!(
+                "module '{}' is known but has neither native runtime builder nor tsn source",
+                path
+            ));
+        }
+
+        Err(format!("cannot resolve module '{}'", path))
     }
 
     pub(super) fn exec_import_op(&mut self, op: OpCode) -> Result<(), String> {
@@ -154,19 +146,22 @@ pub(super) fn resolve_import_path(
         }
 
         // Normalize path to remove . and .. components
-        let normalized = path.components().fold(
-            std::path::PathBuf::new(),
-            |mut acc, c| {
+        let normalized = path
+            .components()
+            .fold(std::path::PathBuf::new(), |mut acc, c| {
                 use std::path::Component::*;
                 match c {
-                    Prefix(_) | RootDir => { acc.push(c); }
+                    Prefix(_) | RootDir => {
+                        acc.push(c);
+                    }
                     CurDir => {}
-                    ParentDir => { acc.pop(); }
+                    ParentDir => {
+                        acc.pop();
+                    }
                     Normal(_) => acc.push(c),
                 }
                 acc
-            }
-        );
+            });
 
         if normalized.is_file() {
             return Some(normalized.to_string_lossy().into_owned());

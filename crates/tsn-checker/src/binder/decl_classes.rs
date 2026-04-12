@@ -2,9 +2,10 @@ use super::type_inference::pattern_lead_name;
 use super::type_resolution::resolve_type_node;
 use crate::binder::{ClassMemberInfo, ClassMemberKind};
 use crate::symbol::{Symbol, SymbolKind};
-use crate::types::Type;
+use crate::types::{FunctionParam, FunctionType, Type};
 use std::collections::HashMap;
-use tsn_core::ast::{ClassDecl, ClassMember, InterfaceDecl, InterfaceMember};
+use tsn_core::ast::{ClassDecl, ClassMember, Expr, InterfaceDecl, InterfaceMember, Pattern};
+use tsn_core::TypeKind;
 
 impl super::Binder {
     pub(super) fn bind_class(&mut self, c: &ClassDecl) {
@@ -38,19 +39,17 @@ impl super::Binder {
                                 .type_ann
                                 .as_ref()
                                 .or_else(|| match &p.pattern {
-                                    tsn_core::ast::Pattern::Identifier { type_ann, .. } => {
-                                        type_ann.as_ref()
-                                    }
+                                    Pattern::Identifier { type_ann, .. } => type_ann.as_ref(),
                                     _ => None,
                                 })
                                 .map(|m| resolve_type_node(m, Some(self)))
                                 .unwrap_or(Type::Dynamic);
                             if p.is_rest {
-                                if !matches!(ty.0, tsn_core::TypeKind::Array(_)) {
+                                if !matches!(ty.0, TypeKind::Array(_)) {
                                     ty = Type::array(ty);
                                 }
                             }
-                            crate::types::FunctionParam {
+                            FunctionParam {
                                 name: Some(pattern_lead_name(&p.pattern).to_owned()),
                                 ty,
                                 optional: p.is_optional,
@@ -58,7 +57,7 @@ impl super::Binder {
                             }
                         })
                         .collect::<Vec<_>>();
-                    let ctor_fn_type = Type::fn_(crate::types::FunctionType {
+                    let ctor_fn_type = Type::fn_(FunctionType {
                         params: params_list,
                         return_type: Box::new(Type::named(name.clone())),
                         is_arrow: false,
@@ -101,19 +100,17 @@ impl super::Binder {
                                 .type_ann
                                 .as_ref()
                                 .or_else(|| match &p.pattern {
-                                    tsn_core::ast::Pattern::Identifier { type_ann, .. } => {
-                                        type_ann.as_ref()
-                                    }
+                                    Pattern::Identifier { type_ann, .. } => type_ann.as_ref(),
                                     _ => None,
                                 })
                                 .map(|m| resolve_type_node(m, Some(self)))
                                 .unwrap_or(Type::Dynamic);
                             if p.is_rest {
-                                if !matches!(ty.0, tsn_core::TypeKind::Array(_)) {
+                                if !matches!(ty.0, TypeKind::Array(_)) {
                                     ty = Type::array(ty);
                                 }
                             }
-                            crate::types::FunctionParam {
+                            FunctionParam {
                                 name: Some(pattern_lead_name(&p.pattern).to_owned()),
                                 ty,
                                 optional: p.is_optional,
@@ -121,7 +118,7 @@ impl super::Binder {
                             }
                         })
                         .collect::<Vec<_>>();
-                    let fn_type = Type::fn_(crate::types::FunctionType {
+                    let fn_type = Type::fn_(FunctionType {
                         params: params_list,
                         return_type: Box::new(effective_ret),
                         is_arrow: false,
@@ -270,14 +267,14 @@ impl super::Binder {
             self.class_members.insert(name.clone(), members.clone());
         }
 
-        if let Some(tsn_core::ast::Expr::Identifier {
+        if let Some(Expr::Identifier {
             name: parent_name, ..
         }) = &c.super_class
         {
             self.class_parents.insert(name.clone(), parent_name.clone());
         }
 
-        if let Some(tsn_core::ast::Expr::Identifier {
+        if let Some(Expr::Identifier {
             name: parent_name, ..
         }) = &c.super_class
         {
@@ -301,7 +298,7 @@ impl super::Binder {
             }
         }
 
-        if let Some(tsn_core::ast::Expr::Identifier {
+        if let Some(Expr::Identifier {
             name: parent_name, ..
         }) = &c.super_class
         {
@@ -415,19 +412,17 @@ impl super::Binder {
                                 .type_ann
                                 .as_ref()
                                 .or_else(|| match &p.pattern {
-                                    tsn_core::ast::Pattern::Identifier { type_ann, .. } => {
-                                        type_ann.as_ref()
-                                    }
+                                    Pattern::Identifier { type_ann, .. } => type_ann.as_ref(),
                                     _ => None,
                                 })
                                 .map(|m| resolve_type_node(m, Some(self)))
                                 .unwrap_or(Type::Dynamic);
                             if p.is_rest {
-                                if !matches!(ty.0, tsn_core::TypeKind::Array(_)) {
+                                if !matches!(ty.0, TypeKind::Array(_)) {
                                     ty = Type::array(ty);
                                 }
                             }
-                            crate::types::FunctionParam {
+                            FunctionParam {
                                 name: Some(pattern_lead_name(&p.pattern).to_owned()),
                                 ty,
                                 optional: p.is_optional,
@@ -435,7 +430,7 @@ impl super::Binder {
                             }
                         })
                         .collect::<Vec<_>>();
-                    let fn_type = Type::fn_(crate::types::FunctionType {
+                    let fn_type = Type::fn_(FunctionType {
                         params: params_list,
                         return_type: Box::new(ret),
                         is_arrow: false,
@@ -502,7 +497,8 @@ fn wrap_async_return(ret: Type, is_async: bool) -> Type {
     if !is_async {
         return ret;
     }
-    let already_future = matches!(&ret.0, tsn_core::TypeKind::Generic(name, _, _) if name == tsn_core::well_known::FUTURE);
+    let already_future =
+        matches!(&ret.0, TypeKind::Generic(name, _, _) if name == tsn_core::well_known::FUTURE);
     if already_future || ret.is_dynamic() || ret == Type::Void {
         ret
     } else {

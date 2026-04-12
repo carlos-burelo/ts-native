@@ -26,7 +26,9 @@ impl ObjData {
         }
     }
 
-    pub fn is_instance(&self) -> bool { self.class.is_some() }
+    pub fn is_instance(&self) -> bool {
+        self.class.is_some()
+    }
 
     pub fn class_name(&self) -> String {
         match &self.class {

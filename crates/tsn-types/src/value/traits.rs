@@ -16,23 +16,34 @@ impl Value {
 
     pub fn instance(class: Arc<ClassObj>) -> Self {
         let ptr = alloc_object();
-        unsafe { *ptr = ObjData::new_instance(class); }
+        unsafe {
+            *ptr = ObjData::new_instance(class);
+        }
         Value::Object(ptr)
     }
 
-    pub fn plain_object() -> Self { Value::Object(alloc_object()) }
+    pub fn plain_object() -> Self {
+        Value::Object(alloc_object())
+    }
 
     #[inline(always)]
-    pub fn empty_array() -> Self { Value::Array(alloc_array()) }
+    pub fn empty_array() -> Self {
+        Value::Array(alloc_array())
+    }
 
     pub fn is_truthy(&self) -> Result<bool, String> {
         match self {
             Value::Bool(b) => Ok(*b),
-            _ => Err(format!("expected bool for condition, got {}", self.type_name())),
+            _ => Err(format!(
+                "expected bool for condition, got {}",
+                self.type_name()
+            )),
         }
     }
 
-    pub fn is_null(&self) -> bool { matches!(self, Value::Null) }
+    pub fn is_null(&self) -> bool {
+        matches!(self, Value::Null)
+    }
 
     pub fn type_name(&self) -> &'static str {
         match self {
@@ -69,11 +80,16 @@ impl Value {
             (Value::Int(a), Value::Float(b)) => Ok(Value::Float(*a as f64 + b)),
             (Value::Float(a), Value::Int(b)) => Ok(Value::Float(a + *b as f64)),
             (Value::Decimal(a), Value::Decimal(b)) => Ok(Value::Decimal(Box::new(**a + **b))),
-            (Value::Decimal(a), Value::Int(b)) => Ok(Value::Decimal(Box::new(**a + rust_decimal::Decimal::from(*b)))),
-            (Value::Int(a), Value::Decimal(b)) => Ok(Value::Decimal(Box::new(rust_decimal::Decimal::from(*a) + **b))),
+            (Value::Decimal(a), Value::Int(b)) => Ok(Value::Decimal(Box::new(
+                **a + rust_decimal::Decimal::from(*b),
+            ))),
+            (Value::Int(a), Value::Decimal(b)) => Ok(Value::Decimal(Box::new(
+                rust_decimal::Decimal::from(*a) + **b,
+            ))),
             (Value::Str(a), Value::Str(b)) => {
                 let mut s = String::with_capacity(a.len() + b.len());
-                s.push_str(a); s.push_str(b);
+                s.push_str(a);
+                s.push_str(b);
                 Ok(Value::Str(Arc::from(s)))
             }
             (Value::Str(a), other) => {
@@ -86,7 +102,11 @@ impl Value {
                 s.push_str(b);
                 Ok(Value::Str(Arc::from(s)))
             }
-            _ => Err(format!("cannot add {} + {}", self.type_name(), rhs.type_name())),
+            _ => Err(format!(
+                "cannot add {} + {}",
+                self.type_name(),
+                rhs.type_name()
+            )),
         }
     }
 }
@@ -108,7 +128,10 @@ impl std::hash::Hash for Value {
             Value::Class(c) => Arc::as_ptr(c).hash(state),
             Value::BoundMethod(m) => Arc::as_ptr(m).hash(state),
             Value::NativeFn(b) => (b.0 as usize).hash(state),
-            Value::NativeBoundMethod(b) => { b.0.hash(state); (b.1 as usize).hash(state); }
+            Value::NativeBoundMethod(b) => {
+                b.0.hash(state);
+                (b.1 as usize).hash(state);
+            }
             Value::Spread(v) => v.hash(state),
             Value::Future(f) => f.hash(state),
             Value::Range(r) => r.hash(state),
@@ -165,7 +188,13 @@ impl PartialOrd for Value {
             (Value::Char(a), Value::Char(b)) => a.partial_cmp(b),
             (Value::BigInt(a), Value::BigInt(b)) => a.partial_cmp(b),
             (Value::Decimal(a), Value::Decimal(b)) => a.partial_cmp(b),
-            _ => { if self == other { Some(std::cmp::Ordering::Equal) } else { None } }
+            _ => {
+                if self == other {
+                    Some(std::cmp::Ordering::Equal)
+                } else {
+                    None
+                }
+            }
         }
     }
 }
@@ -177,8 +206,11 @@ impl fmt::Display for Value {
             Value::Bool(b) => write!(f, "{}", b),
             Value::Int(n) => write!(f, "{}", n),
             Value::Float(d) => {
-                if d.fract() == 0.0 && d.abs() < 9_007_199_254_740_992.0 { write!(f, "{}", *d as i64) }
-                else { write!(f, "{}", d) }
+                if d.fract() == 0.0 && d.abs() < 9_007_199_254_740_992.0 {
+                    write!(f, "{}", *d as i64)
+                } else {
+                    write!(f, "{}", d)
+                }
             }
             Value::Str(s) => write!(f, "{}", s),
             Value::BigInt(n) => write!(f, "{}n", n),
@@ -187,26 +219,39 @@ impl fmt::Display for Value {
                 let v = unsafe { &**ptr };
                 write!(f, "[")?;
                 for (i, val) in v.iter().enumerate() {
-                    if i > 0 { write!(f, ", ")?; }
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
                     write!(f, "{}", val)?;
                 }
                 write!(f, "]")
             }
             Value::Object(ptr) => {
                 let obj = unsafe { &**ptr };
-                if let Some(class) = &obj.class { write!(f, "[object {}]", class.name) }
-                else {
+                if let Some(class) = &obj.class {
+                    write!(f, "[object {}]", class.name)
+                } else {
                     write!(f, "{{ ")?;
                     for (i, (k, v)) in obj.fields.iter().enumerate() {
-                        if i > 0 { write!(f, ", ")?; }
+                        if i > 0 {
+                            write!(f, ", ")?;
+                        }
                         write!(f, "{}: {}", k, v)?;
                     }
                     write!(f, " }}")
                 }
             }
-            Value::Closure(c) => write!(f, "[Function: {}]", c.proto.name.as_deref().unwrap_or("<fn>")),
+            Value::Closure(c) => write!(
+                f,
+                "[Function: {}]",
+                c.proto.name.as_deref().unwrap_or("<fn>")
+            ),
             Value::Class(c) => write!(f, "[class {}]", c.name),
-            Value::BoundMethod(m) => write!(f, "[BoundMethod: {}]", m.method.proto.name.as_deref().unwrap_or("<method>")),
+            Value::BoundMethod(m) => write!(
+                f,
+                "[BoundMethod: {}]",
+                m.method.proto.name.as_deref().unwrap_or("<method>")
+            ),
             Value::NativeFn(b) => write!(f, "[NativeFn: {}]", b.1),
             Value::NativeBoundMethod(b) => write!(f, "[Function: {}]", b.2),
             Value::Spread(v) => write!(f, "{}", v),

@@ -22,13 +22,18 @@ impl super::Binder {
 
         let relative_exports = if let Some(abs) = &relative_target {
             let mut visiting = vec![self.source_file.clone()];
-            Some(module_resolver::resolve_module_exports(abs, &mut visiting))
+            Some(module_resolver::resolve_module_exports_ref(
+                abs,
+                &mut visiting,
+            ))
         } else {
             None
         };
 
         let stdlib_exports = if is_stdlib {
-            Some(module_resolver::resolve_stdlib_module_exports(&i.source))
+            Some(module_resolver::resolve_stdlib_module_exports_ref(
+                &i.source,
+            ))
         } else {
             None
         };
@@ -78,7 +83,7 @@ impl super::Binder {
                     .map(|p| p.to_string_lossy().into_owned())
             });
             let exports_ref: Option<&module_resolver::ExportMap> =
-                relative_exports.as_ref().or(stdlib_exports.as_ref());
+                relative_exports.as_deref().or(stdlib_exports.as_deref());
 
             let sym = if let Some(exports) = exports_ref {
                 if imported == "*" {

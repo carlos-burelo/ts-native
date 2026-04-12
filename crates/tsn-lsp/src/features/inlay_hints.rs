@@ -45,10 +45,7 @@ pub fn build_inlay_hints(state: &DocumentState) -> Vec<InlayHint> {
     hints
 }
 
-fn fn_return_hint(
-    state: &DocumentState,
-    sym: &crate::document::SymbolRecord,
-) -> Option<InlayHint> {
+fn fn_return_hint(state: &DocumentState, sym: &crate::document::SymbolRecord) -> Option<InlayHint> {
     // Only for functions without explicit return type annotation.
     if sym.has_explicit_type {
         return None;
@@ -129,7 +126,11 @@ fn find_rparen_col_on_line(state: &DocumentState, line: u32, fn_col: u32) -> Opt
     // Find the matching `)` for the `(` after the function name on this line.
     let mut depth = 0i32;
     let mut rparen_col = None;
-    for tok in state.tokens.iter().filter(|t| t.line == line && t.col >= fn_col) {
+    for tok in state
+        .tokens
+        .iter()
+        .filter(|t| t.line == line && t.col >= fn_col)
+    {
         match tok.kind {
             tsn_core::TokenKind::LParen => depth += 1,
             tsn_core::TokenKind::RParen => {

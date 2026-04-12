@@ -1,5 +1,0 @@
-import { MetaKey } from "std:reflect"
-print(MetaKey)
-print(MetaKey.create)
-const k = MetaKey.create<str>()
-print(k)

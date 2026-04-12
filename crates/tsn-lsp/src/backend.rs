@@ -289,10 +289,7 @@ impl LanguageServer for Backend {
         params: DocumentSymbolParams,
     ) -> LspResult<Option<DocumentSymbolResponse>> {
         let uri = params.text_document.uri.to_string();
-        let result = self
-            .workspace
-            .get(&uri)
-            .map(|a| build_document_symbols(&a));
+        let result = self.workspace.get(&uri).map(|a| build_document_symbols(&a));
         Ok(result)
     }
 

@@ -5,7 +5,7 @@ mod symbols;
 
 use std::collections::HashMap;
 
-use crate::constants::{SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_HINT};
+use crate::constants::{SEVERITY_ERROR, SEVERITY_HINT, SEVERITY_WARNING};
 use crate::document::{
     uri_to_path, DocumentAnalysis, LspDiag, RelatedLocation, SymbolRecord, TokenRecord,
 };
@@ -279,4 +279,3 @@ fn collect_import_paths(stmts: &[Stmt]) -> Vec<String> {
     }
     paths
 }
-

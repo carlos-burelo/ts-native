@@ -38,16 +38,17 @@ impl ImportCollector {
             Decl::Import(import) => {
                 self.imports.insert(import.source.clone());
             }
-            Decl::Export(export) => {
-                match export {
-                    ExportDecl::Named { source, .. } => {
-                        if let Some(src) = source {
-                            self.imports.insert(src.clone());
-                        }
+            Decl::Export(export) => match export {
+                ExportDecl::Named { source, .. } => {
+                    if let Some(src) = source {
+                        self.imports.insert(src.clone());
                     }
-                    _ => {}
                 }
-            }
+                ExportDecl::All { source, .. } => {
+                    self.imports.insert(source.clone());
+                }
+                _ => {}
+            },
             Decl::Namespace(ns) => {
                 for decl in &ns.body {
                     self.visit_decl(decl);

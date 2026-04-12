@@ -80,7 +80,10 @@ fn classify_brace_kind(
 }
 
 fn is_region_keyword(lexeme: &str) -> bool {
-    matches!(lexeme, "function" | "class" | "interface" | "namespace" | "enum")
+    matches!(
+        lexeme,
+        "function" | "class" | "interface" | "namespace" | "enum"
+    )
 }
 
 /// Collect ranges of consecutive import-statement lines.

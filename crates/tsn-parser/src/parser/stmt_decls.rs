@@ -25,7 +25,8 @@ pub(super) fn try_parse_decl_stmt_mode(
 ) -> Option<Result<Stmt, String>> {
     let result = match kind {
         TokenKind::Function => {
-            let mut decl = match super::decls::parse_function_decl(s, decorators, false, is_declare) {
+            let mut decl = match super::decls::parse_function_decl(s, decorators, false, is_declare)
+            {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };
@@ -34,7 +35,8 @@ pub(super) fn try_parse_decl_stmt_mode(
         }
         TokenKind::Async if next_kind == TokenKind::Function => {
             s.advance();
-            let mut decl = match super::decls::parse_function_decl(s, decorators, true, is_declare) {
+            let mut decl = match super::decls::parse_function_decl(s, decorators, true, is_declare)
+            {
                 Ok(decl) => decl,
                 Err(err) => return Some(Err(err)),
             };

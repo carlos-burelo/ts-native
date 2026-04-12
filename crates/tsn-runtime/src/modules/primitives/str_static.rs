@@ -39,10 +39,7 @@ pub fn str_from_char_code(
     Ok(Value::Str(Arc::from(s)))
 }
 
-pub fn str_char_code(
-    _ctx: &mut dyn tsn_types::Context,
-    args: &[Value],
-) -> Result<Value, String> {
+pub fn str_char_code(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     if let Some(Value::Str(s)) = args.first() {
         return Ok(s
             .chars()
@@ -53,10 +50,7 @@ pub fn str_char_code(
     Ok(Value::Int(-1))
 }
 
-pub fn str_join(
-    _ctx: &mut dyn tsn_types::Context,
-    args: &[Value],
-) -> Result<Value, String> {
+pub fn str_join(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let arr = match args.first() {
         Some(Value::Array(a)) => unsafe { &**a }.clone(),
         _ => return Ok(Value::Str(Arc::from(""))),

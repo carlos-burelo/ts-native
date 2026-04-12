@@ -7,20 +7,20 @@ mod object;
 mod shape;
 mod traits;
 
-pub use crate::native::NativeFn;
 use crate::future::AsyncFuture;
+pub use crate::native::NativeFn;
 use std::sync::Arc;
 
 pub use alloc::{
-    alloc_array, alloc_map, alloc_object, alloc_set, install_allocator,
-    register_global_vtable, init_thread_heap, get_global_vtable,
-    AllocVtable, RuntimeString, ObjRef, ArrayRef, MapRef, SetRef,
+    alloc_array, alloc_map, alloc_object, alloc_set, get_global_vtable, init_thread_heap,
+    install_allocator, register_global_vtable, AllocVtable, ArrayRef, MapRef, ObjRef,
+    RuntimeString, SetRef,
 };
 pub type RuntimeArray = Vec<Value>;
-pub use class::{BoundMethod, ClassObj, find_method_with_owner};
+pub use class::{find_method_with_owner, BoundMethod, ClassObj};
 pub use closure::{Closure, Upvalue, UpvalueInner};
 pub use constructors::{new_array, new_object};
-pub use future::{resolve_future, reject_future, reject_value_future, FutureState, Poll};
+pub use future::{reject_future, reject_value_future, resolve_future, FutureState, Poll};
 pub use object::ObjData;
 pub use shape::{root_shape, RuntimeObject, Shape};
 
@@ -33,12 +33,17 @@ pub struct RangeData {
 
 impl std::hash::Hash for RangeData {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.start.hash(state); self.end.hash(state); self.inclusive.hash(state);
+        self.start.hash(state);
+        self.end.hash(state);
+        self.inclusive.hash(state);
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
-pub enum SymbolKind { Iterator, AsyncIterator }
+pub enum SymbolKind {
+    Iterator,
+    AsyncIterator,
+}
 
 impl SymbolKind {
     pub fn name(&self) -> &'static str {
@@ -50,7 +55,9 @@ impl SymbolKind {
 }
 
 impl std::fmt::Display for SymbolKind {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { write!(f, "{}", self.name()) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.name())
+    }
 }
 
 #[derive(Debug, Clone)]

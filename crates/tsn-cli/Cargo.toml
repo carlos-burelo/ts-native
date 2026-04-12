@@ -17,6 +17,7 @@ tsn-vm       = { path = "../tsn-vm" }
 tsn-runtime  = { path = "../tsn-runtime" }
 tsn-lsp      = { path = "../tsn-lsp" }
 tsn-modules  = { path = "../tsn-modules" }
+tsn-types    = { path = "../tsn-types" }
 tower-lsp    = "0.20"
 bincode = "1"
 

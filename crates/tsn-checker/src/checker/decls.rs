@@ -3,9 +3,9 @@ use crate::binder::widen_literal;
 use crate::binder::BindResult;
 use crate::checker_expressions::infer::{collect_checked_return_types, collect_yield_types};
 use crate::types::{FunctionType, Type};
-use tsn_core::TypeKind;
 use tsn_core::ast::{Decl, Decorator, ExportDecl, ExportDefaultDecl, ImportSpecifier, VarKind};
 use tsn_core::Diagnostic;
+use tsn_core::TypeKind;
 
 impl Checker {
     pub(crate) fn check_decl(&mut self, decl: &Decl, bind: &BindResult) {
@@ -141,11 +141,7 @@ impl Checker {
                                     return_type: Box::new(inferred_ret),
                                     ..ft
                                 });
-                                self.record_type_with_symbol(
-                                    f.range.start.offset,
-                                    updated,
-                                    sym_id,
-                                );
+                                self.record_type_with_symbol(f.range.start.offset, updated, sym_id);
                             }
                         }
                     }

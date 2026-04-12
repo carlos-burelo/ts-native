@@ -211,7 +211,12 @@ impl Checker {
         subject: &Expr,
         bind: &BindResult,
     ) -> Option<(SymbolId, Vec<Type>)> {
-        if let Expr::Member { object, computed: false, .. } = subject {
+        if let Expr::Member {
+            object,
+            computed: false,
+            ..
+        } = subject
+        {
             if let Expr::Identifier { name: obj_name, .. } = object.as_ref() {
                 let scope = bind.scopes.get(self.current_scope);
                 let id = scope.resolve(obj_name, &bind.scopes)?;
@@ -237,7 +242,11 @@ impl Checker {
             None => return false,
         };
         let prop_name = match subject {
-            Some(Expr::Member { property, computed: false, .. }) => {
+            Some(Expr::Member {
+                property,
+                computed: false,
+                ..
+            }) => {
                 if let Expr::Identifier { name, .. } = property.as_ref() {
                     name.as_str()
                 } else {

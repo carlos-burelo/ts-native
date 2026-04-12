@@ -10,8 +10,9 @@ mod decls;
 mod imports;
 mod type_inference;
 mod type_resolution;
-use crate::module_resolver::resolve_module_bind;
+use crate::module_resolver::resolve_module_bind_ref;
 pub use crate::types::{ClassMemberInfo, ClassMemberKind, TypeContext};
+use tsn_core::ast::{Expr, Pattern, TypeNode, VarKind};
 pub use type_inference::{infer_expr_type, pattern_lead_name, widen_literal};
 pub use type_resolution::{resolve_primitive, resolve_type_node};
 
@@ -47,7 +48,7 @@ impl TypeContext for BindResult {
     ) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.interface_members.get(name).cloned();
                 }
             }
@@ -58,7 +59,7 @@ impl TypeContext for BindResult {
     fn get_class_members(&self, name: &str, origin: Option<&str>) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.class_members.get(name).cloned();
                 }
             }
@@ -73,7 +74,7 @@ impl TypeContext for BindResult {
     ) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.namespace_members.get(name).cloned();
                 }
             }
@@ -91,7 +92,7 @@ impl TypeContext for BindResult {
         Some(&self.source_file)
     }
 
-    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, tsn_core::ast::TypeNode)> {
+    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, TypeNode)> {
         let scope = self.scopes.get(self.global_scope);
         let id = scope.resolve(name, &self.scopes)?;
         let sym = self.arena.get(id);
@@ -138,7 +139,7 @@ impl TypeContext for Binder {
     ) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.interface_members.get(name).cloned();
                 }
             }
@@ -149,7 +150,7 @@ impl TypeContext for Binder {
     fn get_class_members(&self, name: &str, origin: Option<&str>) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.class_members.get(name).cloned();
                 }
             }
@@ -164,7 +165,7 @@ impl TypeContext for Binder {
     ) -> Option<Vec<ClassMemberInfo>> {
         if let Some(origin) = origin {
             if origin != self.source_file {
-                if let Some(rb) = resolve_module_bind(origin) {
+                if let Some(rb) = resolve_module_bind_ref(origin) {
                     return rb.namespace_members.get(name).cloned();
                 }
             }
@@ -182,7 +183,7 @@ impl TypeContext for Binder {
         Some(&self.source_file)
     }
 
-    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, tsn_core::ast::TypeNode)> {
+    fn get_alias_node(&self, name: &str) -> Option<(Vec<String>, TypeNode)> {
         let scope = self.scopes.get(self.current);
         let id = scope.resolve(name, &self.scopes)?;
         let sym = self.arena.get(id);
@@ -193,10 +194,29 @@ impl TypeContext for Binder {
 
 impl Binder {
     pub fn bind(program: &Program) -> BindResult {
-        Self::bind_with_globals(program, HashMap::new())
+        Self::bind_with_globals_iter(program, HashMap::new())
     }
 
     pub fn bind_with_globals(program: &Program, globals: HashMap<String, Symbol>) -> BindResult {
+        Self::bind_with_globals_iter(program, globals)
+    }
+
+    pub fn bind_with_global_refs(
+        program: &Program,
+        globals: &HashMap<String, Symbol>,
+    ) -> BindResult {
+        Self::bind_with_globals_iter(
+            program,
+            globals
+                .iter()
+                .map(|(name, sym)| (name.clone(), sym.clone())),
+        )
+    }
+
+    fn bind_with_globals_iter<I>(program: &Program, globals: I) -> BindResult
+    where
+        I: IntoIterator<Item = (String, Symbol)>,
+    {
         let mut b = Binder {
             arena: SymbolArena::default(),
             scopes: ScopeArena::default(),
@@ -263,12 +283,12 @@ impl Binder {
     fn bind_var_declarators(
         &mut self,
         declarators: &[VarDeclarator],
-        kind: tsn_core::ast::VarKind,
+        kind: VarKind,
         doc: Option<&String>,
     ) {
         let sym_kind = match kind {
-            tsn_core::ast::VarKind::Const => SymbolKind::Const,
-            tsn_core::ast::VarKind::Let => SymbolKind::Let,
+            VarKind::Const => SymbolKind::Const,
+            VarKind::Let => SymbolKind::Let,
         };
 
         for declarator in declarators {
@@ -277,7 +297,7 @@ impl Binder {
                 .type_ann
                 .as_ref()
                 .or_else(|| match &declarator.id {
-                    tsn_core::ast::Pattern::Identifier { type_ann, .. } => type_ann.as_ref(),
+                    Pattern::Identifier { type_ann, .. } => type_ann.as_ref(),
                     _ => None,
                 })
                 .map(|ann| resolve_type_node(ann, Some(self)))
@@ -291,8 +311,8 @@ impl Binder {
 
             self.bind_pattern(&declarator.id, sym_kind, line, doc.cloned(), ty);
 
-            if let tsn_core::ast::Pattern::Identifier { name, .. } = &declarator.id {
-                if let Some(tsn_core::ast::Expr::Object { properties, .. }) = &declarator.init {
+            if let Pattern::Identifier { name, .. } = &declarator.id {
+                if let Some(Expr::Object { properties, .. }) = &declarator.init {
                     let fields = self.collect_object_members(properties);
                     if !fields.is_empty() {
                         self.object_members.insert(name.clone(), fields);

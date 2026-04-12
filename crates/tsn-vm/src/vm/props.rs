@@ -7,14 +7,15 @@ pub(super) mod generator;
 mod int;
 mod range;
 mod str;
-
 use std::sync::Arc;
-
 use tsn_core::well_known;
-use tsn_runtime::modules::{map, set};
 use tsn_runtime::modules::primitives as rt_prim;
+use tsn_runtime::modules::{map, set};
 use tsn_types::chunk::CacheEntry;
-use tsn_types::value::{find_method_with_owner, BoundMethod, Closure, ObjData, Value};
+use tsn_types::value::{
+    find_method_with_owner, new_object, BoundMethod, Closure, ObjData, SymbolKind, Value,
+};
+use tsn_types::ClassObj;
 
 fn range_symbol_iterator(
     _ctx: &mut dyn tsn_types::Context,
@@ -29,7 +30,7 @@ fn range_symbol_iterator(
     iter_obj
         .fields
         .insert(Arc::from("__end"), Value::Int(end_excl));
-    let iter_val = tsn_types::value::new_object(iter_obj);
+    let iter_val = new_object(iter_obj);
     let next_method = Value::native_bound(iter_val.clone(), range_iter_next, "next");
     if let Value::Object(o) = &iter_val {
         unsafe { &mut **o }
@@ -57,7 +58,7 @@ fn range_iter_next(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
         let mut done = ObjData::new();
         done.fields.insert(Arc::from("value"), Value::Null);
         done.fields.insert(Arc::from("done"), Value::Bool(true));
-        return Ok(tsn_types::value::new_object(done));
+        return Ok(new_object(done));
     }
     iter_obj
         .fields
@@ -65,7 +66,7 @@ fn range_iter_next(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
     let mut result = ObjData::new();
     result.fields.insert(Arc::from("value"), Value::Int(cur));
     result.fields.insert(Arc::from("done"), Value::Bool(false));
-    Ok(tsn_types::value::new_object(result))
+    Ok(new_object(result))
 }
 
 fn array_symbol_iterator(
@@ -76,7 +77,7 @@ fn array_symbol_iterator(
     let mut iter_obj = ObjData::new();
     iter_obj.fields.insert(Arc::from("__arr"), arr);
     iter_obj.fields.insert(Arc::from("__idx"), Value::Int(0));
-    let iter_val = tsn_types::value::new_object(iter_obj);
+    let iter_val = new_object(iter_obj);
     let next_method = Value::native_bound(iter_val.clone(), array_iter_next, "next");
     if let Value::Object(o) = &iter_val {
         unsafe { &mut **o }
@@ -105,7 +106,7 @@ fn array_iter_next(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
         let mut done = ObjData::new();
         done.fields.insert(Arc::from("value"), Value::Null);
         done.fields.insert(Arc::from("done"), Value::Bool(true));
-        return Ok(tsn_types::value::new_object(done));
+        return Ok(new_object(done));
     }
     let item = match &arr_val {
         Value::Array(a) => {
@@ -120,7 +121,23 @@ fn array_iter_next(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
     let mut result = ObjData::new();
     result.fields.insert(Arc::from("value"), item);
     result.fields.insert(Arc::from("done"), Value::Bool(false));
-    Ok(tsn_types::value::new_object(result))
+    Ok(new_object(result))
+}
+
+fn get_char_property(obj: &Value, key: &str) -> Result<Value, String> {
+    match key {
+        "toString" => Ok(Value::native_bound(
+            obj.clone(),
+            rt_prim::char_to_str,
+            "toString",
+        )),
+        "charCodeAt" => Ok(Value::native_bound(
+            obj.clone(),
+            rt_prim::char_code_at,
+            "charCodeAt",
+        )),
+        _ => Err(format!("property '{}' not found on primitive char", key)),
+    }
 }
 
 impl super::Vm {
@@ -165,6 +182,39 @@ impl super::Vm {
         self.call_value(callee, 1)?;
         self.run_until(depth_before)?;
         Ok(())
+    }
+
+    fn get_primitive_property(
+        &self,
+        obj: &Value,
+        class_name: &str,
+        key: &str,
+    ) -> Result<Value, String> {
+        let globals = self.globals.read();
+        if let Some(Value::Class(cls)) = globals.get(class_name) {
+            if let Some(_getter) = cls.find_getter(key) {
+                return Err(format!(
+                    "getter '{}' on primitive '{}' not accessible via immutable borrow",
+                    key, class_name
+                ));
+            }
+            if let Some(m) = cls.find_method(key) {
+                return Ok(match m {
+                    Value::Closure(c) => Value::BoundMethod(Arc::new(BoundMethod {
+                        receiver: Box::new(obj.clone()),
+                        method: c,
+                        owner_class: Some(cls.clone()),
+                    })),
+                    Value::NativeFn(b) => Value::native_bound(obj.clone(), b.0, b.1),
+                    other => other,
+                });
+            }
+        }
+        Err(format!(
+            "property '{}' not found on primitive {}",
+            key,
+            obj.type_name()
+        ))
     }
 
     pub(super) fn get_property_cached(
@@ -453,47 +503,14 @@ impl super::Vm {
         }
     }
 
-    fn get_primitive_property(
-        &self,
-        obj: &Value,
-        class_name: &str,
-        key: &str,
-    ) -> Result<Value, String> {
-        let globals = self.globals.read();
-        if let Some(Value::Class(cls)) = globals.get(class_name) {
-            if let Some(_getter) = cls.find_getter(key) {
-                return Err(format!(
-                    "getter '{}' on primitive '{}' not accessible via immutable borrow",
-                    key, class_name
-                ));
-            }
-            if let Some(m) = cls.find_method(key) {
-                return Ok(match m {
-                    Value::Closure(c) => Value::BoundMethod(Arc::new(BoundMethod {
-                        receiver: Box::new(obj.clone()),
-                        method: c,
-                        owner_class: Some(cls.clone()),
-                    })),
-                    Value::NativeFn(b) => Value::native_bound(obj.clone(), b.0, b.1),
-                    other => other,
-                });
-            }
-        }
-        Err(format!(
-            "property '{}' not found on primitive {}",
-            key,
-            obj.type_name()
-        ))
-    }
-
     pub(super) fn get_symbol_property(
         &self,
         obj: &Value,
-        symbol: tsn_types::value::SymbolKind,
+        symbol: SymbolKind,
     ) -> Result<Value, String> {
         match obj {
             Value::Array(_) => {
-                if matches!(symbol, tsn_types::value::SymbolKind::Iterator) {
+                if matches!(symbol, SymbolKind::Iterator) {
                     return Ok(Value::native_bound(
                         obj.clone(),
                         array_symbol_iterator,
@@ -510,7 +527,7 @@ impl super::Vm {
                 Err(format!("symbol property {} not found on object", symbol))
             }
             Value::Range(_) => {
-                if matches!(symbol, tsn_types::value::SymbolKind::Iterator) {
+                if matches!(symbol, SymbolKind::Iterator) {
                     return Ok(Value::native_bound(
                         obj.clone(),
                         range_symbol_iterator,
@@ -553,9 +570,9 @@ impl super::Vm {
                 Ok(())
             }
             Value::Class(cls) => {
-                unsafe { &mut *(std::sync::Arc::as_ptr(cls) as *mut tsn_types::value::ClassObj) }
+                unsafe { &mut *(Arc::as_ptr(cls) as *mut ClassObj) }
                     .statics
-                    .insert(std::sync::Arc::from(key), value);
+                    .insert(Arc::from(key), value);
                 Ok(())
             }
             Value::Char(_) | Value::Int(_) | Value::Float(_) | Value::Str(_) | Value::Bool(_) => {
@@ -671,13 +688,5 @@ impl super::Vm {
             }
             _ => Err(format!("cannot index {} with []", obj.type_name())),
         }
-    }
-}
-
-fn get_char_property(obj: &Value, key: &str) -> Result<Value, String> {
-    match key {
-        "toString" => Ok(Value::native_bound(obj.clone(), rt_prim::char_to_str, "toString")),
-        "charCodeAt" => Ok(Value::native_bound(obj.clone(), rt_prim::char_code_at, "charCodeAt")),
-        _ => Err(format!("property '{}' not found on primitive char", key)),
     }
 }

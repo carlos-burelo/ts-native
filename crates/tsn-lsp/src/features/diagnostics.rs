@@ -31,12 +31,22 @@ pub fn convert_diagnostics(state: &DocumentState) -> Vec<LspDiagnostic> {
                             character: r.col,
                         };
                         Some(DiagnosticRelatedInformation {
-                            location: Location::new(url, Range { start: pos, end: pos }),
+                            location: Location::new(
+                                url,
+                                Range {
+                                    start: pos,
+                                    end: pos,
+                                },
+                            ),
                             message: r.message.clone(),
                         })
                     })
                     .collect();
-                if items.is_empty() { None } else { Some(items) }
+                if items.is_empty() {
+                    None
+                } else {
+                    Some(items)
+                }
             };
 
             LspDiagnostic {

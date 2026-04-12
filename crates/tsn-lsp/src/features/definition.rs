@@ -48,7 +48,10 @@ pub fn build_goto_definition(
                 line: member_line,
                 character: member_col,
             };
-            let range = Range { start: pos, end: pos };
+            let range = Range {
+                start: pos,
+                end: pos,
+            };
             let url = Url::parse(&state.uri).ok()?;
             return Some(GotoDefinitionResponse::Scalar(Location::new(url, range)));
         }
@@ -70,7 +73,10 @@ pub fn build_goto_definition(
             line: sym.line,
             character: sym.col,
         };
-        let range = Range { start: pos, end: pos };
+        let range = Range {
+            start: pos,
+            end: pos,
+        };
         let url = Url::parse(&state.uri).ok()?;
         return Some(GotoDefinitionResponse::Scalar(Location::new(url, range)));
     }
@@ -106,5 +112,11 @@ fn entry_location(uri: &str, line: u32, col: u32) -> Option<Location> {
         line,
         character: col,
     };
-    Some(Location::new(url, Range { start: pos, end: pos }))
+    Some(Location::new(
+        url,
+        Range {
+            start: pos,
+            end: pos,
+        },
+    ))
 }

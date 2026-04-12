@@ -1,6 +1,6 @@
 use crate::tsn_types::value::Value;
-use tsn_types::value::ArrayRef;
 use tsn_runtime::modules::array as rt_array;
+use tsn_types::value::ArrayRef;
 
 pub(super) fn get_property(obj: &Value, arr: &ArrayRef, key: &str) -> Result<Value, String> {
     if key == "length" {

@@ -37,10 +37,18 @@ fn _stub_panic(what: &str) -> ! {
         what
     )
 }
-fn _stub_obj() -> ObjRef { _stub_panic("Object") }
-fn _stub_arr() -> ArrayRef { _stub_panic("Array") }
-fn _stub_map() -> MapRef { _stub_panic("Map") }
-fn _stub_set() -> SetRef { _stub_panic("Set") }
+fn _stub_obj() -> ObjRef {
+    _stub_panic("Object")
+}
+fn _stub_arr() -> ArrayRef {
+    _stub_panic("Array")
+}
+fn _stub_map() -> MapRef {
+    _stub_panic("Map")
+}
+fn _stub_set() -> SetRef {
+    _stub_panic("Set")
+}
 
 thread_local! {
     static TL_VTABLE: Cell<*const AllocVtable> = Cell::new(std::ptr::null());
@@ -66,13 +74,21 @@ fn get_vtable() -> &'static AllocVtable {
 }
 
 #[inline(always)]
-pub fn alloc_object() -> ObjRef { (get_vtable().alloc_object)() }
+pub fn alloc_object() -> ObjRef {
+    (get_vtable().alloc_object)()
+}
 
 #[inline(always)]
-pub fn alloc_array() -> ArrayRef { (get_vtable().alloc_array)() }
+pub fn alloc_array() -> ArrayRef {
+    (get_vtable().alloc_array)()
+}
 
 #[inline(always)]
-pub fn alloc_map() -> MapRef { (get_vtable().alloc_map)() }
+pub fn alloc_map() -> MapRef {
+    (get_vtable().alloc_map)()
+}
 
 #[inline(always)]
-pub fn alloc_set() -> SetRef { (get_vtable().alloc_set)() }
+pub fn alloc_set() -> SetRef {
+    (get_vtable().alloc_set)()
+}

@@ -19,6 +19,10 @@ pub struct ModuleSpec {
 
 impl ModuleSpec {
     pub const fn new(id: &'static str, kind: ModuleKind, tsn_source: &'static str) -> Self {
-        Self { id, kind, tsn_source }
+        Self {
+            id,
+            kind,
+            tsn_source,
+        }
     }
 }

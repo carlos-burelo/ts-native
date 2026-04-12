@@ -110,9 +110,13 @@ impl RuntimeObject {
         self.shape.property_names.contains_key(name)
     }
 
-    pub fn len(&self) -> usize { self.values.len() }
+    pub fn len(&self) -> usize {
+        self.values.len()
+    }
 
-    pub fn is_empty(&self) -> bool { self.values.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.values.is_empty()
+    }
 
     pub fn keys(&self) -> std::vec::IntoIter<RuntimeString> {
         let mut pairs: Vec<(RuntimeString, usize)> = self
@@ -122,7 +126,11 @@ impl RuntimeObject {
             .map(|(k, &idx)| (k.clone(), idx))
             .collect();
         pairs.sort_unstable_by_key(|(_, idx)| *idx);
-        pairs.into_iter().map(|(k, _)| k).collect::<Vec<_>>().into_iter()
+        pairs
+            .into_iter()
+            .map(|(k, _)| k)
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
     pub fn iter(&self) -> std::vec::IntoIter<(RuntimeString, Value)> {
@@ -133,15 +141,23 @@ impl RuntimeObject {
             .map(|(k, &idx)| (k.clone(), self.values[idx].clone(), idx))
             .collect();
         pairs.sort_unstable_by_key(|(_, _, idx)| *idx);
-        pairs.into_iter().map(|(k, v, _)| (k, v)).collect::<Vec<_>>().into_iter()
+        pairs
+            .into_iter()
+            .map(|(k, v, _)| (k, v))
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 }
 
 impl PartialEq for RuntimeObject {
     fn eq(&self, other: &Self) -> bool {
-        if self.len() != other.len() { return false; }
+        if self.len() != other.len() {
+            return false;
+        }
         for (k, v) in self.iter() {
-            if other.get(&k) != Some(&v) { return false; }
+            if other.get(&k) != Some(&v) {
+                return false;
+            }
         }
         true
     }

@@ -48,6 +48,7 @@ impl super::Vm {
                 let gen_channel = GenChannel::new();
                 let ic_count = c.proto.cache_count;
                 let mut task_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                task_vm.precompiled_protos = self.precompiled_protos.clone();
                 task_vm.trace = self.trace;
                 task_vm.calls = self.calls;
                 task_vm.opcode_profile = self.opcode_profile.clone();
@@ -81,6 +82,7 @@ impl super::Vm {
                 let output = AsyncFuture::pending();
                 let ic_count = c.proto.cache_count;
                 let mut task_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                task_vm.precompiled_protos = self.precompiled_protos.clone();
                 task_vm.trace = self.trace;
                 task_vm.calls = self.calls;
                 task_vm.opcode_profile = self.opcode_profile.clone();
@@ -107,6 +109,7 @@ impl super::Vm {
 
                 let ic_count = c.proto.cache_count;
                 let mut gen_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                gen_vm.precompiled_protos = self.precompiled_protos.clone();
                 gen_vm.trace = self.trace;
                 gen_vm.calls = self.calls;
                 gen_vm.opcode_profile = self.opcode_profile.clone();
@@ -171,6 +174,7 @@ impl super::Vm {
                     let gen_channel = GenChannel::new();
                     let ic_count = method_closure.proto.cache_count;
                     let mut task_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                    task_vm.precompiled_protos = self.precompiled_protos.clone();
                     task_vm.trace = self.trace;
                     task_vm.calls = self.calls;
                     task_vm.opcode_profile = self.opcode_profile.clone();
@@ -196,6 +200,7 @@ impl super::Vm {
                     let output = AsyncFuture::pending();
                     let ic_count = method_closure.proto.cache_count;
                     let mut task_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                    task_vm.precompiled_protos = self.precompiled_protos.clone();
                     task_vm.trace = self.trace;
                     task_vm.calls = self.calls;
                     task_vm.opcode_profile = self.opcode_profile.clone();
@@ -217,6 +222,7 @@ impl super::Vm {
 
                     let ic_count = method_closure.proto.cache_count;
                     let mut gen_vm = Box::new(Vm::new_with_globals(Arc::clone(&self.globals)));
+                    gen_vm.precompiled_protos = self.precompiled_protos.clone();
                     gen_vm.trace = self.trace;
                     gen_vm.calls = self.calls;
                     gen_vm.opcode_profile = self.opcode_profile.clone();

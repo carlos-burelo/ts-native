@@ -124,9 +124,9 @@ pub fn build_semantic_tokens(state: &DocumentState) -> Vec<u32> {
                         SymbolKind::Class | SymbolKind::Struct | SymbolKind::Extension => TT_CLASS,
                         SymbolKind::Namespace => TT_NAMESPACE,
                         SymbolKind::Interface => TT_INTERFACE,
-                        SymbolKind::TypeAlias
-                        | SymbolKind::Enum
-                        | SymbolKind::TypeParameter => TT_TYPE,
+                        SymbolKind::TypeAlias | SymbolKind::Enum | SymbolKind::TypeParameter => {
+                            TT_TYPE
+                        }
                         SymbolKind::Parameter => TT_PARAMETER,
                         SymbolKind::Property => TT_PROPERTY,
                         SymbolKind::Const | SymbolKind::Let | SymbolKind::Var => {

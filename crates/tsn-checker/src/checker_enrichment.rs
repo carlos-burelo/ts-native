@@ -5,10 +5,10 @@ use crate::symbol::SymbolKind;
 use crate::types::FunctionType;
 use crate::types::Type;
 use std::collections::HashMap;
-use tsn_core::ast::{Decl, ExportDecl, ExportDefaultDecl, Stmt};
+use tsn_core::ast::{Decl, ExportDecl, ExportDefaultDecl, Program, Stmt};
 use tsn_core::TypeKind;
 
-pub fn enrich_call_returns(bind: &mut BindResult, program: &tsn_core::ast::Program) {
+pub fn enrich_call_returns(bind: &mut BindResult, program: &Program) {
     let EnrichIndexes {
         fn_map,
         mut sym_map,

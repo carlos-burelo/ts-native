@@ -268,7 +268,17 @@ pub fn run_bench(
     let proto = tsn_compiler::compile_with_annotations(&program, &check_result.type_annotations)
         .map_err(|e| CliError::fatal(format!("compile error: {e}")))?;
 
-    let precompiled = crate::module_precompile::precompile_direct_imports(&program, path);
+    let graph_build = crate::module_precompile::build_module_graph(&program, &source, path, &proto)
+        .map_err(|e| CliError::fatal(format!("module graph build error: {e}")))?;
+    let precompiled: std::collections::HashMap<
+        String,
+        std::sync::Arc<tsn_compiler::FunctionProto>,
+    > = graph_build
+        .modules
+        .into_iter()
+        .filter(|(module_path, _)| module_path != &graph_build.entry_path)
+        .map(|(module_path, module_proto)| (module_path, std::sync::Arc::new(module_proto)))
+        .collect();
 
     let builtin_protos: Vec<tsn_compiler::FunctionProto> = crate::pipeline::builtin_protos_owned()?;
 

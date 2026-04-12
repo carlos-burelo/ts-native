@@ -104,7 +104,9 @@ pub fn str_substring(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
             _ => len,
         };
         let (a, b) = (start.min(end), start.max(end));
-        return Ok(Value::Str(Arc::from(chars[a..b].iter().collect::<String>())));
+        return Ok(Value::Str(Arc::from(
+            chars[a..b].iter().collect::<String>(),
+        )));
     }
     Ok(Value::Null)
 }
@@ -133,7 +135,9 @@ pub fn str_slice(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Va
             return Ok(Value::Str(Arc::from("")));
         }
         return Ok(Value::Str(Arc::from(
-            chars[start as usize..end as usize].iter().collect::<String>(),
+            chars[start as usize..end as usize]
+                .iter()
+                .collect::<String>(),
         )));
     }
     Ok(Value::Null)
@@ -208,7 +212,9 @@ pub fn str_char_code_at(
 
 pub fn str_repeat(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     match (args.first(), args.get(1)) {
-        (Some(Value::Str(s)), Some(Value::Int(n))) => Ok(Value::Str(Arc::from(s.repeat(*n as usize)))),
+        (Some(Value::Str(s)), Some(Value::Int(n))) => {
+            Ok(Value::Str(Arc::from(s.repeat(*n as usize))))
+        }
         _ => Ok(Value::Null),
     }
 }
@@ -262,7 +268,9 @@ pub fn str_pad_end(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<
 
 pub fn str_concat(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     match (args.first(), args.get(1)) {
-        (Some(Value::Str(a)), Some(Value::Str(b))) => Ok(Value::Str(Arc::from(format!("{}{}", a, b)))),
+        (Some(Value::Str(a)), Some(Value::Str(b))) => {
+            Ok(Value::Str(Arc::from(format!("{}{}", a, b))))
+        }
         _ => Ok(Value::Null),
     }
 }
@@ -283,7 +291,9 @@ pub fn str_substr(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
             _ => len,
         };
         let end = (start as usize + sub_len).min(len);
-        return Ok(Value::Str(Arc::from(chars[start as usize..end].iter().collect::<String>())));
+        return Ok(Value::Str(Arc::from(
+            chars[start as usize..end].iter().collect::<String>(),
+        )));
     }
     Ok(Value::Null)
 }
@@ -304,14 +314,18 @@ pub fn str_is_blank(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
 
 pub fn str_is_digit(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     if let Some(Value::Str(s)) = args.first() {
-        return Ok(Value::Bool(!s.is_empty() && s.chars().all(|c| c.is_ascii_digit())));
+        return Ok(Value::Bool(
+            !s.is_empty() && s.chars().all(|c| c.is_ascii_digit()),
+        ));
     }
     Ok(Value::Bool(false))
 }
 
 pub fn str_is_letter(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     if let Some(Value::Str(s)) = args.first() {
-        return Ok(Value::Bool(!s.is_empty() && s.chars().all(|c| c.is_alphabetic())));
+        return Ok(Value::Bool(
+            !s.is_empty() && s.chars().all(|c| c.is_alphabetic()),
+        ));
     }
     Ok(Value::Bool(false))
 }
@@ -321,7 +335,9 @@ pub fn str_is_whitespace(
     args: &[Value],
 ) -> Result<Value, String> {
     if let Some(Value::Str(s)) = args.first() {
-        return Ok(Value::Bool(!s.is_empty() && s.chars().all(|c| c.is_whitespace())));
+        return Ok(Value::Bool(
+            !s.is_empty() && s.chars().all(|c| c.is_whitespace()),
+        ));
     }
     Ok(Value::Bool(false))
 }

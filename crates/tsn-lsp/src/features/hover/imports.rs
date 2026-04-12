@@ -7,7 +7,8 @@ use super::make_lang_hover;
 use tower_lsp::lsp_types::Hover;
 
 pub fn import_path_hover(specifier: &str, doc_uri: &str) -> Option<Hover> {
-    let display = if specifier.starts_with(STD_PREFIX) || is_incomplete_import_specifier(specifier) {
+    let display = if specifier.starts_with(STD_PREFIX) || is_incomplete_import_specifier(specifier)
+    {
         specifier.to_owned()
     } else {
         resolve_import_module_path(specifier, doc_uri)

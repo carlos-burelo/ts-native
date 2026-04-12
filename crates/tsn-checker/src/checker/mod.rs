@@ -96,16 +96,21 @@ impl Checker {
     pub fn check_with_profile(program: &Program) -> CheckResult {
         let mut profile = CheckProfile::default();
 
-        let mut globals = HashMap::new();
         let is_builtin = crate::builtins::is_builtin_file(&program.filename);
-        if !is_builtin {
+        let globals_ref = if !is_builtin {
             let started = Instant::now();
-            globals = crate::builtins::load_global_exports();
+            let globals = crate::builtins::global_exports_ref();
             profile.load_globals = started.elapsed();
-        }
+            Some(globals)
+        } else {
+            None
+        };
 
         let started = Instant::now();
-        let mut bind = Binder::bind_with_globals(program, globals);
+        let mut bind = match globals_ref {
+            Some(globals) => Binder::bind_with_global_refs(program, globals),
+            None => Binder::bind(program),
+        };
         profile.bind = started.elapsed();
 
         if !is_builtin {

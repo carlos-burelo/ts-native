@@ -22,23 +22,34 @@ pub mod time;
 
 use tsn_types::Value;
 
+use tsn_modules::{
+    STD_ASYNC, STD_COLLECTIONS, STD_CONSOLE, STD_CRYPTO, STD_FS, STD_HTTP, STD_IO, STD_JSON,
+    STD_MATH, STD_NET, STD_PATH, STD_REFLECT, STD_SYS, STD_TEST, STD_TIME,
+};
+
+type ModuleBuilder = fn() -> Value;
+
+const STD_MODULE_BUILDERS: &[(&str, ModuleBuilder)] = &[
+    (STD_ASYNC, async_::build),
+    (STD_COLLECTIONS, collections::build),
+    (STD_CONSOLE, console::build),
+    (STD_CRYPTO, crypto::build),
+    (STD_FS, fs::build),
+    (STD_HTTP, http::build),
+    (STD_IO, io::build),
+    (STD_JSON, json::build),
+    (STD_MATH, math::build),
+    (STD_NET, net::build),
+    (STD_PATH, path::build),
+    (STD_REFLECT, reflect::build),
+    (STD_SYS, sys::build),
+    (STD_TEST, testing::build),
+    (STD_TIME, time::build),
+];
+
 pub fn build_module_by_id(id: &str) -> Option<Value> {
-    match id {
-        "std:async"       => Some(async_::build()),
-        "std:collections" => Some(collections::build()),
-        "std:console"     => Some(console::build()),
-        "std:crypto"      => Some(crypto::build()),
-        "std:fs"          => Some(fs::build()),
-        "std:http"        => Some(http::build()),
-        "std:io"          => Some(io::build()),
-        "std:json"        => Some(json::build()),
-        "std:math"        => Some(math::build()),
-        "std:net"         => Some(net::build()),
-        "std:path"        => Some(path::build()),
-        "std:reflect"     => Some(reflect::build()),
-        "std:sys"         => Some(sys::build()),
-        "std:test"        => Some(testing::build()),
-        "std:time"        => Some(time::build()),
-        _ => None,
-    }
+    STD_MODULE_BUILDERS
+        .iter()
+        .find(|(module_id, _)| *module_id == id)
+        .map(|(_, build)| build())
 }

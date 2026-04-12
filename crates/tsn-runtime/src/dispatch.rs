@@ -88,13 +88,23 @@ pub fn register_globals(globals: &mut HashMap<Arc<str>, Value>) {
     );
     globals.insert(Arc::from("str"), crate::modules::globals::str_type_global());
     globals.insert(Arc::from("int"), crate::modules::globals::int_type_global());
-    globals.insert(Arc::from("float"), crate::modules::globals::float_type_global());
-    globals.insert(Arc::from("Array"), crate::modules::globals::array_type_global());
-    let (error_cls, type_error_cls, range_error_cls) = crate::modules::globals::error_classes_globals();
+    globals.insert(
+        Arc::from("float"),
+        crate::modules::globals::float_type_global(),
+    );
+    globals.insert(
+        Arc::from("Array"),
+        crate::modules::globals::array_type_global(),
+    );
+    let (error_cls, type_error_cls, range_error_cls) =
+        crate::modules::globals::error_classes_globals();
     globals.insert(Arc::from("Error"), error_cls);
     globals.insert(Arc::from("TypeError"), type_error_cls);
     globals.insert(Arc::from("RangeError"), range_error_cls);
     globals.insert(Arc::from("NaN"), Value::Float(f64::NAN));
     globals.insert(Arc::from("Infinity"), Value::Float(f64::INFINITY));
-    globals.insert(Arc::from("Symbol"), crate::modules::globals::symbol_global());
+    globals.insert(
+        Arc::from("Symbol"),
+        crate::modules::globals::symbol_global(),
+    );
 }

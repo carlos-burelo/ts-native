@@ -52,10 +52,7 @@ pub fn index_file(index: &mut ProjectIndex, uri: &str, state: &DocumentState) {
     }
 }
 
-fn resolve_specifier_to_uri(
-    specifier: &str,
-    doc_dir: Option<&std::path::Path>,
-) -> Option<String> {
+fn resolve_specifier_to_uri(specifier: &str, doc_dir: Option<&std::path::Path>) -> Option<String> {
     if specifier.starts_with("std:") {
         let loader = tsn_modules::ModuleLoader::from_env();
         let mod_path = loader.tsn_source_path(specifier)?;

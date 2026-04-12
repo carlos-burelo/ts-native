@@ -21,7 +21,11 @@ pub fn int_to_fixed(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
             Some(Value::Int(d)) => *d as usize,
             _ => 0,
         };
-        return Ok(Value::Str(Arc::from(format!("{:.prec$}", *n as f64, prec = decimals))));
+        return Ok(Value::Str(Arc::from(format!(
+            "{:.prec$}",
+            *n as f64,
+            prec = decimals
+        ))));
     }
     Ok(Value::Null)
 }

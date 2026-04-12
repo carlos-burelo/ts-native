@@ -371,19 +371,23 @@ impl Checker {
                         _ => None,
                     };
 
-                    let narrowings = arm_disc_ty
-                        .and_then(|disc_ty| {
-                            disc_narrowings.as_ref().map(|(id, members)| {
-                                let matched: Vec<crate::types::Type> = members
-                                    .iter()
-                                    .filter(|m| {
-                                        self.union_member_matches_disc(m, disc_narrowings.as_ref().map(|(_, _)| &disc_ty), disc_narrowings.as_ref().map(|(_, _)| subject.as_ref()), bind)
-                                    })
-                                    .cloned()
-                                    .collect();
-                                (*id, matched)
-                            })
-                        });
+                    let narrowings = arm_disc_ty.and_then(|disc_ty| {
+                        disc_narrowings.as_ref().map(|(id, members)| {
+                            let matched: Vec<crate::types::Type> = members
+                                .iter()
+                                .filter(|m| {
+                                    self.union_member_matches_disc(
+                                        m,
+                                        disc_narrowings.as_ref().map(|(_, _)| &disc_ty),
+                                        disc_narrowings.as_ref().map(|(_, _)| subject.as_ref()),
+                                        bind,
+                                    )
+                                })
+                                .cloned()
+                                .collect();
+                            (*id, matched)
+                        })
+                    });
 
                     let narrowing_vec: Vec<(crate::symbol::SymbolId, crate::types::Type)> =
                         if let Some((id, matched)) = narrowings {
@@ -402,9 +406,7 @@ impl Checker {
                         }
                         match &case.body {
                             tsn_core::ast::MatchBody::Expr(e) => checker.check_expr(e, bind),
-                            tsn_core::ast::MatchBody::Block(stmt) => {
-                                checker.check_stmt(stmt, bind)
-                            }
+                            tsn_core::ast::MatchBody::Block(stmt) => checker.check_stmt(stmt, bind),
                         }
                     });
                     self.current_scope = saved_scope;

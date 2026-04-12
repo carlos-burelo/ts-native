@@ -1,7 +1,7 @@
 use crate::binder::{infer_expr_type, resolve_type_node};
 use crate::types::{well_known, FunctionType, Type, TypeContext};
 use std::collections::HashMap;
-use tsn_core::ast::Expr;
+use tsn_core::ast::{Arg, Expr};
 use tsn_core::TypeKind;
 
 const STATIC_NEW: &str = "new";
@@ -40,9 +40,9 @@ pub(crate) fn infer_call_type(
                                 .zip(args.iter())
                                 .filter_map(|(tp, arg)| {
                                     let expr = match arg {
-                                        tsn_core::ast::Arg::Positional(e) => e,
-                                        tsn_core::ast::Arg::Named { value, .. } => value,
-                                        tsn_core::ast::Arg::Spread(_) => return None,
+                                        Arg::Positional(e) => e,
+                                        Arg::Named { value, .. } => value,
+                                        Arg::Spread(_) => return None,
                                     };
                                     let ty = infer_expr_type(expr, ctx);
                                     if !ty.is_dynamic() {

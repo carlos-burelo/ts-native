@@ -1422,6 +1422,7 @@ dependencies = [
  "tsn-modules",
  "tsn-parser",
  "tsn-runtime",
+ "tsn-types",
  "tsn-vm",
 ]
 
@@ -1535,13 +1536,10 @@ dependencies = [
  "serde_json",
  "sha2",
  "tiny_http",
- "tsn-checker",
  "tsn-compiler",
  "tsn-core",
- "tsn-lexer",
  "tsn-modules",
  "tsn-op-macros",
- "tsn-parser",
  "tsn-runtime",
  "tsn-types",
  "ureq",

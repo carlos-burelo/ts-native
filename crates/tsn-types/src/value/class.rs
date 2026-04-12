@@ -48,7 +48,9 @@ impl ClassObj {
     }
 
     pub fn declare_field(&mut self, name: RuntimeString) -> usize {
-        if let Some(&slot) = self.field_map.get(&name) { return slot; }
+        if let Some(&slot) = self.field_map.get(&name) {
+            return slot;
+        }
         let slot = self.field_count;
         self.field_map.insert(name, slot);
         self.field_count += 1;
@@ -83,22 +85,30 @@ impl ClassObj {
     }
 
     pub fn find_getter(&self, name: &str) -> Option<Arc<Closure>> {
-        if let Some(g) = self.getter_map.get(name) { return Some(g.clone()); }
+        if let Some(g) = self.getter_map.get(name) {
+            return Some(g.clone());
+        }
         self.superclass.as_ref()?.find_getter(name)
     }
 
     pub fn find_setter(&self, name: &str) -> Option<Arc<Closure>> {
-        if let Some(s) = self.setter_map.get(name) { return Some(s.clone()); }
+        if let Some(s) = self.setter_map.get(name) {
+            return Some(s.clone());
+        }
         self.superclass.as_ref()?.find_setter(name)
     }
 
     pub fn find_static_getter(&self, name: &str) -> Option<Arc<Closure>> {
-        if let Some(g) = self.static_getter_map.get(name) { return Some(g.clone()); }
+        if let Some(g) = self.static_getter_map.get(name) {
+            return Some(g.clone());
+        }
         self.superclass.as_ref()?.find_static_getter(name)
     }
 
     pub fn find_static_setter(&self, name: &str) -> Option<Arc<Closure>> {
-        if let Some(s) = self.static_setter_map.get(name) { return Some(s.clone()); }
+        if let Some(s) = self.static_setter_map.get(name) {
+            return Some(s.clone());
+        }
         self.superclass.as_ref()?.find_static_setter(name)
     }
 

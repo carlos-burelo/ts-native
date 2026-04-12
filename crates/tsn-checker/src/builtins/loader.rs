@@ -3,6 +3,7 @@ use crate::module_resolver::{resolve_stdlib_module_bind, resolve_stdlib_module_e
 use crate::symbol::Symbol;
 use crate::types::{ClassMemberInfo, Type};
 use std::collections::HashMap;
+use std::hash::Hash;
 use std::sync::OnceLock;
 
 static BUILTIN_EXPORTS: OnceLock<HashMap<String, Symbol>> = OnceLock::new();
@@ -29,18 +30,30 @@ pub fn load_global_exports() -> HashMap<String, Symbol> {
     BUILTIN_EXPORTS.get_or_init(build_builtin_exports).clone()
 }
 
+pub fn global_exports_ref() -> &'static HashMap<String, Symbol> {
+    BUILTIN_EXPORTS.get_or_init(build_builtin_exports)
+}
+
 pub fn merge_builtin_members(bind: &mut BindResult) {
     let members = BUILTIN_MEMBERS.get_or_init(build_builtin_members);
-    bind.class_members.extend(members.class_members.clone());
-    bind.interface_members
-        .extend(members.interface_members.clone());
-    bind.enum_members.extend(members.enum_members.clone());
-    bind.namespace_members
-        .extend(members.namespace_members.clone());
-    bind.class_methods.extend(members.class_methods.clone());
-    bind.flattened_members
-        .extend(members.flattened_members.clone());
-    bind.class_parents.extend(members.class_parents.clone());
+    merge_cloned_map(&mut bind.class_members, &members.class_members);
+    merge_cloned_map(&mut bind.interface_members, &members.interface_members);
+    merge_cloned_map(&mut bind.enum_members, &members.enum_members);
+    merge_cloned_map(&mut bind.namespace_members, &members.namespace_members);
+    merge_cloned_map(&mut bind.class_methods, &members.class_methods);
+    merge_cloned_map(&mut bind.flattened_members, &members.flattened_members);
+    merge_cloned_map(&mut bind.class_parents, &members.class_parents);
+}
+
+fn merge_cloned_map<K, V>(target: &mut HashMap<K, V>, source: &HashMap<K, V>)
+where
+    K: Eq + Hash + Clone,
+    V: Clone,
+{
+    target.reserve(source.len());
+    for (key, value) in source {
+        target.insert(key.clone(), value.clone());
+    }
 }
 
 fn build_builtin_exports() -> HashMap<String, Symbol> {

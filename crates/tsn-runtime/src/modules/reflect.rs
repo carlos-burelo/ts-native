@@ -1,9 +1,12 @@
 use parking_lot::Mutex;
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock};
 use std::sync::atomic::{AtomicU64, Ordering};
-use tsn_types::{value::{new_array, new_object, ObjData}, Value};
+use std::sync::{Arc, OnceLock};
 use tsn_types::NativeFn;
+use tsn_types::{
+    value::{new_array, new_object, ObjData},
+    Value,
+};
 
 static METADATA: OnceLock<Mutex<HashMap<String, HashMap<String, Value>>>> = OnceLock::new();
 static META_KEY_COUNTER: AtomicU64 = AtomicU64::new(1);
@@ -20,34 +23,63 @@ pub fn target_key(v: &Value) -> String {
     }
 }
 
-pub fn reflect_define_meta(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+pub fn reflect_define_meta(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let key = args.first().map(|v| v.to_string()).unwrap_or_default();
     let val = args.get(1).cloned().unwrap_or(Value::Null);
     let target = args.get(2).map(target_key).unwrap_or_default();
-    metadata().lock().entry(target).or_default().insert(key, val);
+    metadata()
+        .lock()
+        .entry(target)
+        .or_default()
+        .insert(key, val);
     Ok(Value::Null)
 }
 
-pub fn reflect_get_meta(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+pub fn reflect_get_meta(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let key = args.first().map(|v| v.to_string()).unwrap_or_default();
     let target = args.get(1).map(target_key).unwrap_or_default();
-    let val = metadata().lock().get(&target)
-        .and_then(|m| m.get(&key)).cloned().unwrap_or(Value::Null);
+    let val = metadata()
+        .lock()
+        .get(&target)
+        .and_then(|m| m.get(&key))
+        .cloned()
+        .unwrap_or(Value::Null);
     Ok(val)
 }
 
-pub fn reflect_has_meta(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+pub fn reflect_has_meta(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let key = args.first().map(|v| v.to_string()).unwrap_or_default();
     let target = args.get(1).map(target_key).unwrap_or_default();
-    let has = metadata().lock().get(&target)
-        .map(|m| m.contains_key(&key)).unwrap_or(false);
+    let has = metadata()
+        .lock()
+        .get(&target)
+        .map(|m| m.contains_key(&key))
+        .unwrap_or(false);
     Ok(Value::Bool(has))
 }
 
-pub fn reflect_get_meta_keys(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
+pub fn reflect_get_meta_keys(
+    _ctx: &mut dyn tsn_types::Context,
+    args: &[Value],
+) -> Result<Value, String> {
     let target = args.first().map(target_key).unwrap_or_default();
-    let keys: Vec<Value> = metadata().lock().get(&target)
-        .map(|m| m.keys().map(|k| Value::Str(Arc::from(k.as_str()))).collect())
+    let keys: Vec<Value> = metadata()
+        .lock()
+        .get(&target)
+        .map(|m| {
+            m.keys()
+                .map(|k| Value::Str(Arc::from(k.as_str())))
+                .collect()
+        })
         .unwrap_or_default();
     Ok(new_array(keys))
 }
@@ -64,7 +96,10 @@ fn meta_key_receiver(args: &[Value]) -> Result<Arc<str>, String> {
     }
 }
 
-pub fn meta_key_create(_ctx: &mut dyn tsn_types::Context, _args: &[Value]) -> Result<Value, String> {
+pub fn meta_key_create(
+    _ctx: &mut dyn tsn_types::Context,
+    _args: &[Value],
+) -> Result<Value, String> {
     let key_id = META_KEY_COUNTER.fetch_add(1, Ordering::Relaxed);
     let key_name = Arc::from(format!("__meta_key_{}", key_id));
 
@@ -110,7 +145,9 @@ pub fn meta_key_set(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
 pub fn meta_key_get(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let key = meta_key_receiver(args)?;
     let target = args.get(1).map(target_key).unwrap_or_default();
-    let value = metadata().lock().get(&target)
+    let value = metadata()
+        .lock()
+        .get(&target)
         .and_then(|m| m.get(key.as_ref()))
         .cloned()
         .unwrap_or(Value::Null);
@@ -120,7 +157,9 @@ pub fn meta_key_get(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
 pub fn meta_key_has(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let key = meta_key_receiver(args)?;
     let target = args.get(1).map(target_key).unwrap_or_default();
-    let has = metadata().lock().get(&target)
+    let has = metadata()
+        .lock()
+        .get(&target)
         .map(|m| m.contains_key(key.as_ref()))
         .unwrap_or(false);
     Ok(Value::Bool(has))
@@ -129,7 +168,9 @@ pub fn meta_key_has(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result
 pub fn meta_key_keys(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let key = meta_key_receiver(args)?;
     let target = args.get(1).map(target_key).unwrap_or_default();
-    let keys = metadata().lock().get(&target)
+    let keys = metadata()
+        .lock()
+        .get(&target)
         .and_then(|m| m.get(key.as_ref()))
         .map(|_| vec![Value::Str(Arc::from(target))])
         .unwrap_or_default();
@@ -138,10 +179,28 @@ pub fn meta_key_keys(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Resul
 
 pub fn build() -> Value {
     let mut ns = ObjData::new();
-    ns.set_field(Arc::from("defineMetadata"),   Value::NativeFn(Box::new((reflect_define_meta   as NativeFn, "defineMetadata"))));
-    ns.set_field(Arc::from("getMetadata"),      Value::NativeFn(Box::new((reflect_get_meta      as NativeFn, "getMetadata"))));
-    ns.set_field(Arc::from("hasMetadata"),      Value::NativeFn(Box::new((reflect_has_meta      as NativeFn, "hasMetadata"))));
-    ns.set_field(Arc::from("getMetadataKeys"),  Value::NativeFn(Box::new((reflect_get_meta_keys as NativeFn, "getMetadataKeys"))));
+    ns.set_field(
+        Arc::from("defineMetadata"),
+        Value::NativeFn(Box::new((
+            reflect_define_meta as NativeFn,
+            "defineMetadata",
+        ))),
+    );
+    ns.set_field(
+        Arc::from("getMetadata"),
+        Value::NativeFn(Box::new((reflect_get_meta as NativeFn, "getMetadata"))),
+    );
+    ns.set_field(
+        Arc::from("hasMetadata"),
+        Value::NativeFn(Box::new((reflect_has_meta as NativeFn, "hasMetadata"))),
+    );
+    ns.set_field(
+        Arc::from("getMetadataKeys"),
+        Value::NativeFn(Box::new((
+            reflect_get_meta_keys as NativeFn,
+            "getMetadataKeys",
+        ))),
+    );
 
     let mut exports = ObjData::new();
     exports.set_field(Arc::from("Reflect"), new_object(ns));

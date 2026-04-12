@@ -1,7 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::TokenStream as TS2;
 use quote::quote;
-use syn::{parse_macro_input, parse::Parse, parse::ParseStream, FnArg, Ident, Item, ItemMod, LitStr, Token, Type};
+use syn::{
+    parse::Parse, parse::ParseStream, parse_macro_input, FnArg, Ident, Item, ItemMod, LitStr,
+    Token, Type,
+};
 
 // ── #[op("name")] ─────────────────────────────────────────────────────────────
 // Used standalone (for backward compat) OR inside a #[module] mod block.
@@ -18,7 +21,10 @@ pub fn op(attr: TokenStream, item: TokenStream) -> TokenStream {
     let fn_block = &input_fn.block;
     let fn_output = &input_fn.sig.output;
 
-    let param_count = input_fn.sig.inputs.iter()
+    let param_count = input_fn
+        .sig
+        .inputs
+        .iter()
         .filter(|arg| !matches!(arg, FnArg::Receiver(_)))
         .count();
 
@@ -78,7 +84,12 @@ impl Parse for ModuleArgs {
             match key.to_string().as_str() {
                 "id" => id = Some(val.value()),
                 "ns" => ns = Some(val.value()),
-                other => return Err(syn::Error::new(key.span(), format!("unknown key '{}'", other))),
+                other => {
+                    return Err(syn::Error::new(
+                        key.span(),
+                        format!("unknown key '{}'", other),
+                    ))
+                }
             }
             let _ = input.parse::<Token![,]>();
         }
@@ -103,7 +114,7 @@ pub fn module(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     // Collect ops and exports, produce clean items
     let mut ops: Vec<(String, Ident, bool)> = vec![]; // (name, fn_ident, needs_ctx)
-    let mut exports: Vec<(String, TS2)> = vec![];    // (name, value_expr)
+    let mut exports: Vec<(String, TS2)> = vec![]; // (name, value_expr)
     let mut clean_items: Vec<TS2> = vec![];
 
     for item in &items {
@@ -123,7 +134,10 @@ pub fn module(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
 
                 // Detect if fn already has ctx param (2 non-self params)
-                let real_params: Vec<_> = f.sig.inputs.iter()
+                let real_params: Vec<_> = f
+                    .sig
+                    .inputs
+                    .iter()
                     .filter(|a| !matches!(a, FnArg::Receiver(_)))
                     .collect();
                 let needs_ctx = real_params.len() >= 2;
@@ -197,20 +211,26 @@ pub fn module(attr: TokenStream, item: TokenStream) -> TokenStream {
     }
 
     // Build function inserts for namespace
-    let op_inserts: Vec<TS2> = ops.iter().map(|(name, ident, _needs_ctx)| {
-        quote! {
-            __obj.set_field(::std::sync::Arc::from(#name),
-                ::tsn_types::Value::NativeFn(::std::boxed::Box::new(
-                    (#ident as ::tsn_types::NativeFn, #name)
-                )));
-        }
-    }).collect();
+    let op_inserts: Vec<TS2> = ops
+        .iter()
+        .map(|(name, ident, _needs_ctx)| {
+            quote! {
+                __obj.set_field(::std::sync::Arc::from(#name),
+                    ::tsn_types::Value::NativeFn(::std::boxed::Box::new(
+                        (#ident as ::tsn_types::NativeFn, #name)
+                    )));
+            }
+        })
+        .collect();
 
-    let export_inserts: Vec<TS2> = exports.iter().map(|(name, val)| {
-        quote! {
-            __obj.set_field(::std::sync::Arc::from(#name), #val);
-        }
-    }).collect();
+    let export_inserts: Vec<TS2> = exports
+        .iter()
+        .map(|(name, val)| {
+            quote! {
+                __obj.set_field(::std::sync::Arc::from(#name), #val);
+            }
+        })
+        .collect();
 
     // Generate build() fn
     let build_fn = if let Some(ns) = ns_name_opt {
@@ -255,16 +275,16 @@ pub fn module(attr: TokenStream, item: TokenStream) -> TokenStream {
 fn const_value_expr(ty: &Type, ident_expr: &TS2) -> TS2 {
     let ty_str = quote! { #ty }.to_string();
     match ty_str.trim() {
-        "f64" | "float" =>
-            quote! { ::tsn_types::Value::Float(#ident_expr as f64) },
-        "i64" | "int" =>
-            quote! { ::tsn_types::Value::Int(#ident_expr as i64) },
-        "bool" =>
-            quote! { ::tsn_types::Value::Bool(#ident_expr) },
-        "& str" | "&'static str" =>
-            quote! { ::tsn_types::Value::Str(::std::sync::Arc::from(#ident_expr)) },
+        "f64" | "float" => quote! { ::tsn_types::Value::Float(#ident_expr as f64) },
+        "i64" | "int" => quote! { ::tsn_types::Value::Int(#ident_expr as i64) },
+        "bool" => quote! { ::tsn_types::Value::Bool(#ident_expr) },
+        "& str" | "&'static str" => {
+            quote! { ::tsn_types::Value::Str(::std::sync::Arc::from(#ident_expr)) }
+        }
         _ =>
-            // fallback: assume f64
-            quote! { ::tsn_types::Value::Float(#ident_expr as f64) },
+        // fallback: assume f64
+        {
+            quote! { ::tsn_types::Value::Float(#ident_expr as f64) }
+        }
     }
 }

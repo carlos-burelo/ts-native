@@ -1,6 +1,9 @@
 use std::sync::Arc;
-use tsn_types::{value::{new_array, new_object, ObjData}, Value};
 use tsn_types::NativeFn;
+use tsn_types::{
+    value::{new_array, new_object, ObjData},
+    Value,
+};
 
 pub fn json_parse(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     match args.first() {
@@ -11,7 +14,8 @@ pub fn json_parse(_ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
 }
 
 pub fn parse_str(s: &str) -> Result<Value, String> {
-    let sv: serde_json::Value = serde_json::from_str(s).map_err(|e| format!("JSON.parse: {}", e))?;
+    let sv: serde_json::Value =
+        serde_json::from_str(s).map_err(|e| format!("JSON.parse: {}", e))?;
     Ok(serde_to_tsn(sv))
 }
 
@@ -20,9 +24,13 @@ pub fn serde_to_tsn(sv: serde_json::Value) -> Value {
         serde_json::Value::Null => Value::Null,
         serde_json::Value::Bool(b) => Value::Bool(b),
         serde_json::Value::Number(n) => {
-            if let Some(i) = n.as_i64() { Value::Int(i) }
-            else if let Some(f) = n.as_f64() { Value::Float(f) }
-            else { Value::Null }
+            if let Some(i) = n.as_i64() {
+                Value::Int(i)
+            } else if let Some(f) = n.as_f64() {
+                Value::Float(f)
+            } else {
+                Value::Null
+            }
         }
         serde_json::Value::String(s) => Value::Str(Arc::from(s)),
         serde_json::Value::Array(arr) => {
@@ -61,7 +69,8 @@ pub fn tsn_to_serde(v: &Value) -> serde_json::Value {
         }
         Value::Object(o) => {
             let map: serde_json::Map<String, serde_json::Value> = unsafe { &**o }
-                .fields.iter()
+                .fields
+                .iter()
                 .map(|(k, v)| (k.to_string(), tsn_to_serde(&v)))
                 .collect();
             serde_json::Value::Object(map)
@@ -72,8 +81,14 @@ pub fn tsn_to_serde(v: &Value) -> serde_json::Value {
 
 pub fn build() -> Value {
     let mut ns = ObjData::new();
-    ns.set_field(Arc::from("parse"),     Value::NativeFn(Box::new((json_parse     as NativeFn, "parse"))));
-    ns.set_field(Arc::from("stringify"), Value::NativeFn(Box::new((json_stringify as NativeFn, "stringify"))));
+    ns.set_field(
+        Arc::from("parse"),
+        Value::NativeFn(Box::new((json_parse as NativeFn, "parse"))),
+    );
+    ns.set_field(
+        Arc::from("stringify"),
+        Value::NativeFn(Box::new((json_stringify as NativeFn, "stringify"))),
+    );
 
     let mut exports = ObjData::new();
     exports.set_field(Arc::from("JSON"), new_object(ns));

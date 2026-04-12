@@ -50,7 +50,12 @@ pub(super) fn parse_var_decl_after_head(
     first_id: Pattern,
     is_declare: bool,
 ) -> Result<VariableDecl, String> {
-    let mut declarators = vec![parse_var_declarator_suffix(s, first_range, first_id, is_declare)?];
+    let mut declarators = vec![parse_var_declarator_suffix(
+        s,
+        first_range,
+        first_id,
+        is_declare,
+    )?];
 
     while s.eat(TokenKind::Comma) {
         let dec_range = s.range();

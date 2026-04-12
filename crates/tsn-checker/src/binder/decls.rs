@@ -1,10 +1,10 @@
 use crate::symbol::{Symbol, SymbolId};
 use crate::types::Type;
 use tsn_core::ast::pattern::MatchPattern;
-use tsn_core::ast::{Arg, Decl, Expr, Param};
+use tsn_core::ast::{Arg, ArrayEl, ArrowBody, Decl, Expr, ObjectProp, Param};
 
 impl super::Binder {
-    pub(super) fn bind_decl(&mut self, decl: &tsn_core::ast::Decl) {
+    pub(super) fn bind_decl(&mut self, decl: &Decl) {
         match decl {
             Decl::Variable(v) => self.bind_variable(v),
             Decl::Function(f) => self.bind_function(f),
@@ -27,7 +27,7 @@ impl super::Binder {
         id
     }
 
-    pub(super) fn bind_expr(&mut self, expr: &tsn_core::ast::Expr) {
+    pub(super) fn bind_expr(&mut self, expr: &Expr) {
         match expr {
             Expr::Arrow {
                 params,
@@ -36,10 +36,10 @@ impl super::Binder {
                 is_async: _,
                 ..
             } => match body.as_ref() {
-                tsn_core::ast::ArrowBody::Block(stmt) => {
+                ArrowBody::Block(stmt) => {
                     self.bind_inline_function(params, return_type.as_ref(), stmt, expr.range());
                 }
-                tsn_core::ast::ArrowBody::Expr(e) => {
+                ArrowBody::Expr(e) => {
                     self.bind_inline_function_expr(params, e, expr.range());
                 }
             },
@@ -104,17 +104,17 @@ impl super::Binder {
             Expr::Array { elements, .. } => {
                 for el in elements {
                     match el {
-                        tsn_core::ast::ArrayEl::Expr(e) => self.bind_expr(e),
-                        tsn_core::ast::ArrayEl::Spread(e) => self.bind_expr(e),
-                        tsn_core::ast::ArrayEl::Hole => {}
+                        ArrayEl::Expr(e) => self.bind_expr(e),
+                        ArrayEl::Spread(e) => self.bind_expr(e),
+                        ArrayEl::Hole => {}
                     }
                 }
             }
             Expr::Object { properties, .. } => {
                 for prop in properties {
                     match prop {
-                        tsn_core::ast::ObjectProp::Property { value, .. } => self.bind_expr(value),
-                        tsn_core::ast::ObjectProp::Method {
+                        ObjectProp::Property { value, .. } => self.bind_expr(value),
+                        ObjectProp::Method {
                             params,
                             return_type,
                             body,
@@ -123,15 +123,13 @@ impl super::Binder {
                         } => {
                             self.bind_inline_function(params, return_type.as_ref(), body, range);
                         }
-                        tsn_core::ast::ObjectProp::Getter { body, .. } => {
+                        ObjectProp::Getter { body, .. } => {
                             self.bind_stmt(body);
                         }
-                        tsn_core::ast::ObjectProp::Setter { body, .. } => {
+                        ObjectProp::Setter { body, .. } => {
                             self.bind_stmt(body);
                         }
-                        tsn_core::ast::ObjectProp::Spread { argument, .. } => {
-                            self.bind_expr(argument)
-                        }
+                        ObjectProp::Spread { argument, .. } => self.bind_expr(argument),
                     }
                 }
             }

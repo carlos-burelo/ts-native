@@ -1,6 +1,9 @@
 use std::sync::Arc;
-use tsn_types::{value::{new_object, ObjData}, AsyncFuture, Value};
 use tsn_types::NativeFn;
+use tsn_types::{
+    value::{new_object, ObjData},
+    AsyncFuture, Value,
+};
 
 pub fn async_spawn(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Value, String> {
     let callee = args.first().cloned().ok_or("spawn: missing function")?;
@@ -27,7 +30,10 @@ pub fn timer_set(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<Val
         Some(Value::Bool(b)) => *b,
         _ => false,
     };
-    let callee = args.get(2).cloned().ok_or("setInterval: missing callback")?;
+    let callee = args
+        .get(2)
+        .cloned()
+        .ok_or("setInterval: missing callback")?;
     let id = ctx.set_timer(ms, repeat, callee, &args[3..])?;
     Ok(Value::Int(id as i64))
 }
@@ -43,9 +49,21 @@ pub fn timer_clear(ctx: &mut dyn tsn_types::Context, args: &[Value]) -> Result<V
 
 pub fn build() -> Value {
     let mut exports = ObjData::new();
-    exports.set_field(Arc::from("spawn"),        Value::NativeFn(Box::new((async_spawn as NativeFn, "spawn"))));
-    exports.set_field(Arc::from("sleep"),        Value::NativeFn(Box::new((async_sleep as NativeFn, "sleep"))));
-    exports.set_field(Arc::from("setInterval"),  Value::NativeFn(Box::new((timer_set   as NativeFn, "setInterval"))));
-    exports.set_field(Arc::from("clearInterval"),Value::NativeFn(Box::new((timer_clear as NativeFn, "clearInterval"))));
+    exports.set_field(
+        Arc::from("spawn"),
+        Value::NativeFn(Box::new((async_spawn as NativeFn, "spawn"))),
+    );
+    exports.set_field(
+        Arc::from("sleep"),
+        Value::NativeFn(Box::new((async_sleep as NativeFn, "sleep"))),
+    );
+    exports.set_field(
+        Arc::from("setInterval"),
+        Value::NativeFn(Box::new((timer_set as NativeFn, "setInterval"))),
+    );
+    exports.set_field(
+        Arc::from("clearInterval"),
+        Value::NativeFn(Box::new((timer_clear as NativeFn, "clearInterval"))),
+    );
     new_object(exports)
 }

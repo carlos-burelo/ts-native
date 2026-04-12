@@ -1,10 +1,17 @@
 use std::sync::OnceLock;
 use tsn_compiler::FunctionProto;
+use tsn_types::ModuleGraphArtifact;
 
 use crate::args::{DebugFlags, RunOpts};
 use crate::error::CliError;
 
 type PipelineResult<T> = Result<T, CliError>;
+
+struct CompileOutput {
+    entry_proto: FunctionProto,
+    precompiled: std::collections::HashMap<String, std::sync::Arc<FunctionProto>>,
+    graph_artifact: ModuleGraphArtifact,
+}
 
 mod debug;
 use debug::{
@@ -27,7 +34,7 @@ const C_CONSTS: &str = "\x1b[93m";
 const C_SCOPE: &str = "\x1b[92m";
 static BUILTIN_PROTOS_BYTES: &[u8] = include_bytes!(concat!(env!("OUT_DIR"), "/builtins.bin"));
 static BUILTIN_PROTOS: OnceLock<Result<Vec<FunctionProto>, String>> = OnceLock::new();
-const COMPILE_CACHE_VERSION: u32 = 1;
+const COMPILE_CACHE_VERSION: u32 = 2;
 const CACHE_HEADER_LEN: usize = 4 + 8 + 8;
 
 fn header(color: &str, phase: &str, file: &str) {
@@ -51,7 +58,7 @@ pub fn run(opts: &RunOpts) -> PipelineResult<()> {
     } else {
         read_source(&opts.file_path)?
     };
-    let (proto, precompiled) = if opts.eval.is_none() && !opts.debug.any() {
+    let compiled = if opts.eval.is_none() && !opts.debug.any() {
         compile_source_cached(&source, &opts.file_path, opts.verbose)?
     } else {
         compile_source(&source, &opts.file_path, opts.verbose, &opts.debug)?
@@ -59,7 +66,13 @@ pub fn run(opts: &RunOpts) -> PipelineResult<()> {
     if opts.no_run {
         return Ok(());
     }
-    execute(proto, precompiled, &source, &opts.file_path, &opts.debug)
+    execute(
+        compiled.entry_proto,
+        compiled.precompiled,
+        &source,
+        &opts.file_path,
+        &opts.debug,
+    )
 }
 
 pub fn compile_file(
@@ -68,8 +81,8 @@ pub fn compile_file(
     debug: &DebugFlags,
 ) -> PipelineResult<FunctionProto> {
     let source = read_source(path)?;
-    let (proto, _) = compile_source(&source, path, verbose, debug)?;
-    Ok(proto)
+    let compiled = compile_source(&source, path, verbose, debug)?;
+    Ok(compiled.entry_proto)
 }
 
 fn compile_source(
@@ -77,40 +90,22 @@ fn compile_source(
     path: &str,
     verbose: bool,
     debug: &DebugFlags,
-) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
+) -> PipelineResult<CompileOutput> {
     let tokens = lex(source, path, verbose, debug);
     let program = parse(tokens, source, path, verbose, debug)?;
     compile(&program, source, verbose, debug)
 }
 
-fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
-    let source_hash = source_cache_hash(source);
+fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineResult<CompileOutput> {
     let cache_path = compile_cache_path(path);
+    let binary_fp = binary_epoch_fingerprint();
 
-    match load_cached_proto(&cache_path, source_hash) {
-        Ok(Some(proto)) => {
+    match load_cached_graph(&cache_path, binary_fp) {
+        Ok(Some(graph_artifact)) => {
             if verbose {
                 eprintln!("[tsn] compile cache hit");
             }
-            let tokens = tsn_lexer::scan(source, path);
-            let program = tsn_parser::parse(tokens, path).map_err(|errs| {
-                let msgs: Vec<String> = errs
-                    .iter()
-                    .map(|e| {
-                        format_error_with_context(
-                            source,
-                            path,
-                            e.range.start.line,
-                            e.range.start.column,
-                            "parse",
-                            &e.message,
-                        )
-                    })
-                    .collect();
-                CliError::fatal(msgs.join("\n"))
-            })?;
-            let precompiled = crate::module_precompile::precompile_direct_imports(&program, path);
-            return Ok((proto, precompiled));
+            return compile_output_from_graph(graph_artifact);
         }
         Ok(None) => {}
         Err(e) => {
@@ -124,13 +119,13 @@ fn compile_source_cached(source: &str, path: &str, verbose: bool) -> PipelineRes
         eprintln!("[tsn] compile cache miss");
     }
 
-    let (proto, precompiled) = compile_source(source, path, verbose, &DebugFlags::default())?;
-    if let Err(e) = store_cached_proto(&cache_path, source_hash, &proto) {
+    let compiled = compile_source(source, path, verbose, &DebugFlags::default())?;
+    if let Err(e) = store_cached_graph(&cache_path, &compiled.graph_artifact) {
         if verbose {
             eprintln!("[tsn] compile cache write skipped: {}", e);
         }
     }
-    Ok((proto, precompiled))
+    Ok(compiled)
 }
 
 fn read_source(path: &str) -> PipelineResult<String> {
@@ -238,7 +233,7 @@ fn compile(
     source: &str,
     verbose: bool,
     debug: &DebugFlags,
-) -> PipelineResult<(FunctionProto, std::collections::HashMap<String, std::sync::Arc<FunctionProto>>)> {
+) -> PipelineResult<CompileOutput> {
     let check_result = tsn_checker::Checker::check(program);
     if !check_result.diagnostics.is_empty() {
         let mut msgs = Vec::new();
@@ -290,9 +285,25 @@ fn compile(
         eprintln!("[tsn] compiled {} bytecode words", proto.chunk.code.len());
     }
 
-    let precompiled = crate::module_precompile::precompile_direct_imports(program, &program.filename);
+    let graph_build =
+        crate::module_precompile::build_module_graph(program, source, &program.filename, &proto)
+            .map_err(|e| {
+                CliError::fatal(format!(
+                    "{}{}error[module-graph]{}: {}",
+                    BOLD, C_ERRORS, R, e
+                ))
+            })?;
+    let binary_fp = binary_epoch_fingerprint();
+    let graph_hash = graph_hash_from_sources(&graph_build.source_hashes, binary_fp);
+    let graph_artifact = crate::module_precompile::build_graph_artifact(
+        COMPILE_CACHE_VERSION,
+        graph_hash,
+        graph_build,
+    );
+    let precompiled = precompiled_from_graph(&graph_artifact);
+
     if verbose && !precompiled.is_empty() {
-        eprintln!("[tsn] precompiled {} direct dependency modules", precompiled.len());
+        eprintln!("[tsn] precompiled {} dependency modules", precompiled.len());
     }
 
     if debug.bytecode {
@@ -315,7 +326,11 @@ fn compile(
         debug_scope(&proto, &program.filename);
     }
 
-    Ok((proto, precompiled))
+    Ok(CompileOutput {
+        entry_proto: proto,
+        precompiled,
+        graph_artifact,
+    })
 }
 
 pub fn execute(
@@ -357,13 +372,6 @@ pub(crate) fn builtin_protos_owned() -> PipelineResult<Vec<FunctionProto>> {
         .map_err(|e| CliError::fatal(e.clone()))
 }
 
-fn source_cache_hash(source: &str) -> u64 {
-    let mut h = fnv1a64(source.as_bytes());
-    h = fnv1a64_u64(h, binary_epoch_fingerprint());
-    h = fnv1a64_u64(h, COMPILE_CACHE_VERSION as u64);
-    h
-}
-
 fn binary_epoch_fingerprint() -> u64 {
     let Ok(exe) = std::env::current_exe() else {
         return 0;
@@ -389,10 +397,10 @@ fn compile_cache_path(source_path: &str) -> std::path::PathBuf {
         .join(format!("{key:016x}.bin"))
 }
 
-fn load_cached_proto(
+fn load_cached_graph(
     cache_path: &std::path::Path,
-    expected_source_hash: u64,
-) -> PipelineResult<Option<FunctionProto>> {
+    binary_fingerprint: u64,
+) -> PipelineResult<Option<ModuleGraphArtifact>> {
     let bytes = match std::fs::read(cache_path) {
         Ok(bytes) => bytes,
         Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
@@ -413,26 +421,38 @@ fn load_cached_proto(
     }
 
     let version = u32::from_le_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
-    let hash = u64::from_le_bytes([
+    let header_graph_hash = u64::from_le_bytes([
         bytes[4], bytes[5], bytes[6], bytes[7], bytes[8], bytes[9], bytes[10], bytes[11],
     ]);
-    if version != COMPILE_CACHE_VERSION || hash != expected_source_hash {
+    if version != COMPILE_CACHE_VERSION {
         return Ok(None);
     }
 
     let payload = &bytes[CACHE_HEADER_LEN..];
-    let proto: FunctionProto = match bincode::deserialize(payload) {
-        Ok(p) => p,
+    let graph: ModuleGraphArtifact = match bincode::deserialize(payload) {
+        Ok(g) => g,
         Err(_) => return Ok(None),
     };
 
-    Ok(Some(proto))
+    if graph.format_version != COMPILE_CACHE_VERSION {
+        return Ok(None);
+    }
+    if graph.graph_hash != header_graph_hash {
+        return Ok(None);
+    }
+    if graph.entry_proto().is_none() {
+        return Ok(None);
+    }
+    if !is_graph_cache_valid(&graph, binary_fingerprint) {
+        return Ok(None);
+    }
+
+    Ok(Some(graph))
 }
 
-fn store_cached_proto(
+fn store_cached_graph(
     cache_path: &std::path::Path,
-    source_hash: u64,
-    proto: &FunctionProto,
+    graph: &ModuleGraphArtifact,
 ) -> PipelineResult<()> {
     if let Some(parent) = cache_path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| {
@@ -447,7 +467,7 @@ fn store_cached_proto(
         })?;
     }
 
-    let payload = bincode::serialize(proto).map_err(|e| {
+    let payload = bincode::serialize(graph).map_err(|e| {
         CliError::fatal(format!(
             "{}{}error[cache]{}: serialize failed: {}",
             BOLD, C_ERRORS, R, e
@@ -456,7 +476,7 @@ fn store_cached_proto(
 
     let mut bytes = Vec::with_capacity(CACHE_HEADER_LEN + payload.len());
     bytes.extend_from_slice(&COMPILE_CACHE_VERSION.to_le_bytes());
-    bytes.extend_from_slice(&source_hash.to_le_bytes());
+    bytes.extend_from_slice(&graph.graph_hash.to_le_bytes());
     bytes.extend_from_slice(&0u64.to_le_bytes());
     bytes.extend_from_slice(&payload);
 
@@ -472,8 +492,80 @@ fn store_cached_proto(
     })
 }
 
+fn compile_output_from_graph(graph_artifact: ModuleGraphArtifact) -> PipelineResult<CompileOutput> {
+    let entry_proto = graph_artifact.entry_proto().cloned().ok_or_else(|| {
+        CliError::fatal("cache error: graph artifact is missing entry proto".to_owned())
+    })?;
+    let precompiled = precompiled_from_graph(&graph_artifact);
+    Ok(CompileOutput {
+        entry_proto,
+        precompiled,
+        graph_artifact,
+    })
+}
+
+fn precompiled_from_graph(
+    graph_artifact: &ModuleGraphArtifact,
+) -> std::collections::HashMap<String, std::sync::Arc<FunctionProto>> {
+    graph_artifact
+        .modules
+        .iter()
+        .filter(|(path, _)| *path != &graph_artifact.entry_path)
+        .map(|(path, proto)| (path.clone(), std::sync::Arc::new(proto.clone())))
+        .collect()
+}
+
+fn is_graph_cache_valid(graph_artifact: &ModuleGraphArtifact, binary_fingerprint: u64) -> bool {
+    let expected_graph_hash =
+        graph_hash_from_sources(&graph_artifact.source_hashes, binary_fingerprint);
+    if graph_artifact.graph_hash != expected_graph_hash {
+        return false;
+    }
+
+    for (path, expected_hash) in &graph_artifact.source_hashes {
+        let Ok(source) = std::fs::read_to_string(path) else {
+            return false;
+        };
+        if fnv1a64(source.as_bytes()) != *expected_hash {
+            return false;
+        }
+    }
+
+    true
+}
+
+fn graph_hash_from_sources(
+    source_hashes: &std::collections::HashMap<String, u64>,
+    binary_fingerprint: u64,
+) -> u64 {
+    let mut hash = fnv1a64_u64(0xcbf29ce484222325u64, COMPILE_CACHE_VERSION as u64);
+    hash = fnv1a64_u64(hash, binary_fingerprint);
+
+    let mut items: Vec<(&str, u64)> = source_hashes
+        .iter()
+        .map(|(path, source_hash)| (path.as_str(), *source_hash))
+        .collect();
+    items.sort_by(|a, b| a.0.cmp(b.0));
+
+    for (path, source_hash) in items {
+        hash = fnv1a64_extend(hash, path.as_bytes());
+        hash = fnv1a64_u64(hash, source_hash);
+    }
+
+    hash
+}
+
 fn fnv1a64(bytes: &[u8]) -> u64 {
     let mut hash = 0xcbf29ce484222325u64;
+    for b in bytes {
+        hash ^= *b as u64;
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    hash
+}
+
+fn fnv1a64_extend(seed: u64, bytes: &[u8]) -> u64 {
+    let mut hash = seed;
     for b in bytes {
         hash ^= *b as u64;
         hash = hash.wrapping_mul(0x100000001b3);

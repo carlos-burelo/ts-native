@@ -78,9 +78,10 @@ fn resolve_callee_signature(
     active_param: u32,
 ) -> Option<SignatureHelp> {
     // Try expr_types at the token offset.
-    let tok = state.tokens.iter().find(|t| {
-        t.line == line && t.col <= col && col < t.col + t.length
-    })?;
+    let tok = state
+        .tokens
+        .iter()
+        .find(|t| t.line == line && t.col <= col && col < t.col + t.length)?;
 
     let info = state.expr_types.get(&tok.offset)?;
     if let TypeKind::Fn(ft) = &info.ty.0 {

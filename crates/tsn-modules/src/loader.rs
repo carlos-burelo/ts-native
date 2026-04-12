@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use super::registry::{MODULE_REGISTRY, is_known, spec_for};
+use super::registry::{is_known, spec_for, MODULE_REGISTRY};
 use super::spec::ModuleKind;
 
 /// Path-resolution authority. Does NOT handle ExportMap or BindResult
@@ -58,11 +58,15 @@ impl ModuleLoader {
     }
 
     pub fn builtins(&self) -> impl Iterator<Item = &'static super::spec::ModuleSpec> {
-        MODULE_REGISTRY.iter().filter(|m| m.kind == ModuleKind::Builtin)
+        MODULE_REGISTRY
+            .iter()
+            .filter(|m| m.kind == ModuleKind::Builtin)
     }
 
     pub fn stdlib_modules(&self) -> impl Iterator<Item = &'static super::spec::ModuleSpec> {
-        MODULE_REGISTRY.iter().filter(|m| m.kind == ModuleKind::Stdlib)
+        MODULE_REGISTRY
+            .iter()
+            .filter(|m| m.kind == ModuleKind::Stdlib)
     }
 
     /// Resolve a relative specifier (e.g. "./foo") relative to a base directory.
@@ -73,17 +77,17 @@ impl ModuleLoader {
             base_dir
         };
         let resolved = base.join(specifier);
-        let normalized = resolved
-            .components()
-            .fold(PathBuf::new(), |mut acc, c| {
-                use std::path::Component::*;
-                match c {
-                    ParentDir => { acc.pop(); }
-                    CurDir => {}
-                    c => acc.push(c),
+        let normalized = resolved.components().fold(PathBuf::new(), |mut acc, c| {
+            use std::path::Component::*;
+            match c {
+                ParentDir => {
+                    acc.pop();
                 }
-                acc
-            });
+                CurDir => {}
+                c => acc.push(c),
+            }
+            acc
+        });
         Some(normalized.to_string_lossy().to_string())
     }
 }

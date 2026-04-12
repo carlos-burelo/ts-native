@@ -3,7 +3,7 @@ use crate::symbol::SymbolKind;
 use crate::BindResult;
 use tsn_core::ast::operators::BinaryOp;
 use tsn_core::ast::ImportSpecifier;
-use tsn_core::ast::{Decl, Expr, Program, Stmt};
+use tsn_core::ast::{Arg, ArrayEl, Decl, Expr, ForInit, Program, Stmt};
 use tsn_core::TypeKind;
 use tsn_core::{NumericKind, TypeAnnotations};
 
@@ -53,8 +53,8 @@ fn annotate_stmt(stmt: &Stmt, ann: &mut TypeAnnotations, bind: &BindResult) {
         } => {
             if let Some(init_box) = init {
                 match init_box.as_ref() {
-                    tsn_core::ast::ForInit::Expr(e) => annotate_expr(e, ann, bind),
-                    tsn_core::ast::ForInit::Var { declarators, .. } => {
+                    ForInit::Expr(e) => annotate_expr(e, ann, bind),
+                    ForInit::Var { declarators, .. } => {
                         for d in declarators {
                             if let Some(init_expr) = &d.init {
                                 annotate_expr(init_expr, ann, bind);
@@ -172,9 +172,9 @@ fn annotate_expr(expr: &Expr, ann: &mut TypeAnnotations, _bind: &BindResult) {
             annotate_expr(callee, ann, _bind);
             for arg in args {
                 let e = match arg {
-                    tsn_core::ast::Arg::Positional(e) => e,
-                    tsn_core::ast::Arg::Spread(e) => e,
-                    tsn_core::ast::Arg::Named { value, .. } => value,
+                    Arg::Positional(e) => e,
+                    Arg::Spread(e) => e,
+                    Arg::Named { value, .. } => value,
                 };
                 annotate_expr(e, ann, _bind);
             }
@@ -185,7 +185,7 @@ fn annotate_expr(expr: &Expr, ann: &mut TypeAnnotations, _bind: &BindResult) {
         }
         Expr::Array { elements, .. } => {
             for el in elements {
-                if let tsn_core::ast::ArrayEl::Expr(e) = el {
+                if let ArrayEl::Expr(e) = el {
                     annotate_expr(e, ann, _bind);
                 }
             }

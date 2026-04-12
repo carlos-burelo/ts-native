@@ -148,7 +148,10 @@ impl Vm {
         self.opcode_profile.as_ref().map(|p| p.snapshot())
     }
 
-    pub fn set_precompiled_protos(&mut self, protos: std::collections::HashMap<String, Arc<FunctionProto>>) {
+    pub fn set_precompiled_protos(
+        &mut self,
+        protos: std::collections::HashMap<String, Arc<FunctionProto>>,
+    ) {
         self.precompiled_protos = protos;
     }
 
@@ -330,6 +333,7 @@ impl Vm {
         main_vm.trace = self.trace;
         main_vm.calls = self.calls;
         main_vm.opcode_profile = self.opcode_profile.clone();
+        main_vm.precompiled_protos = self.precompiled_protos.clone();
         main_vm.frames.push(CallFrame {
             closure,
             ip: 0,

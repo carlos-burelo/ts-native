@@ -105,9 +105,9 @@ pub fn classify_identifier(
         }
         Some(SymbolKind::Interface) => TT_INTERFACE,
         Some(SymbolKind::Namespace) => TT_NAMESPACE,
-        Some(SymbolKind::TypeAlias)
-        | Some(SymbolKind::Enum)
-        | Some(SymbolKind::TypeParameter) => TT_TYPE,
+        Some(SymbolKind::TypeAlias) | Some(SymbolKind::Enum) | Some(SymbolKind::TypeParameter) => {
+            TT_TYPE
+        }
         Some(SymbolKind::Property) => TT_PROPERTY,
         Some(SymbolKind::Parameter) => TT_PARAMETER,
         Some(SymbolKind::Const) => TT_VARIABLE,
