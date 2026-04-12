@@ -3,7 +3,11 @@
     "allow": [
       "Bash(select-object *)",
       "Bash(@findstr *)",
-      "Bash(target\\release\\tsn.exe *)"
+      "Bash(target\\release\\tsn.exe *)",
+      "Bash(f *)",
+      "Bash(do)",
+      "Bash(sed *)",
+      "Bash(taskkill *)"
     ]
   },
   "$version": 3

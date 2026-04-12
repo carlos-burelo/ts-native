@@ -1,7 +1,7 @@
 use tsn_core::ast::{Decl, ExportDecl, Program, Stmt};
 
 pub fn debug_import_graph(program: &Program) {
-    use super::super::{footer, header, BOLD, C_MODULES, DIM, R};
+    use super::super::colors::{footer, header, BOLD, C_MODULES, DIM, R};
     use super::modules::format_import_specifiers;
 
     struct Edge {

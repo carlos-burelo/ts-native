@@ -1,7 +1,7 @@
 use tsn_compiler::{FunctionProto, Literal, PoolEntry};
 
 pub fn debug_scope(proto: &FunctionProto, filename: &str) {
-    use super::super::{footer, header, C_SCOPE};
+    use super::super::colors::{footer, header, C_SCOPE};
     header(C_SCOPE, "scope", filename);
     let mut count = 0usize;
     print_fn_scope(proto, 1, &mut count);
@@ -9,7 +9,7 @@ pub fn debug_scope(proto: &FunctionProto, filename: &str) {
 }
 
 fn print_fn_scope(proto: &FunctionProto, depth: usize, count: &mut usize) {
-    use super::super::{BOLD, C_SCOPE, DIM, R};
+    use super::super::colors::{BOLD, C_SCOPE, DIM, R};
     let pad = "  ".repeat(depth);
     let name = proto.name.as_deref().unwrap_or("<anon>");
     let mut flags = String::new();

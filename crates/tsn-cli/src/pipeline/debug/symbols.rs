@@ -1,7 +1,7 @@
 use tsn_core::ast::{Decl, Pattern, Program, Stmt, VarKind};
 
 pub fn debug_symbols(program: &Program) {
-    use super::super::{footer, header, C_SYMBOLS};
+    use super::super::colors::{footer, header, C_SYMBOLS};
     header(C_SYMBOLS, "symbols", &program.filename);
     let mut count = 0usize;
     collect_symbol_stmts(&program.body, 1, &mut count);
@@ -17,7 +17,7 @@ fn collect_symbol_stmts(stmts: &[Stmt], depth: usize, count: &mut usize) {
 }
 
 fn collect_symbol_decl(decl: &Decl, pad: &str, count: &mut usize) {
-    use super::super::{BOLD, C_SYMBOLS, R};
+    use super::super::colors::{BOLD, C_SYMBOLS, R};
     match decl {
         Decl::Function(f) => {
             let mut flags = String::new();

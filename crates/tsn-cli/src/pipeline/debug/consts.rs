@@ -2,7 +2,7 @@ use tsn_compiler::{FunctionProto, Literal, PoolEntry};
 use tsn_core::well_known;
 
 pub fn debug_consts(proto: &FunctionProto, filename: &str) {
-    use super::super::{footer, header, C_CONSTS};
+    use super::super::colors::{footer, header, C_CONSTS};
     header(C_CONSTS, "consts", filename);
     let mut total = 0usize;
     print_fn_consts(proto, "", &mut total);

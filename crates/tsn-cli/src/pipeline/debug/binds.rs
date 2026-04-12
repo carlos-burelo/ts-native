@@ -1,7 +1,7 @@
 use tsn_compiler::{FunctionProto, PoolEntry};
 
 pub fn debug_binds(proto: &FunctionProto, filename: &str) {
-    use super::super::{footer, header, C_BINDS};
+    use super::super::colors::{footer, header, C_BINDS};
     header(C_BINDS, "binds", filename);
     let mut count = 0usize;
     print_fn_binds(proto, 1, &mut count);
@@ -9,7 +9,7 @@ pub fn debug_binds(proto: &FunctionProto, filename: &str) {
 }
 
 fn print_fn_binds(proto: &FunctionProto, depth: usize, count: &mut usize) {
-    use super::super::{BOLD, C_BINDS, R};
+    use super::super::colors::{BOLD, C_BINDS, R};
     let pad = "  ".repeat(depth);
     let name = proto.name.as_deref().unwrap_or("<anon>");
     let mut flags = String::new();

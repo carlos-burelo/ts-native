@@ -1,7 +1,7 @@
 use tower_lsp::lsp_types::HoverContents;
 
 pub fn debug_lsp(path: &str, source: &str) {
-    use super::super::{footer, header, BOLD, C_TYPES, R};
+    use super::super::colors::{footer, header, BOLD, C_TYPES, R};
 
     header(C_TYPES, "lsp analysis", path);
 

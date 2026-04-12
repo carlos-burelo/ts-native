@@ -6,11 +6,7 @@ pub fn parse_type(s: &mut TokenStream) -> Result<TypeNode, String> {
     let start = s.range();
     let ty = parse_union_type(s)?;
 
-    // Conditional type: `Check extends Extends ? TrueType : FalseType`
     if s.eat(TokenKind::Extends) {
-        // The extends rhs avoids nested conditional types.
-        // `parse_union_type` is safe here because `parse_nullable_type` uses `could_start_type`
-        // to avoid consuming `?` when it is the conditional operator.
         let extends_ty = parse_union_type(s)?;
         s.expect(TokenKind::Question)?;
         let true_ty = parse_type(s)?;
@@ -75,7 +71,6 @@ fn parse_array_type(s: &mut TokenStream) -> Result<TypeNode, String> {
 
     loop {
         if s.check(TokenKind::LBracket) && s.peek_kind(1) == TokenKind::RBracket {
-            // T[]
             s.advance();
             let end_range = s.range();
             s.advance();
@@ -84,8 +79,7 @@ fn parse_array_type(s: &mut TokenStream) -> Result<TypeNode, String> {
                 range: extend_range(start.clone(), end_range),
             };
         } else if s.check(TokenKind::LBracket) && s.peek_kind(1) != TokenKind::RBracket {
-            // T[K] — indexed access type
-            s.advance(); // consume `[`
+            s.advance();
             let index = parse_type(s)?;
             let end_range = s.range();
             s.expect(TokenKind::RBracket)?;
@@ -107,11 +101,8 @@ fn parse_nullable_type(s: &mut TokenStream) -> Result<TypeNode, String> {
     let start = s.range();
     let ty = parse_primary_type(s)?;
 
-    // Only consume `?` as a nullable modifier when what follows is NOT a type-start token.
-    // This prevents ambiguity with conditional types: `T extends U ? X : Y`
-    // where `?` is the conditional operator after `U`, not a nullable modifier.
     if s.check(TokenKind::Question) && !could_start_type(s.peek_kind(1)) {
-        s.advance(); // consume `?`
+        s.advance();
         let end = s.range();
         Ok(TypeNode {
             kind: TypeKind::Nullable(Box::new(ty)),
@@ -122,25 +113,17 @@ fn parse_nullable_type(s: &mut TokenStream) -> Result<TypeNode, String> {
     }
 }
 
-/// Returns true if `kind` can start a type expression in a conditional context.
-/// Used to disambiguate `T?` (nullable modifier) from `T ? X : Y` (conditional operator).
-/// Only includes tokens that are unambiguously type-starts and cannot appear as
-/// the next class member / property after a nullable type annotation.
 fn could_start_type(kind: TokenKind) -> bool {
     matches!(
         kind,
-        // User-defined names, type variables, `never`, `infer R`, etc.
         TokenKind::Identifier
-            // Function type: `T extends () => R`
             | TokenKind::LParen
-            // Literal types in conditional branches
             | TokenKind::Str
             | TokenKind::IntegerLiteral
             | TokenKind::FloatLiteral
             | TokenKind::DecimalLiteral
             | TokenKind::True
             | TokenKind::False
-            // Keyword types that appear in conditional branches
             | TokenKind::Null
             | TokenKind::Void
             | TokenKind::Typeof
@@ -155,7 +138,6 @@ fn parse_primary_type(s: &mut TokenStream) -> Result<TypeNode, String> {
         TokenKind::Template | TokenKind::TemplateHead => parse_template_literal_type(s),
 
         TokenKind::Identifier => {
-            // `keyof T` — contextual keyword
             if s.lexeme() == "keyof" {
                 s.advance();
                 let inner = parse_array_type(s)?;
@@ -166,11 +148,10 @@ fn parse_primary_type(s: &mut TokenStream) -> Result<TypeNode, String> {
                 });
             }
 
-            // `infer R` — contextual keyword; only meaningful inside conditional extends clause
             if s.lexeme() == "infer" && s.peek_kind(1) == TokenKind::Identifier {
-                s.advance(); // eat "infer"
+                s.advance();
                 let name = s.lexeme().to_owned();
-                s.advance(); // eat identifier
+                s.advance();
                 let end = s.range();
                 return Ok(TypeNode {
                     kind: TypeKind::Infer(name),
@@ -247,7 +228,6 @@ fn parse_primary_type(s: &mut TokenStream) -> Result<TypeNode, String> {
                 ));
             }
 
-            // `(name: Type, ...) => Ret` or `(...rest: Type) => Ret`
             if (s.kind() == TokenKind::Identifier && s.peek_kind(1) == TokenKind::Colon)
                 || s.check(TokenKind::DotDotDot)
             {
@@ -331,7 +311,6 @@ fn parse_primary_type(s: &mut TokenStream) -> Result<TypeNode, String> {
         TokenKind::LBrace => {
             s.advance();
 
-            // Detect mapped type: { [K in Source]: Value } or { readonly [K in Source]: Value }
             let is_mapped = if s.check(TokenKind::Readonly) {
                 s.peek_kind(1) == TokenKind::LBracket
                     && s.peek_kind(2) == TokenKind::Identifier
@@ -344,10 +323,10 @@ fn parse_primary_type(s: &mut TokenStream) -> Result<TypeNode, String> {
 
             if is_mapped {
                 let mapped_readonly = s.eat(TokenKind::Readonly);
-                s.advance(); // consume `[`
+                s.advance();
                 let key_var = s.lexeme().to_owned();
-                s.advance(); // consume key variable identifier
-                s.advance(); // consume `in`
+                s.advance();
+                s.advance();
                 let source = parse_type(s)?;
                 s.expect(TokenKind::RBracket)?;
                 let optional = s.eat(TokenKind::Question);
@@ -553,8 +532,6 @@ pub fn parse_type_params(s: &mut TokenStream) -> Result<Vec<TypeParam>, String> 
         let name_tok = s.expect_token(TokenKind::Identifier)?;
         let name = name_tok.lexeme.to_string();
         let constraint = if s.eat(TokenKind::Extends) {
-            // Use parse_union_type (not parse_type) to avoid treating
-            // `<T extends A ? B : C>` as a conditional type constraint.
             Some(parse_union_type(s)?)
         } else {
             None
@@ -589,7 +566,6 @@ fn parse_fn_type_params(s: &mut TokenStream) -> Result<Vec<TypeParam>, String> {
     while !s.check(TokenKind::RParen) && !s.is_eof() {
         let prange = s.range();
 
-        // consume optional `...` prefix for rest params
         s.eat(TokenKind::DotDotDot);
 
         let name = if s.kind() == TokenKind::Identifier && s.peek_kind(1) == TokenKind::Colon {

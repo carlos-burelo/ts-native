@@ -1,7 +1,7 @@
 use tsn_core::ast::{Decl, ExportDecl, ExportDefaultDecl, ImportSpecifier, Program, Stmt, VarKind};
 
 pub fn debug_modules(program: &Program) {
-    use super::super::{footer, header, BOLD, C_MODULES, R};
+    use super::super::colors::{footer, header, BOLD, C_MODULES, R};
     header(C_MODULES, "modules", &program.filename);
     let mut imports = 0usize;
     let mut exports = 0usize;

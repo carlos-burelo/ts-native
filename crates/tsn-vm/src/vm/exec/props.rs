@@ -1,7 +1,12 @@
 use tsn_core::OpCode;
 use tsn_types::value::Value;
 
-impl super::super::Vm {
+use super::super::props::{
+    get_index, get_property_cached, get_symbol_property, set_index, set_property_cached,
+};
+use super::super::Vm;
+
+impl Vm {
     pub(super) fn exec_prop_op(&mut self, op: OpCode) -> Result<(), String> {
         match op {
             OpCode::OpGetProperty => {
@@ -9,7 +14,7 @@ impl super::super::Vm {
                 let cache_idx = self.read_u16() as usize;
                 let key = self.get_str_const(key_idx);
                 let obj = self.pop()?;
-                let v = self.get_property_cached(&obj, key.as_ref(), cache_idx)?;
+                let v = get_property_cached(self, &obj, key.as_ref(), cache_idx)?;
                 self.push(v);
             }
             OpCode::OpGetPropertyMaybe => {
@@ -17,9 +22,8 @@ impl super::super::Vm {
                 let cache_idx = self.read_u16() as usize;
                 let key = self.get_str_const(key_idx);
                 let obj = self.pop()?;
-                let v = self
-                    .get_property_cached(&obj, key.as_ref(), cache_idx)
-                    .unwrap_or(Value::Null);
+                let v =
+                    get_property_cached(self, &obj, key.as_ref(), cache_idx).unwrap_or(Value::Null);
                 self.push(v);
             }
             OpCode::OpSetProperty => {
@@ -28,21 +32,21 @@ impl super::super::Vm {
                 let key = self.get_str_const(key_idx);
                 let value = self.pop()?;
                 let obj = self.pop()?;
-                self.set_property_cached(&obj, key.as_ref(), value.clone(), cache_idx)?;
+                set_property_cached(self, &obj, key.as_ref(), value.clone(), cache_idx)?;
                 self.push(value);
             }
 
             OpCode::OpGetIndex => {
                 let idx = self.pop()?;
                 let obj = self.pop()?;
-                let v = self.get_index(&obj, &idx)?;
+                let v = get_index(self, &obj, &idx)?;
                 self.push(v);
             }
             OpCode::OpSetIndex => {
                 let value = self.pop()?;
                 let idx = self.pop()?;
                 let obj = self.pop()?;
-                self.set_index(&obj, &idx, value.clone())?;
+                set_index(self, &obj, &idx, value.clone())?;
                 self.push(value);
             }
 
@@ -106,7 +110,7 @@ impl super::super::Vm {
                     }
                 };
                 let obj = self.pop()?;
-                let v = self.get_symbol_property(&obj, symbol)?;
+                let v = get_symbol_property(self, &obj, symbol)?;
                 self.push(v);
             }
 

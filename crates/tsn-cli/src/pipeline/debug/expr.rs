@@ -1,7 +1,7 @@
 use tsn_core::ast::Program;
 
 pub fn debug_expr(program: &Program, range: Option<(u32, u32)>) {
-    use super::super::{footer, header, C_TYPES, DIM, R};
+    use super::super::colors::{footer, header, C_TYPES, DIM, R};
 
     let result = tsn_checker::Checker::check(program);
 

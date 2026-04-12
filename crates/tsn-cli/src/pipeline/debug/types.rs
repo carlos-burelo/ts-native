@@ -3,7 +3,7 @@ use tsn_core::ast::{Decl, Expr, Program, Stmt};
 use tsn_core::{well_known, TypeKind};
 
 pub fn debug_types(program: &Program, range: Option<(u32, u32)>) {
-    use super::super::{footer, header, BOLD, C_TYPES, DIM, R};
+    use super::super::colors::{footer, header, BOLD, C_TYPES, DIM, R};
 
     // Only class/interface/enum/struct inherit annotations — built from AST
     // (extends/implements/variants/fields). Member types come from bind below.
